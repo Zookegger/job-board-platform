@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SERVER_PORT: ${SERVER_PORT}
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
+      APP_JWT_EXPIRATION_MILLIS: ${APP_JWT_EXPIRATION_MILLIS}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    depends_on:
+      - server
+    ports:
+      - "3000:80"
+
+volumes:
+  db-data:
+
+# Notes:
+# - Environment variables are read from a root-level .env file by docker-compose.
+# - The Spring Boot app reads DB_URL, DB_USERNAME and DB_PASSWORD from application.properties.
