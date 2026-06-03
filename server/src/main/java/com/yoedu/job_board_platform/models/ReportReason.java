@@ -10,6 +10,6 @@ package com.yoedu.job_board_platform.models;
 public enum ReportReason {
     SPAM,
     SCAM,
-    INAPPROPRIATE_CONTENT,
+    INAPPROPRIATE,
     OTHER
 }

@@ -3,6 +3,8 @@ package com.yoedu.job_board_platform.models;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.springframework.data.annotation.CreatedDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -39,5 +41,6 @@ public class RefreshToken {
     private boolean isRevoked = false;
 
     @Column(name = "created_at", nullable = false)
+    @CreatedDate
     private OffsetDateTime createdAt;
 }
