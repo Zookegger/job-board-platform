@@ -18,14 +18,17 @@ import com.yoedu.job_board_platform.services.AuthService;
 import com.yoedu.job_board_platform.services.UserService;
 import com.yoedu.job_board_platform.utils.CookieUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "🔐 Auth & Tài khoản", description = "Đăng ký, đăng nhập, làm mới token")
 public class AuthController {
     private final AuthService authService;
     private final AuthMapper authMapper;
@@ -36,6 +39,7 @@ public class AuthController {
     private static final String REFRESH_COOKIE = "refreshToken";
 
     @PostMapping("/login")
+    @Operation(summary = "Đăng nhập → JWT + refresh token", description = "Trả về access token và refresh token")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         AuthResult result = authService.authenticate(request.email(), request.password());
 
@@ -46,6 +50,7 @@ public class AuthController {
     }
 
     @PostMapping("/register/candidate")
+    @Operation(summary = "Đăng ký ứng viên")
     public ResponseEntity<Void> registerCandidate(@RequestBody CandidateRegisterRequest request) {
         authService.registerCandidate(request);
         return ResponseEntity.status(201).build();
@@ -57,7 +62,8 @@ public class AuthController {
 
     // }
 
-    @PostMapping("/refresh")
+    @PostMapping("/refresh-token")
+    @Operation(summary = "Làm mới access token", description = "Dùng refresh token để lấy access token mới")
     public ResponseEntity<AuthResponse> refresh(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = cookieUtil.extract(request, REFRESH_COOKIE);
         if (refreshToken == null) {
@@ -74,6 +80,7 @@ public class AuthController {
     // logout
 
     @GetMapping("/me")
+    @Operation(summary = "Lấy thông tin user hiện tại", description = "Yêu cầu JWT token")
     public ResponseEntity<UserResponse> me() {
         return ResponseEntity.ok(userMapper.toResponse(userService.getCurrentUser()));
     }
