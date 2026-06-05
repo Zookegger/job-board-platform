@@ -245,7 +245,7 @@ COMMENT ON COLUMN "reports"."details" IS 'Mô tả chi tiết từ người repo
 
 COMMENT ON COLUMN "reports"."reviewed_by" IS 'users.id của admin xử lý';
 
-ALTER TABLE "users" ADD FOREIGN KEY ("id") REFERENCES "profiles" ("user_id") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "profiles" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
 
 ALTER TABLE "refresh_tokens" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
 

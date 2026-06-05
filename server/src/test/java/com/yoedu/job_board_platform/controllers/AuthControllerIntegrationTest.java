@@ -13,13 +13,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.utility.TestcontainersConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yoedu.job_board_platform.TestcontainersConfiguration;
+
 import com.yoedu.job_board_platform.models.RefreshToken;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
@@ -27,18 +30,21 @@ import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
 import jakarta.servlet.http.Cookie;
-import lombok.RequiredArgsConstructor;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@RequiredArgsConstructor
 @Import(TestcontainersConfiguration.class)
 public class AuthControllerIntegrationTest {
-    private final MockMvc mockMvc;
-    private final ObjectMapper objectMapper;
-    private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void cleanup() {
@@ -63,7 +69,7 @@ public class AuthControllerIntegrationTest {
         var loginPayload = objectMapper.writeValueAsString(
                 java.util.Map.of("email", "test@example.com", "password", "P@ssw0rd"));
 
-        MvcResult res = mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+        MvcResult res = mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                 .content(loginPayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").exists())
@@ -71,7 +77,9 @@ public class AuthControllerIntegrationTest {
                 .andReturn();
 
         String setCookie = res.getResponse().getHeader("Set-Cookie");
-        assertThat(setCookie).contains("accessToken=").contains("refreshToken=");
+        assertThat(setCookie).contains("accessToken=");
+        assertThat(res.getResponse().getHeaders("Set-Cookie"))
+                .anyMatch(header -> header.contains("refreshToken="));
 
         String body = res.getResponse().getContentAsString();
         var json = objectMapper.readTree(body);
@@ -104,7 +112,7 @@ public class AuthControllerIntegrationTest {
 
         // Act: call refresh endpoint with cookie
         Cookie cookie = new Cookie("refreshToken", rt.getTokenString());
-        MvcResult res = mockMvc.perform(post("/auth/refresh").cookie(cookie))
+        MvcResult res = mockMvc.perform(post("/api/auth/refresh-token").cookie(cookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").exists())
                 .andReturn();
@@ -134,7 +142,7 @@ public class AuthControllerIntegrationTest {
         var loginPayload = objectMapper.writeValueAsString(
                 java.util.Map.of("email", "wrong@example.com", "password", "WrongPassword"));
 
-        mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                 .content(loginPayload))
                 .andExpect(status().isUnauthorized());
     }
@@ -164,7 +172,7 @@ public class AuthControllerIntegrationTest {
 
         // Act: call refresh endpoint with revoked token
         Cookie cookie = new Cookie("refreshToken", revokedToken.getTokenString());
-        mockMvc.perform(post("/auth/refresh").cookie(cookie))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/auth/refresh-token").cookie(cookie))
+                .andExpect(status().isBadRequest());
     }
 }

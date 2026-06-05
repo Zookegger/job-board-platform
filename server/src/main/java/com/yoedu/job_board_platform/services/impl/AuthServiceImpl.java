@@ -11,6 +11,7 @@ import com.yoedu.job_board_platform.dtos.auth.AuthResult;
 import com.yoedu.job_board_platform.dtos.auth.CandidateRegisterRequest;
 import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
 import com.yoedu.job_board_platform.mappers.CandidateMapper;
+import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.RefreshToken;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.UserRepository;
@@ -64,9 +65,16 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void registerCandidate(CandidateRegisterRequest request) {
+        UUID id = UUID.randomUUID();
+
         User user = candidateMapper.toUser(request);
-        user.setId(UUID.randomUUID());
+        user.setId(id);
         user.setPassword(passwordEncoder.encode(request.password()));
+
+        Profile profile = user.getProfile();
+        profile.setId(id);
+        profile.setPhone("");
+
         userRepository.save(user);
     }
 

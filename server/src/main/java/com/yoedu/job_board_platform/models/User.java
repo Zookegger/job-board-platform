@@ -31,7 +31,8 @@ import lombok.Setter;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 /**
- * Đối tượng User đại diện cho người dùng trong hệ thống, có thể là ứng viên, admin hoặc nhà tuyển dụng. 
+ * Đối tượng User đại diện cho người dùng trong hệ thống, có thể là ứng viên,
+ * admin hoặc nhà tuyển dụng.
  */
 public class User {
     @Id
@@ -51,11 +52,11 @@ public class User {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
-    
+
     @Column(name = "created_at", nullable = false)
     @CreatedDate
     private OffsetDateTime createdAt;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade=CascadeType.ALL)
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Profile profile;
 }
