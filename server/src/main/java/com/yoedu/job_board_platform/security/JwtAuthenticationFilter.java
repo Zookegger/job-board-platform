@@ -55,33 +55,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         Cookie[] cookies = request.getCookies();
-        String token = Stream.of(cookies)
-                .filter(cookie -> "accessToken".equals(cookie.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElse(null);
+        String token = null;
+        
+        // Kiểm tra cookies không null trước khi stream
+        if (cookies != null) {
+            token = Stream.of(cookies)
+                    .filter(cookie -> "accessToken".equals(cookie.getName()))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .orElse(null);
+        }
 
         try {
-            String email = jwtService.extractUsername(token);
+            if (token != null) {
+                String email = jwtService.extractUsername(token);
 
-            // Chỉ xác thực khi:
-            // 1. Email tồn tại trong token.
-            // 2. Chưa có Authentication trong SecurityContext.
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userService.loadUserByUsername(email);
+                // Chỉ xác thực khi:
+                // 1. Email tồn tại trong token.
+                // 2. Chưa có Authentication trong SecurityContext.
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userService.loadUserByUsername(email);
 
-                if (jwtService.validateToken(token, userDetails)) {
-                    // Tạo đối tượng Authentication chứa:
-                    // - Thông tin người dùng
-                    // - Danh sách quyền (authorities)
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
-                            null, userDetails.getAuthorities());
+                    if (jwtService.validateToken(token, userDetails)) {
+                        // Tạo đối tượng Authentication chứa:
+                        // - Thông tin người dùng
+                        // - Danh sách quyền (authorities)
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
+                                null, userDetails.getAuthorities());
 
-                    // Gắn thêm thông tin request hiện tại (IP, session, ...)
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        // Gắn thêm thông tin request hiện tại (IP, session, ...)
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    // Lưu Authentication vào SecurityContext. Từ đây Spring Security xem request đã đăng nhập.
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                        // Lưu Authentication vào SecurityContext. Từ đây Spring Security xem request đã đăng nhập.
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
                 }
             }
         } catch (JwtException e) {

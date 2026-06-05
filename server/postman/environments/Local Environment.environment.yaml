@@ -1,0 +1,6 @@
+name: Local Environment
+values:
+  - key: baseUrl
+    value: ''
+  - key: accessToken
+    value: ''
