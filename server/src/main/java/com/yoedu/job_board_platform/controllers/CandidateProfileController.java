@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/profile")
 @PreAuthorize("hasRole('CANDIDATE')")
-@Tag(name = "👤 Hồ sơ ứng viên", description = "Quản lý thông tin cá nhân, CV - chỉ CANDIDATE")
+@Tag(name = "Hồ sơ ứng viên", description = "Quản lý thông tin cá nhân, CV - chỉ CANDIDATE")
 public class CandidateProfileController {
 
     @GetMapping

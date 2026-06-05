@@ -1,0 +1,31 @@
+$kind: http-request
+name: Login
+method: POST
+url: '{{baseUrl}}/auth/login'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "user@example.com",
+      "password": "password123"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      var res = pm.response.json();
+
+      if (pm.response.code === 200) {
+        if (res.accessToken) {
+          pm.environment.set("accessToken", res.accessToken);
+          console.log("✅ accessToken saved to environment");
+        }
+        if (res.refreshToken) {
+          pm.environment.set("refreshToken", res.refreshToken);
+          console.log("✅ refreshToken saved to environment");
+        }
+      }

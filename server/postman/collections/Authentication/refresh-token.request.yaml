@@ -1,0 +1,24 @@
+$kind: http-request
+name: Refresh Token
+method: POST
+url: '{{baseUrl}}/auth/refresh'
+order: 3000
+headers:
+  - key: Cookie
+    value: 'refreshToken={{refreshToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      var res = pm.response.json();
+
+      if (pm.response.code === 200) {
+        if (res.accessToken) {
+          pm.environment.set("accessToken", res.accessToken);
+          console.log("✅ accessToken refreshed and saved to environment");
+        }
+        if (res.refreshToken) {
+          pm.environment.set("refreshToken", res.refreshToken);
+          console.log("✅ refreshToken updated in environment");
+        }
+      }

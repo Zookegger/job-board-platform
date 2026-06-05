@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "🔐 Auth & Tài khoản", description = "Đăng ký, đăng nhập, làm mới token")
+@Tag(name = "Auth & Tài khoản", description = "Đăng ký, đăng nhập, làm mới token")
 public class AuthController {
     private final AuthService authService;
     private final AuthMapper authMapper;

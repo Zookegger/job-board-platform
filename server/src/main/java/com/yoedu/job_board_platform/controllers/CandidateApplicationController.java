@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/applications")
 @PreAuthorize("hasRole('CANDIDATE')")
-@Tag(name = "📋 Ứng tuyển & Timeline", description = "Quản lý đơn ứng tuyển - chỉ CANDIDATE")
+@Tag(name = "Ứng tuyển & Timeline", description = "Quản lý đơn ứng tuyển - chỉ CANDIDATE")
 public class CandidateApplicationController {
 
     @PostMapping

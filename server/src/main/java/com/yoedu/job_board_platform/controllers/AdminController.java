@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "🛡️ Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống - chỉ ADMIN")
+@Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống - chỉ ADMIN")
 public class AdminController {
 
     // ========== DASHBOARD ==========

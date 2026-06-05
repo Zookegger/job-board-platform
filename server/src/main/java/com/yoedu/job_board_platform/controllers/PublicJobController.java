@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/public")
-@Tag(name = "🔍 Trang tìm việc (Public)", description = "Danh sách việc, tìm kiếm, lọc - không cần đăng nhập")
+@Tag(name = "Trang tìm việc (Public)", description = "Danh sách việc, tìm kiếm, lọc - không cần đăng nhập")
 public class PublicJobController {
 
     @GetMapping("/jobs")

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/saved-jobs")
 @PreAuthorize("hasRole('CANDIDATE')")
-@Tag(name = "🔖 Việc làm đã lưu", description = "Quản lý danh sách việc yêu thích - chỉ CANDIDATE")
+@Tag(name = "Việc làm đã lưu", description = "Quản lý danh sách việc yêu thích - chỉ CANDIDATE")
 public class SavedJobController {
 
     @GetMapping
