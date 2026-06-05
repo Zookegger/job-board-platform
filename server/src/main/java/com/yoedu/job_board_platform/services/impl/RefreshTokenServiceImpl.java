@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
@@ -12,6 +13,7 @@ import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.services.RefreshTokenService;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -102,5 +104,31 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             token.setRevoked(true);
             refreshTokenRepository.save(token);
         });
+    }
+
+    /**
+     * Dọn dẹp các refresh token đã hết hạn trong hệ thống.
+     *
+     * <p>
+     * Phương thức được Spring Scheduler tự động thực thi vào lúc 03:00 sáng
+     * mỗi ngày. Tất cả các token có thời gian hết hạn ({@code expiresAt})
+     * nhỏ hơn thời điểm hiện tại sẽ bị xóa khỏi cơ sở dữ liệu.
+     * </p>
+     *
+     * <p>
+     * Mục đích:
+     * <ul>
+     * <li>Loại bỏ các token không còn hợp lệ.</li>
+     * <li>Giảm dung lượng lưu trữ không cần thiết trong cơ sở dữ liệu.</li>
+     * <li>Tăng hiệu năng cho các thao tác liên quan đến refresh token.</li>
+     * </ul>
+     * </p>
+     */
+    @Override
+    @Scheduled(cron = "0 0 3 * * ?") // 3h sáng mỗi ngày
+    // @Scheduled(cron = "0 * * * * ?") // Mỗi 1 phút
+    @Transactional
+    public void cleanupExpiredTokens() {
+        refreshTokenRepository.deleteByExpiresAtBefore(OffsetDateTime.now());
     }
 }

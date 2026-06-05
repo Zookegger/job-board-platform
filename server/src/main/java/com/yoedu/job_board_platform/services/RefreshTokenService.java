@@ -25,4 +25,9 @@ public interface RefreshTokenService {
      * Revoke all refresh tokens for a user
      */
     void revokeAllUserTokens(UUID userId);
+
+    /**
+     * Xóa token hết hạn
+     */
+    void cleanupExpiredTokens();
 }
