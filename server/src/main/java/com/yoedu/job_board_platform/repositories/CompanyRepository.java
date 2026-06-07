@@ -9,4 +9,7 @@ import com.yoedu.job_board_platform.models.Company;
 
 @Repository
 public interface CompanyRepository extends JpaRepository<Company, UUID> {
+    Company findByEmail(String email);
+    boolean existsByEmail(String email);
+    boolean existsBySlug(String slug);
 }

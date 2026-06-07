@@ -11,6 +11,7 @@ import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.dtos.auth.AuthResponse;
 import com.yoedu.job_board_platform.dtos.auth.AuthResult;
 import com.yoedu.job_board_platform.dtos.auth.CandidateRegisterRequest;
+import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
 import com.yoedu.job_board_platform.dtos.auth.LoginRequest;
 import com.yoedu.job_board_platform.dtos.user.UserResponse;
 import com.yoedu.job_board_platform.mappers.AuthMapper;
@@ -80,17 +81,26 @@ public class AuthController {
 			@ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ (email sai format, thiếu trường, mật khẩu không khớp)", content = @Content),
 			@ApiResponse(responseCode = "409", description = "Email đã tồn tại trong hệ thống", content = @Content)
 	})
-	public ResponseEntity<Void> registerCandidate(@RequestBody CandidateRegisterRequest request) {
+	public ResponseEntity<Void> registerCandidate(@Valid @RequestBody CandidateRegisterRequest request) {
 		authService.registerCandidate(request);
 		return ResponseEntity.status(201).build();
 	}
 
-	// @PostMapping("/register/company")
-	// public ResponseEntity<Void> registerCompany(@RequestBody
-	// CompanyRegisterRequest request) {
-	// authService.registerCompany()
-
-	// }
+	@PostMapping("/register/company")
+	@Operation(summary = "Đăng ký tài khoản nhà tuyển dụng", description = """
+			Tạo tài khoản mới với vai trò EMPLOYER, đồng thời tạo một công ty mới
+			với trạng thái PENDING chờ admin phê duyệt.
+			Yêu cầu email công ty chưa tồn tại trong hệ thống.
+			""")
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "Đăng ký thành công — tài khoản nhà tuyển dụng và công ty đã được tạo", content = @Content),
+			@ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc mật khẩu xác nhận không trùng", content = @Content),
+			@ApiResponse(responseCode = "409", description = "Email công ty đã tồn tại", content = @Content)
+	})
+	public ResponseEntity<Void> registerCompany(@Valid @RequestBody CompanyRegisterRequest request) {
+		authService.registerCompany(request);
+		return ResponseEntity.status(201).build();
+	}
 
 	@PostMapping("/refresh-token")
 	@Operation(summary = "Làm mới access token", description = """

@@ -9,12 +9,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "job_seeker_skills")
+@Table(name = "candidate_skills")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class JobSeekerSkill {
+public class CandidateSkill {
     @EmbeddedId
-    private JobSeekerSkillId id;
+    private CandidateSkillId id;
 }

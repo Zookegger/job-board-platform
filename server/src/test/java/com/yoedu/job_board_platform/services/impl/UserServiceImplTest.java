@@ -45,13 +45,13 @@ public class UserServiceImplTest {
     @Test
     void TC_01_createSuccessWithNewEmail() {
         // Arrange
-        CreateUserRequest request = new CreateUserRequest("newuser@example.com", "Password123", UserRole.JOB_SEEKER,
+        CreateUserRequest request = new CreateUserRequest("newuser@example.com", "Password123", UserRole.CANDIDATE,
                 "New User", "0123456789", "");
         User savedUser = User.builder()
                 .id(UUID.randomUUID())
                 .email("newuser@example.com")
                 .password("encodedPassword")
-                .role(UserRole.JOB_SEEKER)
+                .role(UserRole.CANDIDATE)
                 .isActive(true)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -61,7 +61,7 @@ public class UserServiceImplTest {
         User unsavedUser = User.builder()
                 .email("newuser@example.com")
                 .password("Password123")
-                .role(UserRole.JOB_SEEKER)
+                .role(UserRole.CANDIDATE)
                 .build();
 
         when(userMapper.toEntity(request)).thenReturn(unsavedUser);
@@ -84,13 +84,13 @@ public class UserServiceImplTest {
     @Test
     void TC_02_createFailsWithDuplicateEmail() {
         // Arrange
-        CreateUserRequest request = new CreateUserRequest("existing@example.com", "Password123", UserRole.JOB_SEEKER,
+        CreateUserRequest request = new CreateUserRequest("existing@example.com", "Password123", UserRole.CANDIDATE,
                 "Existing User", "0123456789", "");
         User existingUser = User.builder()
                 .id(UUID.randomUUID())
                 .email("existing@example.com")
                 .password("encodedPassword")
-                .role(UserRole.JOB_SEEKER)
+                .role(UserRole.CANDIDATE)
                 .build();
 
         when(userRepository.findByEmail("existing@example.com")).thenReturn(Optional.of(existingUser));

@@ -16,13 +16,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "job_seeker_details")
+@Table(name = "candidate_details")
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class JobSeekerDetail {
+public class CandidateDetail {
     @Id
     @Column(name = "profile_id", columnDefinition = "uuid")
     private UUID profileId;

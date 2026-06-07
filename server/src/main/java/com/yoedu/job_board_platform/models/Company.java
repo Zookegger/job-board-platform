@@ -11,6 +11,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -28,6 +30,7 @@ import lombok.NoArgsConstructor;
 public class Company {
     @Id
     @Column(columnDefinition = "uuid")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "company_name", nullable = false, unique = true, length = 100)
@@ -58,6 +61,12 @@ public class Company {
     @Column(nullable = false)
     @Builder.Default
     private CompanyStatus status = CompanyStatus.PENDING;
+
+    @Column(name = "tax_code", length = 20)
+    private String taxCode;
+
+    @Column(name = "rejection_reason", columnDefinition = "text")
+    private String rejectionReason;
 
     @Column(name = "is_approved", nullable = false)
     @Builder.Default

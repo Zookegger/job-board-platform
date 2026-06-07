@@ -6,15 +6,50 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CompanyRegisterRequest(
+        // =========================
+        // Thông tin công ty
+        // =========================
+
         @Schema(description = "Tên công ty", example = "Yoedu Technology Corporation")
         @NotBlank(message = "Tên công ty không được để trống")
         @Size(max = 100, message = "Tên công ty không được quá 100 ký tự")
         String companyName,
 
-        @Schema(description = "Email công ty", example = "hr@yoedu.com")
+        @Schema(description = "Mã số thuế", example = "0123456789")
+        @Size(max = 20, message = "Mã số thuế không được quá 20 ký tự")
+        String taxCode,
+
+        @Schema(description = "Địa chỉ công ty", example = "123 Nguyễn Huệ, Quận 1, TP.HCM")
+        @NotBlank(message = "Địa chỉ không được để trống")
+        String address,
+
+        @Schema(description = "Số điện thoại liên hệ công ty", example = "0901234567")
+        @NotBlank(message = "Số điện thoại không được để trống")
+        @Size(max = 15, message = "Số điện thoại không được quá 15 ký tự")
+        String companyPhone,
+
+        @Schema(description = "Email công ty", example = "careers@yoedu.com")
         @NotBlank(message = "Email không được để trống")
         @Email(message = "Email sai định dạng")
         String email,
+
+        // =========================
+        // Thông tin người đại diện
+        // =========================
+
+        @Schema(description = "Đại diện HR công ty", example = "Nguyễn Văn A")
+        @NotBlank(message = "Họ tên không được để trống")
+        String fullName,
+
+        @Schema(description = "Email của đại diện HR", example = "recruiter.nguyenvana@yoedu.com")
+        @NotBlank(message = "Email không được để trống")
+        @Email(message = "Email sai định dạng")
+        String userEmail,
+
+        @Schema(description = "Số điện thoại liên hệ đại diện HR", example = "0901234567")
+        @NotBlank(message = "Số điện thoại không được để trống")
+        @Size(max = 15, message = "Số điện thoại không được quá 15 ký tự")
+        String userPhone,
 
         @Schema(description = "Mật khẩu", example = "password123")
         @NotBlank(message = "Mật khẩu không được để trống")
@@ -23,11 +58,6 @@ public record CompanyRegisterRequest(
 
         @Schema(description = "Xác nhận mật khẩu", example = "password123")
         @NotBlank(message = "Yêu cầu xác nhận mật khẩu")
-        String confirmPassword,
-
-        @Schema(description = "Số điện thoại liên hệ", example = "0901234567")
-        @NotBlank(message = "Số điện thoại không được để trống")
-        @Size(max = 15, message = "Số điện thoại không được quá 15 ký tự")
-        String phone
+        String confirmPassword
 ) {
 }

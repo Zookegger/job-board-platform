@@ -1,5 +1,7 @@
 package com.yoedu.job_board_platform.controllers;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
+import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.services.AdminService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,12 +23,15 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/admin")
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN.")
+@RequiredArgsConstructor
 public class AdminController {
+    private final AdminService adminService;
 
     // ========== DASHBOARD ==========
     @GetMapping("/dashboard")
@@ -50,7 +57,7 @@ public class AdminController {
     })
     public ResponseEntity<?> getUsers(
             @Parameter(description = "Lọc theo vai trò: CANDIDATE, EMPLOYER, ADMIN", example = "CANDIDATE")
-            @RequestParam(required = false) String role,
+            @RequestParam(required = false) UserRole role,
             @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
             @RequestParam(defaultValue = "0") int page
     ) {
@@ -76,7 +83,7 @@ public class AdminController {
     })
     public ResponseEntity<?> suspendUser(
             @Parameter(description = "ID của người dùng cần khóa", example = "1", required = true)
-            @PathVariable Long id
+            @PathVariable UUID id
     ) {
         return ResponseEntity.ok("Khóa tài khoản thành công");
     }
@@ -89,7 +96,7 @@ public class AdminController {
     })
     public ResponseEntity<?> reactivateUser(
             @Parameter(description = "ID của người dùng cần mở khóa", example = "1", required = true)
-            @PathVariable Long id
+            @PathVariable UUID id
     ) {
         return ResponseEntity.ok("Mở khóa thành công");
     }
@@ -117,8 +124,9 @@ public class AdminController {
     })
     public ResponseEntity<?> approveCompany(
             @Parameter(description = "ID của công ty cần duyệt", example = "1", required = true)
-            @PathVariable Long id
+            @PathVariable UUID id
     ) {
+        adminService.approveCompany(id);
         return ResponseEntity.ok("Duyệt công ty thành công");
     }
 

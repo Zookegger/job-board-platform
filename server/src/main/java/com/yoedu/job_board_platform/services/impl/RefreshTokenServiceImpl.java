@@ -37,7 +37,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public RefreshToken createRefreshToken(User user) {
         RefreshToken refreshToken = RefreshToken.builder()
-                .id(UUID.randomUUID())
                 .userId(user.getId())
                 .tokenString(UUID.randomUUID().toString())
                 .expiresAt(OffsetDateTime.now().plusDays(refreshTokenExpirationDays))

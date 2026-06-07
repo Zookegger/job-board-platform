@@ -8,9 +8,9 @@ import lombok.Data;
 
 @Embeddable
 @Data
-public class JobSeekerSkillId implements Serializable {
+public class CandidateSkillId implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private UUID jobSeekerId;
+    private UUID candidateId;
     private Integer skillId;
 }
