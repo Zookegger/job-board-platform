@@ -16,6 +16,7 @@ public record CompanyRegisterRequest(
         String companyName,
 
         @Schema(description = "Mã số thuế", example = "0123456789")
+        @NotBlank(message = "Mã số thuế không được để trống")
         @Size(max = 20, message = "Mã số thuế không được quá 20 ký tự")
         String taxCode,
 
@@ -23,18 +24,9 @@ public record CompanyRegisterRequest(
         @NotBlank(message = "Địa chỉ không được để trống")
         String address,
 
-        @Schema(description = "Số điện thoại liên hệ công ty", example = "0901234567")
-        @NotBlank(message = "Số điện thoại không được để trống")
-        @Size(max = 15, message = "Số điện thoại không được quá 15 ký tự")
-        String companyPhone,
-
-        @Schema(description = "Email công ty", example = "careers@yoedu.com")
-        @NotBlank(message = "Email không được để trống")
-        @Email(message = "Email sai định dạng")
-        String email,
-
         // =========================
         // Thông tin người đại diện
+        // TODO: email + companyPhone đã được chuyển sang form cập nhật trong Employer Dashboard
         // =========================
 
         @Schema(description = "Đại diện HR công ty", example = "Nguyễn Văn A")
