@@ -51,10 +51,11 @@ public class Company {
     @Column(name = "logo_url", columnDefinition = "text")
     private String logoUrl;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(unique = true, length = 255)
+    // TODO: email + phone được cập nhật qua form trong Employer Dashboard
     private String email;
 
-    @Column(nullable = false, length = 15)
+    @Column(length = 15)
     private String phone;
 
     @Enumerated(EnumType.STRING)

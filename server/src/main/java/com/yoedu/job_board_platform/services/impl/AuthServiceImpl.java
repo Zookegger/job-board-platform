@@ -100,12 +100,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void registerCompany(CompanyRegisterRequest request) {
-        // 1. Kiểm tra email chưa tồn tại → throw ConflictException nếu có
-        if (companyRepository.existsByEmail(request.email())) {
-            throw new ConflictException("Email " + request.email() + " đã được sử dụng bởi công ty khác");
-        }
-
-        // 2. Validate confirmPassword == password
+        // 1. Validate confirmPassword == password
+        // TODO: Kiểm tra email công ty không trùng — chuyển sang form cập nhật trong Employer Dashboard
         if (!request.password().equals(request.confirmPassword())) {
             throw new BadRequestException("Mật khẩu xác nhận không trùng");
         }

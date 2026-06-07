@@ -52,6 +52,6 @@ public interface CompanyMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "approvedAt", ignore = true)
     @Mapping(target = "rejectionReason", ignore = true)
-    @Mapping(target = "phone", source = "companyPhone")
+    // TODO: phone + email sẽ được cập nhật qua form trong Employer Dashboard (PUT /api/jobs/my-company)
     Company toEntity(CompanyRegisterRequest request);
 }
