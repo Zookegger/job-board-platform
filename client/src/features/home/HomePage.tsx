@@ -1,8 +1,8 @@
 export default function HomePage() {
     return (
         <div className="home-page">
-            <h1>Welcome to the Job Board Platform</h1>
-            <p>Find your dream job or post your job openings here!</p>
+            <h1>Chào mừng đến với JobBoard</h1>
+            <p>Tìm việc mơ ước hoặc đăng tin tuyển dụng tại đây!</p>
         </div>
     );
 }

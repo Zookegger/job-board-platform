@@ -1,0 +1,10 @@
+export default function EmployerJobsPage() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold">Việc làm của tôi</h1>
+        <p className="mt-2 text-muted-foreground">Đang phát triển</p>
+      </div>
+    </div>
+  )
+}

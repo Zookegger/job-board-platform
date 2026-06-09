@@ -35,7 +35,7 @@ export function LoginPage() {
 			await login(data);
 			navigate("/");
 		} catch {
-			toast.error("Email hoặc mật khẩu không đúng", { position: "top-center"});
+			toast.error("Email hoặc mật khẩu không đúng", { position: "top-center" });
 		}
 	};
 
@@ -74,14 +74,13 @@ export function LoginPage() {
 							{...register("password")}
 							startIcon={<KeyRound size={25} />}
 							endIcon={
-								<button
-									type='button'
+								<Button
 									onClick={() => setShowPassword(!showPassword)}
-									className='flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer'
+									className='flex grow-0 items-center justify-center p-0 text-muted-foreground hover:text-foreground cursor-pointer'
 									tabIndex={-1}
 								>
-									{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-								</button>
+									{showPassword ? <EyeOff className='h-5! w-5!' /> : <Eye className='h-5! w-5!' />}
+								</Button>
 							}
 						/>
 					</FieldContent>
@@ -92,7 +91,7 @@ export function LoginPage() {
 			<div className='flex justify-end'>
 				<Link
 					to={RouterRoutes.FORGOT_PASSWORD}
-					className='text-sm text-blue-600 no-underline hover:no-underline mt-2 block'
+					className='text-sm text-primary no-underline hover:no-underline mt-2 block'
 				>
 					Quên mật khẩu?
 				</Link>
@@ -101,7 +100,8 @@ export function LoginPage() {
 			<Button
 				type='submit'
 				disabled={isSubmitting}
-				className=' w-full mt-6 bg-blue-600 hover:bg-blue-800 text-white font-semibold py-5 rounded-3xl'
+				variant={"primary"}
+				className='w-full mt-6 font-semibold py-5 rounded-3xl'
 			>
 				{isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
 			</Button>
@@ -110,7 +110,7 @@ export function LoginPage() {
 				Bạn chưa có tài khoản?{" "}
 				<Link
 					to={RouterRoutes.REGISTER}
-					className='text-blue-600 no-underline hover:no-underline'
+					className='text-primary no-underline hover:no-underline'
 				>
 					Đăng ký
 				</Link>

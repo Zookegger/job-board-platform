@@ -9,9 +9,9 @@ import {
 	type CandidateRegisterData,
 	type CompanyRegisterData,
 } from "@/lib/schemas/auth";
+import { useToast } from "@/providers/ToastProvider";
 import RouterRoutes from "@/utils/RouterRoutes";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/providers/ToastProvider";
 import { Building, Eye, EyeOff, Lock, Mail, MapPin, Phone, Receipt, User } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -27,26 +27,27 @@ export default function RegisterPage() {
 			<div className='max-w-md mx-auto mt-10 p-6'>
 				<h2 className='text-2xl font-bold mb-6 text-center'>Bạn muốn?</h2>
 				<div className='flex flex-col gap-4'>
-					<button
+					<Button
 						onClick={() => setRole("candidate")}
-						className='border-2 border-border rounded-xl p-6 text-left hover:border-primary transition-colors cursor-pointer group'
+						className='border-2 border-border rounded-xl p-6 text-left hover:border-primary transition-colors cursor-pointer group flex-col flex-1 items-start'
 					>
 						<h3 className='text-lg font-semibold'>Tôi muốn ứng tuyển</h3>
 						<p className='text-sm text-muted-foreground mt-1'>Tạo tài khoản ứng viên để tìm việc</p>
-					</button>
-					<button
+					</Button>
+					<Button
 						onClick={() => setRole("employer")}
-						className='border-2 border-border rounded-xl p-6 text-left hover:border-primary transition-colors cursor-pointer group'
+						className='border-2 border-border rounded-xl p-6 text-left hover:border-primary transition-colors cursor-pointer group flex-col flex-1 items-start'
+						
 					>
 						<h3 className='text-lg font-semibold'>Tôi muốn tuyển dụng</h3>
 						<p className='text-sm text-muted-foreground mt-1'>Đăng ký tài khoản nhà tuyển dụng</p>
-					</button>
+					</Button>
 				</div>
 				<p className='text-center mt-6'>
 					Đã có tài khoản?{" "}
 					<Link
 						to={RouterRoutes.LOGIN}
-						className='text-blue-600 no-underline hover:underline'
+						className='text-primary no-underline hover:underline'
 					>
 						Đăng nhập
 					</Link>
@@ -186,6 +187,7 @@ function CandidateRegisterForm({ onBack, navigate }: { onBack: () => void; navig
 					type='submit'
 					disabled={isSubmitting}
 					className='w-full mt-2'
+					variant={"primary"}
 				>
 					{isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
 				</Button>
@@ -285,7 +287,7 @@ function CompanyRegisterForm({ onBack, navigate }: { onBack: () => void; navigat
 								<span
 									className={`text-xs mt-1.5 ${step === s ? "font-semibold text-foreground" : "text-muted-foreground"}`}
 								>
-									{s === 1 ? "Employer" : s === 2 ? "Company" : "Review"}
+									{s === 1 ? "Nhà tuyển dụng" : s === 2 ? "Công ty" : "Xem lại"}
 								</span>
 							</div>
 							{s < 3 && <div className='w-16 h-px bg-border mx-2 mb-5' />}
