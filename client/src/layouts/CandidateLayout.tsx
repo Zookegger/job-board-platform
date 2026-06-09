@@ -3,7 +3,7 @@ import { Header } from '../components/layout/Header'
 import { Footer } from '../components/layout/Footer'
 import { Toaster } from '@/components/ui/sonner'
 
-export function RootLayout() {
+export function CandidateLayout() {
   return (
     <div className="flex min-h-screen min-w-screen flex-col">
       <Header />
