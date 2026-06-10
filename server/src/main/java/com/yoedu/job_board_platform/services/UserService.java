@@ -11,4 +11,5 @@ public interface UserService {
     UserResponse create(CreateUserRequest request);
     UserResponse update(UUID id, UpdateUserRequest request);
     User getCurrentUser();
+    
 }

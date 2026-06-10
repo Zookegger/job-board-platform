@@ -15,16 +15,19 @@ import com.yoedu.job_board_platform.dtos.auth.CandidateRegisterRequest;
 import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
 import com.yoedu.job_board_platform.mappers.CandidateMapper;
 import com.yoedu.job_board_platform.mappers.CompanyMapper;
+import com.yoedu.job_board_platform.models.CandidateDetail;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.RefreshToken;
 import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.security.JwtService;
 import com.yoedu.job_board_platform.services.AuthService;
+import com.yoedu.job_board_platform.services.ProfileService;
 import com.yoedu.job_board_platform.services.RefreshTokenService;
 import com.yoedu.job_board_platform.utils.StringUtils;
 
@@ -40,7 +43,9 @@ public class AuthServiceImpl implements AuthService {
     private final CandidateMapper candidateMapper;
     private final CompanyMapper companyMapper;
     private final CompanyRepository companyRepository;
+    private final CandidateDetailRepository candidateDetailRepository;
     private final CompanyEmployerDetailRepository employerRepository;
+    private final ProfileService profileService;
 
     @Override
     public AuthResult authenticate(String email, String password) {
@@ -90,9 +95,13 @@ public class AuthServiceImpl implements AuthService {
 
         User user = candidateMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.password()));
+        user = userRepository.save(user);
 
-        Profile profile = user.getProfile();
-        profile.setPhone("");
+        Profile profile = profileService.createProfile(user, request.fullName(), "", null);
+        user.setProfile(profile);
+
+        CandidateDetail detail = CandidateDetail.builder().profileId(profile.getId()).build();
+        candidateDetailRepository.save(detail);
 
         userRepository.save(user);
     }
@@ -109,13 +118,11 @@ public class AuthServiceImpl implements AuthService {
         // 4. Tạo User: role = EMPLOYER, isActive = true, email, password (encoded)
         User user = companyMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.password()));
-        userRepository.save(user);
+        user = userRepository.save(user);
         
-        // 5. Tạo Profile: id = userId, fullName (từ companyName hoặc để trống), phone từ request
-        Profile profile = user.getProfile();
-        if (profile.getId() == null) {
-            profile.setId(user.getId());
-        }
+        // 5. Tạo Profile: id = userId, fullName, phone từ request
+        Profile profile = profileService.createProfile(user, request.fullName(), request.userPhone(), null);
+        user.setProfile(profile);
 
         // 6. Tạo Company: status = PENDING, isApproved = false, slug tự sinh từ companyName
         Company company = companyMapper.toEntity(request);

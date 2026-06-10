@@ -26,6 +26,7 @@ import com.yoedu.job_board_platform.mappers.UserMapper;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.UserRepository;
+import com.yoedu.job_board_platform.services.ProfileService;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
@@ -38,6 +39,9 @@ public class UserServiceImplTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private ProfileService profileService;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -78,7 +82,8 @@ public class UserServiceImplTest {
         assertThat(result.email()).isEqualTo("newuser@example.com");
         assertThat(result.id()).isEqualTo(savedUser.getId());
         verify(userRepository, times(1)).findByEmail("newuser@example.com");
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userRepository, times(2)).save(any(User.class));
+        verify(profileService, times(1)).createProfile(any(User.class), any(), any(), any());
     }
 
     @Test
