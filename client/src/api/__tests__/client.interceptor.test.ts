@@ -32,17 +32,18 @@ describe("Axios interceptor — xử lý 401 và token", () => {
   })
 
   it("chuyển hướng sang /login khi refresh token thất bại", async () => {
+    const replaceSpy = vi.fn()
     vi.spyOn(authApi.default, "refreshToken").mockRejectedValue(new Error("refresh failed"))
 
     Object.defineProperty(window, "location", {
-      value: { href: "", ancestorOrigins: {} as DOMStringList, hash: "", host: "", hostname: "", origin: "", pathname: "", port: "", protocol: "", search: "", assign: vi.fn(), reload: vi.fn(), replace: vi.fn() },
+      value: { href: "", ancestorOrigins: {} as DOMStringList, hash: "", host: "", hostname: "", origin: "", pathname: "", port: "", protocol: "", search: "", assign: vi.fn(), reload: vi.fn(), replace: replaceSpy },
       writable: true,
     })
 
     mock.onGet("/auth/me").reply(401)
 
     await expect(client.get("/auth/me")).rejects.toThrow()
-    expect(window.location.href).toBe("/login")
+    expect(replaceSpy).toHaveBeenCalledWith("/login")
   })
 
   it("hiển thị toast lỗi khi nhận 403 mà không gọi refresh", async () => {

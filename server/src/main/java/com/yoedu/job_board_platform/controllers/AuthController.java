@@ -63,10 +63,7 @@ public class AuthController {
 	public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
 			HttpServletResponse response) {
 		AuthResult result = authService.authenticate(request.email(), request.password());
-
-		cookieUtil.add(response, CookieName.ACCESS_TOKEN, result.accessToken());
-		cookieUtil.add(response, CookieName.REFRESH_TOKEN, result.refreshToken());
-
+		addCookie(response, result.accessToken(), result.refreshToken());
 		return ResponseEntity.ok(authMapper.toAuthResponse(result));
 	}
 
@@ -122,14 +119,18 @@ public class AuthController {
 	public ResponseEntity<AuthResponse> refresh(HttpServletRequest request, HttpServletResponse response) {
 		String refreshToken = cookieUtil.extract(request, CookieName.REFRESH_TOKEN);
 		if (refreshToken == null) {
+			clearCookie(response);
 			return ResponseEntity.status(401).build();
 		}
 
-		AuthResult result = authService.refreshToken(refreshToken);
-
-		cookieUtil.add(response, CookieName.ACCESS_TOKEN, result.accessToken());
-
-		return ResponseEntity.ok(authMapper.toAuthResponse(result));
+		try {
+			AuthResult result = authService.refreshToken(refreshToken);
+			addCookie(response, result.accessToken(), result.refreshToken());
+			return ResponseEntity.ok(authMapper.toAuthResponse(result));
+		} catch (Exception e) {
+			clearCookie(response);
+			throw e;
+		}
 	}
 
 	@GetMapping("/me")
@@ -168,9 +169,18 @@ public class AuthController {
 			authService.logout(refreshToken);
 		}
 
-		cookieUtil.clear(res, CookieName.ACCESS_TOKEN);
-		cookieUtil.clear(res, CookieName.REFRESH_TOKEN);
+		clearCookie(res);
 
 		return ResponseEntity.ok().build();
+	}
+
+	private void addCookie(HttpServletResponse response, String accessToken, String refreshToken) {
+		cookieUtil.add(response, CookieName.ACCESS_TOKEN, accessToken);
+		cookieUtil.add(response, CookieName.REFRESH_TOKEN, refreshToken);
+	}
+
+	private void clearCookie(HttpServletResponse response) {
+		cookieUtil.clear(response, CookieName.ACCESS_TOKEN);
+		cookieUtil.clear(response, CookieName.REFRESH_TOKEN);
 	}
 }

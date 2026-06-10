@@ -3,12 +3,14 @@ import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/compo
 import { Input } from "@/components/ui/input";
 import { loginSchema } from "@/lib/schemas/auth";
 import { useToast } from "@/providers/ToastProvider";
+import { UserRole } from "@/types/auth";
 import RouterRoutes from "@/utils/RouterRoutes";
+import getErrorMessage from "@/utils/getErrorMessage";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, KeyRound, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 type LoginFormData = {
@@ -27,19 +29,38 @@ export function LoginPage() {
 		defaultValues: { email: "", password: "" },
 	});
 	const [showPassword, setShowPassword] = useState(false);
-	const navigate = useNavigate();
 	const toast = useToast();
 
 	const onSubmit = async (data: LoginFormData) => {
 		try {
-			await login(data);
-			navigate("/");
-		} catch {
-			toast.error("Email hoặc mật khẩu không đúng", { position: "top-center" });
+			const userData = await login(data);
+
+			if (!userData) {
+				toast.error("Email hoặc mật khẩu không đúng", { position: "top-center" });
+				return;
+			}
+
+			toast.success("Đăng nhập thành công", { position: "top-right" });
+		} catch (error) {
+			toast.error(getErrorMessage(error), { position: "top-center" });
+			console.error("Login error:", error);
 		}
 	};
 
-	if (isAuthenticated) return <div>Chào, {user?.fullName}</div>;
+	if (isAuthenticated) {
+		const redirectTo =
+			user?.role === UserRole.ADMIN
+				? RouterRoutes.ADMIN_DASHBOARD
+				: user?.role === UserRole.EMPLOYER
+					? RouterRoutes.EMPLOYER_DASHBOARD
+					: RouterRoutes.HOME;
+		return (
+			<Navigate
+				to={redirectTo}
+				replace
+			/>
+		);
+	}
 
 	return (
 		<form

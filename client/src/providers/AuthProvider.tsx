@@ -40,7 +40,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     });
 
     const login = async (data: LoginRequest) => {
-        await loginMutation.mutateAsync(data);
+        return await loginMutation.mutateAsync(data);
     }
 
     const logout = async () => {

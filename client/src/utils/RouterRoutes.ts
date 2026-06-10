@@ -6,6 +6,8 @@ const RouterRoutes = {
   JOBS: '/jobs',
   JOB_DETAIL: (id: string) => `/jobs/${id}`,
 
+  UNAUTHORIZED: '/unauthorized',
+
   // Candidate
   CANDIDATE: '/candidate',
   CANDIDATE_PROFILE: '/candidate/profile',

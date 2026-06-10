@@ -1,5 +1,8 @@
+import ApiRoutes from "@/utils/ApiRoutes";
+import RouterRoutes from "@/utils/RouterRoutes";
 import axios from "axios";
 import { toast } from "sonner";
+import { navigateTo } from "@/lib/navigate";
 import AuthApi from "./auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api";
@@ -16,14 +19,19 @@ client.interceptors.response.use(
 	(response) => response,
 	async (error) => {
 		// Nếu nhận được lỗi 401 Unauthorized, thử làm mới token
-		if (error.response?.status === 401 && !error.config._retry) {
+		if (
+			error.response?.status === 401 &&
+			!error.config._retry &&
+			!error.config.url?.includes(ApiRoutes.REFRESH_TOKEN)
+		) {
 			error.config._retry = true;
 			try {
 				await AuthApi.refreshToken();
 				return client(error.config); // Thử lại request ban đầu sau khi làm mới token
-			} catch {
+			} catch (refreshError) {
 				// Nếu làm mới token thất bại, chuyển hướng người dùng đến trang đăng nhập
-				window.location.href = "/login";
+				navigateTo(RouterRoutes.LOGIN, { replace: true });
+				return Promise.reject(refreshError);
 			}
 		}
 

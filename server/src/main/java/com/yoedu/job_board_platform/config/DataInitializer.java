@@ -3,6 +3,7 @@ package com.yoedu.job_board_platform.config;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,7 +21,6 @@ import com.yoedu.job_board_platform.models.ExperienceLevel;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobCategory;
 import com.yoedu.job_board_platform.models.JobSkill;
-import com.yoedu.job_board_platform.models.JobSkillId;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.LocationTypes;
 import com.yoedu.job_board_platform.models.ProficientLevel;
@@ -35,7 +35,6 @@ import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
-import com.yoedu.job_board_platform.repositories.ProfileRepository;
 import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
@@ -48,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
-    private final ProfileRepository profileRepository;
     private final CandidateDetailRepository candidateDetailRepository;
     private final CompanyEmployerDetailRepository companyEmployerDetailRepository;
     private final CompanyRepository companyRepository;
@@ -116,18 +114,21 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedEmployerWithCompanyAndJobs(List<JobCategory> categories, List<Skill> skills) {
-        User employer = userRepository.save(User.builder()
+        User employer = User.builder()
             .email("employer@yoedu.com")
             .password(passwordEncoder.encode("employer123"))
             .role(UserRole.EMPLOYER)
             .isActive(true)
-            .build());
+            .build();
 
-        Profile employerProfile = profileRepository.save(Profile.builder()
+        Profile employerProfile = Profile.builder()
             .user(employer)
             .fullName("HR Manager")
             .phone("0901234567")
-            .build());
+            .build();
+
+        employer.setProfile(employerProfile);
+        userRepository.save(employer);
 
         Company company = companyRepository.save(Company.builder()
             .companyName("Yoedu Tech")
@@ -229,6 +230,15 @@ public class DataInitializer implements CommandLineRunner {
             .build());
 
         jobSkillRepository.save(JobSkill.builder()
+            .jobId(marketingInternJob.getId())
+            .skillId(skills.get(2).getId())
+            .build());
+        jobSkillRepository.save(JobSkill.builder()
+            .jobId(marketingInternJob.getId())
+            .skillId(skills.get(9).getId())
+            .build());
+
+        jobSkillRepository.save(JobSkill.builder()
             .jobId(uiDesignerJob.getId())
             .skillId(skills.get(9).getId())
             .build());
@@ -239,27 +249,30 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedCandidate(List<Skill> skills) {
-        User candidate = userRepository.save(User.builder()
+        User candidate = User.builder()
             .email("candidate@yoedu.com")
             .password(passwordEncoder.encode("candidate123"))
             .role(UserRole.CANDIDATE)
             .isActive(true)
-            .build());
+            .build();
 
-        Profile candidateProfile = profileRepository.save(Profile.builder()
+        Profile candidateProfile = Profile.builder()
             .user(candidate)
             .fullName("Job Seeker")
             .phone("0909876543")
-            .build());
+            .build();
+        candidate.setProfile(candidateProfile);
+        candidate = userRepository.save(candidate);
 
         CandidateDetail candidateDetail = CandidateDetail.builder()
-            .profileId(candidateProfile.getId())
-            .profile(candidateProfile)
+            .profileId(candidate.getId())
             .build();
-        candidateDetailRepository.save(candidateDetail);
+        candidateDetailRepository.saveAndFlush(candidateDetail);
+
+        UUID candidateUuid = candidate.getId();
 
         CandidateSkillId javaSkillId = new CandidateSkillId();
-        javaSkillId.setCandidateId(candidateProfile.getId());
+        javaSkillId.setCandidateId(candidateUuid);
         javaSkillId.setSkillId(skills.get(0).getId());
         candidateSkillRepository.save(CandidateSkill.builder()
             .id(javaSkillId)
@@ -267,7 +280,7 @@ public class DataInitializer implements CommandLineRunner {
             .build());
 
         CandidateSkillId reactSkillId = new CandidateSkillId();
-        reactSkillId.setCandidateId(candidateProfile.getId());
+        reactSkillId.setCandidateId(candidateUuid);
         reactSkillId.setSkillId(skills.get(1).getId());
         candidateSkillRepository.save(CandidateSkill.builder()
             .id(reactSkillId)
@@ -275,13 +288,13 @@ public class DataInitializer implements CommandLineRunner {
             .build());
 
         CandidateSkillId tsSkillId = new CandidateSkillId();
-        tsSkillId.setCandidateId(candidateProfile.getId());
+        tsSkillId.setCandidateId(candidateUuid);
         tsSkillId.setSkillId(skills.get(3).getId());
         candidateSkillRepository.save(CandidateSkill.builder()
             .id(tsSkillId)
             .proficientLevel(ProficientLevel.ADVANCED)
             .build());
 
-        log.info("Seeded candidate: {} — {}", candidate.getId(), candidate.getEmail());
+        log.info("Seeded candidate: {} — {}", candidateUuid, candidate.getEmail());
     }
 }

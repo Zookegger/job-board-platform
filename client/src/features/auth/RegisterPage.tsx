@@ -569,6 +569,7 @@ function CompanyRegisterForm({ onBack, navigate }: { onBack: () => void; navigat
 						<Button
 							type='submit'
 							disabled={isSubmitting || !confirmed}
+							variant={"primary"}
 						>
 							{isSubmitting ? "Đang đăng ký..." : "Hoàn tất đăng ký"}
 						</Button>

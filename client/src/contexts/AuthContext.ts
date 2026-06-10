@@ -5,7 +5,7 @@ interface AuthContextType {
 	user: UserResponse | null;
 	isLoading: boolean;
 	isAuthenticated: boolean;
-	login: (data: LoginRequest) => Promise<void>;
+	login: (data: LoginRequest) => Promise<UserResponse | null>;
 	logout: () => Promise<void>;
 }
 
