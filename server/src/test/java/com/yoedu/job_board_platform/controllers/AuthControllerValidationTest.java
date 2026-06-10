@@ -20,7 +20,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,6 +36,7 @@ import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
+import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
 import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
@@ -60,6 +63,7 @@ class AuthControllerValidationTest {
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired CompanyEmployerDetailRepository companyEmployerDetailRepository;
     @Autowired CompanyRepository companyRepository;
+    @Autowired JobRepository jobRepository;
     @Autowired ProfileRepository profileRepository;
     @Autowired RefreshTokenService refreshTokenService;
 
@@ -67,9 +71,11 @@ class AuthControllerValidationTest {
 
     @BeforeEach
     void cleanup() {
+        jobRepository.deleteAll();
         companyEmployerDetailRepository.deleteAll();
         companyRepository.deleteAll();
         refreshTokenRepository.deleteAll();
+        profileRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -809,4 +815,5 @@ class AuthControllerValidationTest {
             assertThat(refreshTokenRepository.findById(t3.getId()).orElseThrow().isRevoked()).isTrue();
         }
     }
+
 }

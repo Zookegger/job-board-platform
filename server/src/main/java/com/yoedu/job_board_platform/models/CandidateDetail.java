@@ -31,6 +31,4 @@ public class CandidateDetail {
     @JoinColumn(name = "profile_id", insertable = false, updatable = false)
     private Profile profile;
 
-    @Column(name = "cv_file_url", unique = true, columnDefinition = "text")
-    private String cvFileUrl;
 }
