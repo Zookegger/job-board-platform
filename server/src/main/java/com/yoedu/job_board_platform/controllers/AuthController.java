@@ -18,7 +18,6 @@ import com.yoedu.job_board_platform.mappers.AuthMapper;
 import com.yoedu.job_board_platform.mappers.UserMapper;
 import com.yoedu.job_board_platform.models.CookieName;
 import com.yoedu.job_board_platform.services.AuthService;
-import com.yoedu.job_board_platform.services.UserService;
 import com.yoedu.job_board_platform.utils.CookieUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,7 +40,6 @@ public class AuthController {
 	private final AuthMapper authMapper;
 	private final UserMapper userMapper;
 	private final CookieUtil cookieUtil;
-	private final UserService userService;
 
 	@PostMapping("/login")
 	@Operation(summary = "Đăng nhập", description = """
@@ -152,7 +150,7 @@ public class AuthController {
 			@ApiResponse(responseCode = "401", description = "Token không hợp lệ hoặc đã hết hạn", content = @Content)
 	})
 	public ResponseEntity<UserResponse> me() {
-		return ResponseEntity.ok(userMapper.toResponse(userService.getCurrentUser()));
+		return ResponseEntity.ok(userMapper.toResponse(authService.getCurrentUser()));
 	}
 
 	@PostMapping("/logout")
