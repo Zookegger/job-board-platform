@@ -5,6 +5,10 @@ import java.util.UUID;
 import com.yoedu.job_board_platform.models.RefreshToken;
 import com.yoedu.job_board_platform.models.User;
 
+/**
+ * Service quản lý refresh token.
+ * Hỗ trợ tạo, xác thực, thu hồi token và dọn dẹp token hết hạn.
+ */
 public interface RefreshTokenService {
     /**
      * Create a new refresh token for a user

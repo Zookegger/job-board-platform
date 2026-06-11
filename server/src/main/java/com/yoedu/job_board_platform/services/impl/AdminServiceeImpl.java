@@ -10,6 +10,10 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * Triển khai AdminService. Xử lý phê duyệt/từ chối công ty.
+ * (Chưa triển khai đầy đủ — các phương thức đang ném UnsupportedOperationException.)
+ */
 public class AdminServiceeImpl implements AdminService {@Override
     public void approveCompany(UUID companyId) {
         // TODO Auto-generated method stub

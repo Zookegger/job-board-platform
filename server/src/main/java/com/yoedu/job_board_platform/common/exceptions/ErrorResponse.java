@@ -3,6 +3,10 @@ package com.yoedu.job_board_platform.common.exceptions;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+/**
+ * Đối tượng phản hồi lỗi chuẩn cho API.
+ * Chứa thời gian, mã trạng thái, thông báo lỗi và lỗi field cụ thể (nếu có).
+ */
 public class ErrorResponse {
 
     private final LocalDateTime timestamp;

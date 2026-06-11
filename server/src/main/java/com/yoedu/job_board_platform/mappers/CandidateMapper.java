@@ -7,6 +7,10 @@ import com.yoedu.job_board_platform.dtos.auth.CandidateRegisterRequest;
 import com.yoedu.job_board_platform.models.User;
 
 @Mapper(componentModel = "spring")
+/**
+ * MapStruct mapper cho đăng ký ứng viên.
+ * Chuyển đổi CandidateRegisterRequest thành User entity (role = CANDIDATE).
+ */
 public interface CandidateMapper {
 
     @Mapping(target = "id", ignore = true)

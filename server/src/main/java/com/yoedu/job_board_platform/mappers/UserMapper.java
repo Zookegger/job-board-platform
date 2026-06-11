@@ -14,6 +14,10 @@ import com.yoedu.job_board_platform.dtos.user.UserResponse;
 import com.yoedu.job_board_platform.models.User;
 
 @Mapper(componentModel = "spring")
+/**
+ * MapStruct mapper cho User entity.
+ * Chuyển đổi giữa User entity, CreateUserRequest, UpdateUserRequest và UserResponse.
+ */
 public interface UserMapper {
     @Mapping(target = "role", source = "role")
     @Mapping(target = "fullName", source = "profile.fullName")

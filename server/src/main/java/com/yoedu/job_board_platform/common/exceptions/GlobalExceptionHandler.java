@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+/**
+ * Xử lý ngoại lị toàn cục cho các controller REST.
+ * Chuyển đổi các exception thành phản hồi JSON với cấu trúc nhất quán.
+ */
 public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleInternal(Exception ex) {

@@ -26,6 +26,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+/**
+ * CV / Hồ sơ xin việc của ứng viên. Mỗi ứng viên có thể có nhiều resume,
+ * nhưng chỉ một resume được gắn trực tiếp với CandidateDetail.
+ * Lưu trữ thông tin file (đường dẫn, kích thước, loại) và thời gian tạo/cập nhật.
+ */
 public class Resume {
     @Id
     @Column(columnDefinition = "uuid")

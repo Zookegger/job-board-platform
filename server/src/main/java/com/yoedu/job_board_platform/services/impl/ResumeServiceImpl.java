@@ -26,8 +26,8 @@ import com.yoedu.job_board_platform.models.Resume;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
 import com.yoedu.job_board_platform.repositories.ResumeRepository;
+import com.yoedu.job_board_platform.services.AuthService;
 import com.yoedu.job_board_platform.services.ResumeService;
-import com.yoedu.job_board_platform.services.UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,23 +35,27 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * Triển khai ResumeService. Xử lý upload, cập nhật, xóa, tải xuống CV
+ * và danh sách CV. File được lưu trên disk tại thư mục uploads/resumes.
+ */
 public class ResumeServiceImpl implements ResumeService {
     private final ResumeRepository resumeRepository;
     private final CandidateDetailRepository candidateDetailRepository;
-    private final UserService userService;
+    private final AuthService authService;
     private final ResumeMapper resumeMapper;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
 
     private CandidateDetail getCurrentCandidateDetail() {
-        User user = userService.getCurrentUser();
+        User user = authService.getCurrentUser();
         return candidateDetailRepository.findById(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin ứng viên"));
     }
 
     private Resume getCurrentResumeEntity() {
-        User user = userService.getCurrentUser();
+        User user = authService.getCurrentUser();
         return resumeRepository.findByCandidateDetailProfileId(user.getId())
                 .orElse(null);
     }

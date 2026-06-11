@@ -30,6 +30,11 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
+/**
+ * Hồ sơ người dùng, liên kết 1-1 với User.
+ * Chứa thông tin cá nhân như họ tên, số điện thoại, avatar.
+ * Có thể mở rộng thành CandidateDetail (ứng viên) hoặc CompanyEmployerDetail (nhà tuyển dụng).
+ */
 public class Profile {
     @Id
     @Column(columnDefinition = "uuid")

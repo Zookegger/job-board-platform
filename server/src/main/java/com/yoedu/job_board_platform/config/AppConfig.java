@@ -14,6 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableJpaAuditing(dateTimeProviderRef = "offsetDateTimeProvider")
 @EnableScheduling
+/**
+ * Cấu hình chung của ứng dụng.
+ * Cung cấp bean PasswordEncoder (BCrypt), DateTimeProvider cho JPA Auditing,
+ * và bật tính năng scheduling.
+ */
 public class AppConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {

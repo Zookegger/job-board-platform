@@ -17,6 +17,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+/**
+ * Kỹ năng của ứng viên, sử dụng khóa phức hợp CandidateSkillId.
+ * Liên kết CandidateDetail với Skill và lưu mức độ thành thạo (ProficientLevel).
+ */
 public class CandidateSkill {
     @EmbeddedId
     private CandidateSkillId id;

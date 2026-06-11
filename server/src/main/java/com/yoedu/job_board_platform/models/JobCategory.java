@@ -17,6 +17,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+/**
+ * Danh mục công việc (ví dụ: IT, Kế toán, Nhân sự).
+ * Dùng để phân loại và lọc tin tuyển dụng.
+ */
 public class JobCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

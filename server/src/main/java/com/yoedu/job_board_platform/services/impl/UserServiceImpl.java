@@ -3,15 +3,12 @@ package com.yoedu.job_board_platform.services.impl;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ConflictException;
-import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.user.CreateUserRequest;
 import com.yoedu.job_board_platform.dtos.user.UpdateUserRequest;
 import com.yoedu.job_board_platform.dtos.user.UserResponse;
@@ -27,6 +24,10 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * Triển khai UserService. Xử lý tạo và cập nhật thông tin người dùng,
+ * đồng bộ với Profile tương ứng.
+ */
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
@@ -35,7 +36,8 @@ public class UserServiceImpl implements UserService {
     private final ProfileService profileService;
 
     /**
-     * Tạo mới một người dùng dựa trên thông tin từ CreateUserRequest. 
+     * Tạo mới một người dùng dựa trên thông tin từ CreateUserRequest.
+     * 
      * @param request thông tin người dùng cần tạo
      * @return UserResponse thông tin người dùng đã được tạo
      * @throws ConflictException nếu email đã tồn tại
@@ -61,10 +63,12 @@ public class UserServiceImpl implements UserService {
 
     /**
      * Cập nhật thông tin người dùng dựa trên id và thông tin từ UpdateUserRequest.
-     * @param id id của người dùng cần cập nhật
+     * 
+     * @param id      id của người dùng cần cập nhật
      * @param request thông tin cập nhật
      * @return UserResponse thông tin người dùng đã được cập nhật
-     * @throws BadRequestException nếu email đã tồn tại, không tìm thấy người dùng hoặc có lỗi trong quá trình cập nhật người dùng
+     * @throws BadRequestException nếu email đã tồn tại, không tìm thấy người dùng
+     *                             hoặc có lỗi trong quá trình cập nhật người dùng
      */
     @Override
     @Transactional
@@ -87,28 +91,16 @@ public class UserServiceImpl implements UserService {
         if (request.fullName() != null || request.phone() != null || request.avatarUrl() != null) {
             Profile profile = profileRepository.findById(id)
                     .orElseThrow(() -> new BadRequestException("Không tìm thấy hồ sơ với id: " + id));
-            if (request.fullName() != null) profile.setFullName(request.fullName());
-            if (request.phone() != null) profile.setPhone(request.phone());
-            if (request.avatarUrl() != null) profile.setAvatarUrl(request.avatarUrl());
+            if (request.fullName() != null)
+                profile.setFullName(request.fullName());
+            if (request.phone() != null)
+                profile.setPhone(request.phone());
+            if (request.avatarUrl() != null)
+                profile.setAvatarUrl(request.avatarUrl());
             profileRepository.save(profile);
         }
 
         return userMapper.toResponse(user);
-    }
-
-    /**
-     * Lấy thông tin người dùng hiện tại dựa trên ngữ cảnh bảo mật.
-     * @return User thông tin người dùng hiện tại
-     * @throws ResourceNotFoundException nếu không tìm thấy người dùng hiện tại hoặc có lỗi trong quá trình lấy thông tin người dùng hiện tại
-     */
-    @Override
-    public User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
-        }
-        return userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại"));
     }
 
 }

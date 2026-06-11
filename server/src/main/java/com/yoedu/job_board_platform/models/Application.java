@@ -28,6 +28,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+/**
+ * Đại diện cho đơn ứng tuyển của một ứng viên vào một công việc.
+ * Mỗi ứng viên chỉ có thể ứng tuyển một lần cho mỗi công việc (unique constraint trên candidate_id + job_id).
+ */
 public class Application {
     @Id
     @Column(columnDefinition = "uuid")

@@ -18,6 +18,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+/**
+ * Liên kết giữa Job và Skill (n-n).
+ * Sử dụng IdClass JobSkillId làm khóa phức hợp.
+ */
 public class JobSkill {
     @Id
     private UUID jobId;

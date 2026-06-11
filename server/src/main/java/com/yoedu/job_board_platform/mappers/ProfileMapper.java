@@ -13,6 +13,11 @@ import com.yoedu.job_board_platform.dtos.profile.EmployerProfileResponse;
 import com.yoedu.job_board_platform.models.Profile;
 
 @Mapper(componentModel = "spring")
+/**
+ * MapStruct mapper cho Profile entity.
+ * Hỗ trợ chuyển đổi Profile thành CandidateProfileResponse, EmployerProfileResponse,
+ * và cập nhật entity từ request DTO.
+ */
 public interface ProfileMapper {
 
     @Mapping(target = "id", source = "user.id")

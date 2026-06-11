@@ -8,6 +8,10 @@ import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.User;
 
 @Mapper(componentModel = "spring")
+/**
+ * MapStruct mapper cho Company entity.
+ * Chuyển đổi CompanyRegisterRequest thành User và Company entity khi đăng ký nhà tuyển dụng.
+ */
 public interface CompanyMapper {
 
     @Mapping(target = "id", ignore = true)

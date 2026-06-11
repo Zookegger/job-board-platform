@@ -1,10 +1,17 @@
 package com.yoedu.job_board_platform.services.impl;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.profile.CandidateProfileRequest;
@@ -12,40 +19,40 @@ import com.yoedu.job_board_platform.dtos.profile.CandidateProfileResponse;
 import com.yoedu.job_board_platform.dtos.profile.EmployerProfileRequest;
 import com.yoedu.job_board_platform.dtos.profile.EmployerProfileResponse;
 import com.yoedu.job_board_platform.mappers.ProfileMapper;
-import com.yoedu.job_board_platform.models.CandidateDetail;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
-import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
-import com.yoedu.job_board_platform.repositories.UserRepository;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.services.ProfileService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
+/**
+ * Triển khai ProfileService. Xử lý các thao tác CRUD trên hồ sơ người dùng
+ * và upload avatar. Phân quyền dựa trên UserRole để phân biệt ứng viên/nhà tuyển dụng.
+ */
 public class ProfileServiceImpl implements ProfileService {
     private final ProfileRepository profileRepository;
-    private final UserRepository userRepository;
     private final ProfileMapper profileMapper;
-    private final CandidateDetailRepository candidateDetailRepository;
     private final CompanyEmployerDetailRepository companyEmployerDetailRepository;
     private final CompanyRepository companyRepository;
+    private final SecurityUtil securityUtil;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
 
     @Override
     public CandidateProfileResponse getCurrentCandidateProfile() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
-        }
-
-        User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại"));
+        User user = securityUtil.getCurrentUser();
         if (user.getRole() != UserRole.CANDIDATE) {
             throw new ForbiddenException("Chỉ ứng viên mới có thể xem hồ sơ ứng viên");
         }
@@ -57,13 +64,8 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public EmployerProfileResponse getCurrentEmployerProfile() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
-        }
+        User user = securityUtil.getCurrentUser();
 
-        User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại"));
         if (user.getRole() != UserRole.EMPLOYER) {
             throw new ForbiddenException("Chỉ nhà tuyển dụng mới có thể xem hồ sơ nhà tuyển dụng");
         }
@@ -76,13 +78,8 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public CandidateProfileResponse updateCurrentCandidateProfile(CandidateProfileRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
-        }
+        User user = securityUtil.getCurrentUser();
 
-        User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại"));
         if (user.getRole() != UserRole.CANDIDATE) {
             throw new ForbiddenException("Chỉ ứng viên mới có thể cập nhật hồ sơ ứng viên");
         }
@@ -99,13 +96,8 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public EmployerProfileResponse updateCurrentEmployerProfile(EmployerProfileRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
-        }
+        User user = securityUtil.getCurrentUser();
 
-        User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại"));
         if (user.getRole() != UserRole.EMPLOYER) {
             throw new ForbiddenException("Chỉ nhà tuyển dụng mới có thể cập nhật hồ sơ nhà tuyển dụng");
         }
@@ -126,11 +118,26 @@ public class ProfileServiceImpl implements ProfileService {
 
         Company company = employerDetail.getCompany();
         boolean companyChanged = false;
-        if (request.companyName() != null) { company.setCompanyName(request.companyName()); companyChanged = true; }
-        if (request.address() != null) { company.setAddress(request.address()); companyChanged = true; }
-        if (request.description() != null) { company.setDescription(request.description()); companyChanged = true; }
-        if (request.website() != null) { company.setWebsite(request.website()); companyChanged = true; }
-        if (request.logoUrl() != null) { company.setLogoUrl(request.logoUrl()); companyChanged = true; }
+        if (request.companyName() != null) {
+            company.setCompanyName(request.companyName());
+            companyChanged = true;
+        }
+        if (request.address() != null) {
+            company.setAddress(request.address());
+            companyChanged = true;
+        }
+        if (request.description() != null) {
+            company.setDescription(request.description());
+            companyChanged = true;
+        }
+        if (request.website() != null) {
+            company.setWebsite(request.website());
+            companyChanged = true;
+        }
+        if (request.logoUrl() != null) {
+            company.setLogoUrl(request.logoUrl());
+            companyChanged = true;
+        }
         if (companyChanged) {
             companyRepository.save(company);
         }
@@ -148,5 +155,52 @@ public class ProfileServiceImpl implements ProfileService {
                 .avatarUrl(avatarUrl)
                 .build();
         return profileRepository.save(profile);
+    }
+
+    @Override
+    public String uploadAvatar(MultipartFile file) {
+        Profile userProfile = securityUtil.getCurrentUser().getProfile();
+
+        if (file.isEmpty())
+            throw new BadRequestException("Không có file");
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/"))
+            throw new BadRequestException("Chỉ hỗ trợ định dạng hình ảnh");
+
+        if (file.getSize() > 5 * 1024 * 1024)
+            throw new BadRequestException("File quá lớn. Dung lượng tối đa: 5MB");
+
+        var avatarDir = Paths.get(uploadDir, "avatars");
+        try {
+            Files.createDirectories(avatarDir);
+        } catch (IOException e) {
+            log.error("Lỗi lưu ảnh avatar", e);
+            throw new RuntimeException("Lỗi tạo thư mục ảnh avatar", e);
+        }
+
+        var ext = contentType.substring(contentType.lastIndexOf('/') + 1); // "png", "jpeg"
+        var fileName = UUID.randomUUID() + "." + ext;
+        var targetPath = avatarDir.resolve(fileName);
+
+        try {
+            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Lỗi lưu ảnh avatar", e);
+            throw new RuntimeException("Lỗi lưu ảnh avatar", e);
+        }
+
+        if (userProfile.getAvatarUrl() != null && !userProfile.getAvatarUrl().isBlank()) {
+            try {
+                Files.deleteIfExists(Paths.get(userProfile.getAvatarUrl()));
+            } catch (IOException e) {
+                log.error("Lỗi xóa ảnh avatar cũ", e);
+                throw new RuntimeException("Lỗi xóa ảnh avatar cũ", e);
+            }
+        }
+
+        userProfile.setAvatarUrl(targetPath.toString());
+        profileRepository.save(userProfile);
+        return targetPath.toString();
     }
 }

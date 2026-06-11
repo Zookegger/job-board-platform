@@ -18,6 +18,10 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * Triển khai RefreshTokenService. Lưu token vào database,
+ * kiểm tra hiệu lực và thu hồi token. Tự động dọn dẹp token hết hạn theo lịch.
+ */
 public class RefreshTokenServiceImpl implements RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
 

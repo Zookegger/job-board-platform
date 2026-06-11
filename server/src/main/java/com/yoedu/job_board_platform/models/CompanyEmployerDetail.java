@@ -29,6 +29,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+/**
+ * Liên kết giữa Profile của nhà tuyển dụng và Company.
+ * Mỗi nhà tuyển dụng chỉ thuộc về một công ty duy nhất.
+ * Triển khai Persistable để kiểm soát INSERT/merge behavior
+ * khi profileId được gán thủ công.
+ */
 public class CompanyEmployerDetail implements Persistable<UUID> {
     @Id
     @Column(name = "profile_id", columnDefinition = "uuid")

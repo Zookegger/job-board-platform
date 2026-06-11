@@ -26,6 +26,7 @@ import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.security.JwtService;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.services.AuthService;
 import com.yoedu.job_board_platform.services.ProfileService;
 import com.yoedu.job_board_platform.services.RefreshTokenService;
@@ -35,6 +36,10 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * Triển khai AuthService. Xử lý xác thực, đăng ký và quản lý token.
+ * Sử dụng PasswordEncoder để mã hóa mật khẩu và JwtService để tạo JWT.
+ */
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -46,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
     private final CandidateDetailRepository candidateDetailRepository;
     private final CompanyEmployerDetailRepository employerRepository;
     private final ProfileService profileService;
+    private final SecurityUtil securityUtil;
 
     @Override
     public AuthResult authenticate(String email, String password) {
@@ -109,27 +115,32 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void registerCompany(CompanyRegisterRequest request) {
-        // 1. Validate confirmPassword == password
-        // TODO: Kiểm tra email công ty không trùng — chuyển sang form cập nhật trong Employer Dashboard
+        // 1. Kiểm tra email công ty không trùng
+        if (companyRepository.existsByCompanyName(request.companyName()))
+            throw new ConflictException("Tên công ty này đã được đăng ký. Nếu đây là công ty của bạn, vui lòng đăng nhập để tiếp tục.");
+
+        // 2. Validate confirmPassword == password
         if (!request.password().equals(request.confirmPassword())) {
             throw new BadRequestException("Mật khẩu xác nhận không trùng");
         }
 
-        // 4. Tạo User: role = EMPLOYER, isActive = true, email, password (encoded)
+        // 3. Tạo User: role = EMPLOYER, isActive = true, email, password (encoded)
         User user = companyMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.password()));
         user = userRepository.save(user);
-        
-        // 5. Tạo Profile: id = userId, fullName, phone từ request
+
+        // 4. Tạo Profile: id = userId, fullName, phone từ request
         Profile profile = profileService.createProfile(user, request.fullName(), request.userPhone(), null);
         user.setProfile(profile);
 
-        // 6. Tạo Company: status = PENDING, isApproved = false, slug tự sinh từ companyName
+        // 5. Tạo Company: status = PENDING, isApproved = false, slug tự sinh từ companyName
         Company company = companyMapper.toEntity(request);
-        company.setSlug(StringUtils.slugifyUnique(request.companyName(), (slug) -> companyRepository.existsBySlug(slug)));
+        company.setSlug(
+                StringUtils.slugifyUnique(request.companyName(), (slug) -> companyRepository.existsBySlug(slug)));
         companyRepository.save(company);
 
-        // 7. Tạo CompanyEmployerDetail: link Profile → Company, roleInCompany = "HR Representative"
+        // 7. Tạo CompanyEmployerDetail: link Profile → Company, roleInCompany = "HR
+        // Representative"
         CompanyEmployerDetail detail = CompanyEmployerDetail.builder()
                 .profileId(profile.getId())
                 .profile(profile)
@@ -138,7 +149,8 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         employerRepository.save(detail);
 
-        // TODO: 8. Tạo Notification cho tất cả ADMIN: type = COMPANY_PENDING_REVIEW, message
+        // TODO: 8. Tạo Notification cho tất cả ADMIN: type = COMPANY_PENDING_REVIEW,
+        // message
         // = "Công ty {companyName} đã đăng ký và đang chờ duyệt", entityId = companyId
     }
 
@@ -161,6 +173,11 @@ public class AuthServiceImpl implements AuthService {
                 .password(user.getPassword())
                 .authorities("ROLE_" + user.getRole().name())
                 .build();
+    }
+
+    @Override
+    public User getCurrentUser() {
+        return securityUtil.getCurrentUser();
     }
 
 }

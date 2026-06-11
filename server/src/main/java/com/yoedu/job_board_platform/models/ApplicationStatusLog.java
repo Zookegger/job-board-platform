@@ -31,6 +31,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 
+/**
+ * Lịch sử thay đổi trạng thái của một đơn ứng tuyển.
+ * Ghi lại ai đã thay đổi, thay đổi thành trạng thái gì, và ghi chú kèm theo.
+ */
 public class ApplicationStatusLog {
     @Id
     @Column(columnDefinition = "uuid")

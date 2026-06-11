@@ -17,6 +17,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+/**
+ * Kỹ năng (ví dụ: Java, Python, Photoshop).
+ * Được sử dụng chung cho cả ứng viên (CandidateSkill) và tin tuyển dụng (JobSkill).
+ */
 public class Skill {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
