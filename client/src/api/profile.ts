@@ -1,0 +1,169 @@
+import type {
+	CandidateProfileRequest,
+	CandidateProfileResponse,
+	EmployerProfileRequest,
+	EmployerProfileResponse,
+} from "@/types/profile";
+import ApiError from "@/utils/ApiError";
+import client from "./client";
+
+const profileApi = {
+	// Candidate
+	getCandidateProfile: (): Promise<CandidateProfileResponse | null> =>
+		client
+			.get("/profile/candidate")
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+	updateCandidateProfile: (request: CandidateProfileRequest) =>
+		client
+			.put("/profile/candidate", request)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+
+	// Employer
+	getEmployerProfile: (): Promise<EmployerProfileResponse | null> =>
+		client
+			.get("/profile/employer")
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+	updateEmployerProfile: (request: EmployerProfileRequest) =>
+		client
+			.put("/profile/employer", request)
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+
+	uploadAvatar: (file: File) => {
+		const formData = new FormData();
+		formData.append("file", file);
+		return client
+			.post("/profile/avatar", formData, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+				},
+			})
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			});
+	},
+
+	getResume: () =>
+		client
+			.get("/profile/resume")
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+	uploadResume: (file: File) => {
+		const formData = new FormData();
+		formData.append("file", file);
+		return client
+			.post("/profile/resume", formData, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+				},
+			})
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			});
+	},
+	updateResume: () =>
+		client
+			.put("/profile/resume")
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+	deleteResume: () =>
+		client
+			.delete("/profile/resume")
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+	downloadResume: () =>
+		client
+			.get("/profile/resume/download")
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+	previewResume: () =>
+		client
+			.get("/profile/resume/preview")
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) {
+					throw new ApiError("", error.response.status);
+				}
+				throw new ApiError(
+					error.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			}),
+};
+
+export default profileApi;

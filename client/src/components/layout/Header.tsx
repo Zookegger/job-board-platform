@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/types/auth";
 import RouterRoutes from "@/utils/RouterRoutes";
 import { useNavigate } from "react-router-dom";
+import UserAvatar from "../shared/UserAvatar";
 import { Button } from "../ui/button";
 import {
 	DropdownMenu,
@@ -11,14 +12,7 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
-function UserAvatar({ fullName }: { fullName: string }) {
-	const initial = fullName?.charAt(0)?.toUpperCase() ?? "U";
-	return (
-		<div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground'>
-			{initial}
-		</div>
-	);
-}
+
 
 export function Header() {
 	const { isAuthenticated, user, logout } = useAuth();
@@ -26,17 +20,22 @@ export function Header() {
 
 	const candidateItems = (
 		<>
-            <DropdownMenuItem onSelect={() => navigate(RouterRoutes.CANDIDATE_PROFILE)}>Hồ sơ</DropdownMenuItem>
+			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.PROFILE)}>Hồ sơ</DropdownMenuItem>
 			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.CANDIDATE_APPLICATIONS)}>
 				Đơn ứng tuyển
 			</DropdownMenuItem>
-			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.CANDIDATE_SAVED_JOBS)}>Việc đã lưu</DropdownMenuItem>
+			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.CANDIDATE_SAVED_JOBS)}>
+				Việc đã lưu
+			</DropdownMenuItem>
 		</>
 	);
 
 	const employerItems = (
 		<>
-			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.EMPLOYER_DASHBOARD)}>Bảng điều khiển</DropdownMenuItem>
+			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.PROFILE)}>Hồ sơ</DropdownMenuItem>
+			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.EMPLOYER_DASHBOARD)}>
+				Bảng điều khiển
+			</DropdownMenuItem>
 			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.EMPLOYER_JOBS)}>Việc làm của tôi</DropdownMenuItem>
 			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.EMPLOYER_COMPANY)}>Công ty</DropdownMenuItem>
 		</>
@@ -87,7 +86,7 @@ export function Header() {
 				) : (
 					<DropdownMenu>
 						<DropdownMenuTrigger className='flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground'>
-							<UserAvatar fullName={user?.fullName ?? ""} />
+							<UserAvatar fullName={user?.fullName ?? ""} avatarUrl={user?.avatarUrl} />
 							{user?.fullName}
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align='end'>
