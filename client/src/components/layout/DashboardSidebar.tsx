@@ -5,6 +5,7 @@ import { EllipsisVertical, LogOut, UserIcon } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import UserAvatar from "../shared/UserAvatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Sheet, SheetContent } from "../ui/sheet";
 
 interface NavItem {
 	to: string;
@@ -14,14 +15,16 @@ interface NavItem {
 
 interface DashboardSidebarProps {
 	navItems: NavItem[];
+	isOpen: boolean;
+	onClose: () => void;
 }
 
-export function DashboardSidebar({ navItems }: DashboardSidebarProps) {
+function SidebarContent({ navItems }: { navItems: NavItem[] }) {
 	const { user, logout } = useAuth();
 	const navigate = useNavigate();
 
 	return (
-		<aside className='flex h-screen w-64 flex-col border-r bg-card'>
+		<>
 			<div className='flex h-16 items-center border-b px-6'>
 				<span className='text-xl font-bold text-primary'>JobBoard</span>
 			</div>
@@ -78,6 +81,24 @@ export function DashboardSidebar({ navItems }: DashboardSidebarProps) {
 					</div>
 				</DropdownMenu>
 			</div>
-		</aside>
+		</>
+	);
+}
+
+export function DashboardSidebar({ navItems, isOpen, onClose }: DashboardSidebarProps) {
+	return (
+		<>
+			<aside className='hidden lg:flex h-screen w-64 flex-col border-r bg-card'>
+				<SidebarContent navItems={navItems} />
+			</aside>
+
+			<div className='lg:hidden'>
+				<Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+					<SheetContent side='left' className='w-64 p-0'>
+						<SidebarContent navItems={navItems} />
+					</SheetContent>
+				</Sheet>
+			</div>
+		</>
 	);
 }
