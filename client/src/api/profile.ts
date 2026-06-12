@@ -61,6 +61,14 @@ const profileApi = {
 	uploadAvatar: (file: File) => {
 		const formData = new FormData();
 		formData.append("file", file);
+		if (file.size > 5 * 1024 * 1024) {
+			throw new ApiError("Kích thước file vượt quá 5MB", 400);
+		}
+
+		if (file.name.match(/\.(jpg|jpeg|png|gif|pdf|webp|)$/i) === null) {
+			throw new ApiError("Định dạng file không hợp lệ. Vui lòng chọn ảnh.", 400);
+		}
+
 		return client
 			.post("/profile/avatar", formData, {
 				headers: {
