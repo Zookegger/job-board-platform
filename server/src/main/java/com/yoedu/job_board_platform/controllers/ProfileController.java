@@ -97,6 +97,18 @@ public class ProfileController {
 		return ResponseEntity.ok(profileService.uploadAvatar(file));
 	}
 
+	@PostMapping("/company-logo")
+	@PreAuthorize("hasRole('EMPLOYER')")
+	@Operation(summary = "Upload logo công ty", description = "Upload logo công ty. Định dạng: PNG, JPG, SVG, WEBP. Dung lượng tối đa: 2MB.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "URL logo đã lưu", content = @Content),
+			@ApiResponse(responseCode = "400", description = "File không hợp lệ", content = @Content)
+	})
+	public ResponseEntity<String> uploadCompanyLogo(
+			@Parameter(description = "File logo (multipart/form-data, max 2MB)", required = true) @RequestParam MultipartFile file) {
+		return ResponseEntity.ok(profileService.uploadCompanyLogo(file));
+	}
+
 	// -----------------------------------------------------------------
 	// Resume (CV) — single PDF per candidate
 	// -----------------------------------------------------------------

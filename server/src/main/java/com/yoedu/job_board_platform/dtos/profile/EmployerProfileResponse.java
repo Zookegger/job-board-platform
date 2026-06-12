@@ -30,6 +30,9 @@ public record EmployerProfileResponse(
         String companyName,
 
         @Schema(description = "Vai trò trong công ty", example = "HR Manager")
-        String roleInCompany
+        String roleInCompany,
+
+        @Schema(description = "URL logo công ty", example = "https://example.com/logo.png")
+        String logoUrl
 ) {
 }

@@ -115,7 +115,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void registerCompany(CompanyRegisterRequest request) {
-        // 1. Kiểm tra email công ty không trùng
+        // 1. Kiểm tra email người dùng không trùng
+        if (userRepository.findByEmail(request.userEmail()).isPresent())
+            throw new ConflictException("Email " + request.userEmail() + " đã tồn tại trong hệ thống");
+
+        // 2. Kiểm tra tên công ty không trùng
         if (companyRepository.existsByCompanyName(request.companyName()))
             throw new ConflictException("Tên công ty này đã được đăng ký. Nếu đây là công ty của bạn, vui lòng đăng nhập để tiếp tục.");
 

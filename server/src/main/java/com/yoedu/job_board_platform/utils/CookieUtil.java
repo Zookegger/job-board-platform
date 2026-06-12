@@ -46,7 +46,10 @@ public class CookieUtil {
         Cookie cookie = new Cookie(name.getValue(), value);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        response.addCookie(cookie);
+        // SameSite=None cho phép cross-origin (client:3000 → api:8080)
+        // Không set Secure vì local HTTP
+        response.addHeader("Set-Cookie",
+                name.getValue() + "=" + value + "; Path=/; HttpOnly; SameSite=None");
     }
 
     /**
@@ -60,6 +63,7 @@ public class CookieUtil {
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        response.addHeader("Set-Cookie",
+                name.getValue() + "=; Path=/; HttpOnly; SameSite=None; Max-Age=0");
     }
 }

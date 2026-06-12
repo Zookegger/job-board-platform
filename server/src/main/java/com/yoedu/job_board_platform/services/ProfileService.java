@@ -21,4 +21,5 @@ public interface ProfileService {
     EmployerProfileResponse updateCurrentEmployerProfile(EmployerProfileRequest request);
     Profile createProfile(User user, String fullName, String phone, String avatarUrl);
     String uploadAvatar(MultipartFile file);
+    String uploadCompanyLogo(MultipartFile file);
 }

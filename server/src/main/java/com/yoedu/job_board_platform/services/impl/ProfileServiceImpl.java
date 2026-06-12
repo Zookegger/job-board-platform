@@ -27,8 +27,8 @@ import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
-import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.services.ProfileService;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -206,5 +206,57 @@ public class ProfileServiceImpl implements ProfileService {
         userProfile.setAvatarUrl(avatarUrl);
         profileRepository.save(userProfile);
         return avatarUrl;
+    }
+
+    @Override
+    public String uploadCompanyLogo(MultipartFile file) {
+        Profile userProfile = securityUtil.getCurrentUser().getProfile();
+        Company company = userProfile.getEmployerDetail().getCompany();
+
+        if (file.isEmpty())
+            throw new BadRequestException("Không có file");
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/"))
+            throw new BadRequestException("Chỉ hỗ trợ định dạng hình ảnh");
+
+        if (file.getSize() > 2 * 1024 * 1024)
+            throw new BadRequestException("File quá lớn. Dung lượng tối đa: 2MB");
+
+        var logoDir = Paths.get(uploadDir, "logos");
+        try {
+            Files.createDirectories(logoDir);
+        } catch (IOException e) {
+            log.error("Lỗi tạo thư mục logo", e);
+            throw new RuntimeException("Lỗi tạo thư mục logo", e);
+        }
+
+        var ext = contentType.substring(contentType.lastIndexOf('/') + 1);
+        if (ext.equals("svg+xml")) ext = "svg";
+        var fileName = UUID.randomUUID() + "." + ext;
+        var targetPath = logoDir.resolve(fileName);
+
+        try {
+            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Lỗi lưu logo công ty", e);
+            throw new RuntimeException("Lỗi lưu logo công ty", e);
+        }
+
+        if (company.getLogoUrl() != null && !company.getLogoUrl().isBlank()) {
+            try {
+                var oldPath = company.getLogoUrl().startsWith("/uploads/")
+                        ? Paths.get(uploadDir, company.getLogoUrl().replace("/uploads/", ""))
+                        : Paths.get(company.getLogoUrl());
+                Files.deleteIfExists(oldPath);
+            } catch (IOException e) {
+                log.warn("Không thể xóa logo cũ: {}", e.getMessage());
+            }
+        }
+
+        var logoUrl = "/uploads/logos/" + fileName;
+        company.setLogoUrl(logoUrl);
+        companyRepository.save(company);
+        return logoUrl;
     }
 }

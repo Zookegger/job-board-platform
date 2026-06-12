@@ -87,6 +87,29 @@ const profileApi = {
 			});
 	},
 
+	uploadCompanyLogo: (file: File) => {
+		const ACCEPTED = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
+		if (!ACCEPTED.includes(file.type))
+			throw new ApiError("Định dạng không hợp lệ. Chỉ chấp nhận PNG, JPG, SVG, WEBP.", 400);
+		if (file.size > 2 * 1024 * 1024)
+			throw new ApiError("File quá lớn. Dung lượng tối đa: 2MB", 400);
+
+		const formData = new FormData();
+		formData.append("file", file);
+		return client
+			.post<string>("/profile/company-logo", formData, {
+				headers: { "Content-Type": "multipart/form-data" },
+			})
+			.then((response) => response.data)
+			.catch((error) => {
+				if (error.response?.status === 401) throw new ApiError("", 401);
+				throw new ApiError(
+					error.response?.data?.message || "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+					error.response?.status || 500,
+				);
+			});
+	},
+
 	getResume: () =>
 		client
 			.get("/profile/resume")

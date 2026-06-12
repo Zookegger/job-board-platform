@@ -31,6 +31,7 @@ public interface ProfileMapper {
     @Mapping(target = "companyId", source = "employerDetail.company.id")
     @Mapping(target = "companyName", source = "employerDetail.company.companyName")
     @Mapping(target = "roleInCompany", source = "employerDetail.roleInCompany")
+    @Mapping(target = "logoUrl", source = "employerDetail.company.logoUrl")
     EmployerProfileResponse toEmployerResponse(Profile profile);
 
     @Mapping(target = "id", ignore = true)

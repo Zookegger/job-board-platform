@@ -99,6 +99,17 @@ export function useUploadAvatar() {
 	});
 }
 
+export function useUploadCompanyLogo() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (file: File) => profileApi.uploadCompanyLogo(file),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.employer });
+		},
+	});
+}
+
 /**
  * Lấy thông tin CV (resume) của ứng viên hiện tại.
  * Dữ liệu được cache 5 phút, không retry khi lỗi.
