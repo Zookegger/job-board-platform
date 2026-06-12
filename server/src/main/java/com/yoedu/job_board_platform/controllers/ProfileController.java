@@ -1,5 +1,7 @@
 package com.yoedu.job_board_platform.controllers;
 
+import java.io.IOException;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -160,10 +162,19 @@ public class ProfileController {
 			@ApiResponse(responseCode = "404", description = "Chưa upload CV", content = @Content)
 	})
 	public ResponseEntity<Resource> downloadResume() {
-		var resource = resumeService.downloadResume();
+		Resource resource = resumeService.downloadResume();
+
+		long contentLength;
+		try {
+			contentLength = resource.contentLength();
+		} catch (IOException e) {
+			throw new RuntimeException("Không thể xác định kích thước file");
+		}
+
 		return ResponseEntity.ok()
 				.contentType(MediaType.APPLICATION_PDF)
-				.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"cv.pdf\"")
+				.contentLength(contentLength)
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cv.pdf\"")
 				.body(resource);
 	}
 
@@ -174,7 +185,11 @@ public class ProfileController {
 			@ApiResponse(responseCode = "200", description = "Thông tin CV", content = @Content),
 			@ApiResponse(responseCode = "404", description = "Chưa upload CV", content = @Content)
 	})
-	public ResponseEntity<ResumeResponse> previewResume() {
-		return ResponseEntity.ok(resumeService.getCurrentResume());
+	public ResponseEntity<Resource> previewResume() {
+		var resource = resumeService.downloadResume();
+		return ResponseEntity.ok()
+				.contentType(MediaType.APPLICATION_PDF)
+				.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"cv.pdf\"")
+				.body(resource);
 	}
 }

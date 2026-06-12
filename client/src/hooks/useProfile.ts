@@ -1,5 +1,5 @@
 import profileApi from "@/api/profile";
-import type { CandidateProfileRequest, EmployerProfileRequest } from "@/types/profile";
+import type { CandidateProfileRequest, EmployerProfileRequest, ResumeRequest } from "@/types/profile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 /** Query keys cho profile API, dùng để quản lý cache trong React Query. */
@@ -21,6 +21,7 @@ export function useCandidateProfile() {
 		queryKey: PROFILE_KEYS.candidate,
 		queryFn: () => profileApi.getCandidateProfile(),
 		staleTime: 5 * 60 * 1000,
+		gcTime: 10 * 60 * 1000,
 		retry: false,
 	});
 }
@@ -37,6 +38,7 @@ export function useEmployerProfile() {
 		queryKey: PROFILE_KEYS.employer,
 		queryFn: () => profileApi.getEmployerProfile(),
 		staleTime: 5 * 60 * 1000,
+		gcTime: 10 * 60 * 1000,
 		retry: false,
 	});
 }
@@ -127,9 +129,9 @@ export function useUploadResume() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (file: File) => profileApi.uploadResume(file),
+		mutationFn: profileApi.uploadResume,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.resume });
+			queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.resume, exact: false });
 		},
 	});
 }
@@ -148,7 +150,37 @@ export function useDeleteResume() {
 	return useMutation({
 		mutationFn: () => profileApi.deleteResume(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.resume });
+			queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.resume, exact: false });
 		},
+	});
+}
+
+/**
+ * Cập nhật CV (resume) của ứng viên.
+ * Tự động invalidate cache resume để làm mới dữ liệu.
+ *
+ * @example
+ * const update = useUpdateResume();
+ * update.mutate({ file: file });
+ */
+export function useUpdateResume() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (data: ResumeRequest) => profileApi.updateResume(data),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.resume, exact: false });
+		},
+	});
+}
+
+export function usePreviewCV(enabled: boolean) {
+	return useQuery({
+		queryKey: ["profile", "resume", "preview"],
+		queryFn: () => profileApi.previewResume(),
+		enabled: enabled,
+		retry: false,
+		staleTime: Infinity, // never refetch in background
+		gcTime: 1000 * 60 * 5, // keep in cache 5 minutes
 	});
 }

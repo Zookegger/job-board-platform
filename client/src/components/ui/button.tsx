@@ -19,6 +19,7 @@ const buttonVariants = cva(
 					"bg-destructive/10 text-destructive hover:bg-destructive-hover focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
 				link: "text-primary underline-offset-4 hover:underline",
 				dark: "bg-foreground text-background hover:bg-dark-hover",
+				success: "bg-success text-background hover:bg-success-hover",
 				default: "border-0 bg-transparent shadow-none rounded-none hover:bg-transparent hover:text-foreground active:translate-y-0 px-0",
 			},
 			size: {
@@ -68,3 +69,4 @@ function Button({
 
 // eslint-disable-next-line react-refresh/only-export-components
 export { Button, buttonVariants };
+

@@ -3,6 +3,9 @@ import type {
 	CandidateProfileResponse,
 	EmployerProfileRequest,
 	EmployerProfileResponse,
+	ResumeRequest,
+	ResumeResponse,
+	UploadResumeRequest,
 } from "@/types/profile";
 import ApiError from "@/utils/ApiError";
 import client from "./client";
@@ -87,7 +90,7 @@ const profileApi = {
 			});
 	},
 
-	getResume: () =>
+	getResume: (): Promise<ResumeResponse | null> =>
 		client
 			.get("/profile/resume")
 			.then((response) => response.data)
@@ -100,13 +103,19 @@ const profileApi = {
 					error.response?.status || 500,
 				);
 			}),
-	uploadResume: (file: File) => {
+	uploadResume: ({ file, onUploadProgress }: UploadResumeRequest) => {
 		const formData = new FormData();
 		formData.append("file", file);
 		return client
 			.post("/profile/resume", formData, {
 				headers: {
 					"Content-Type": "multipart/form-data",
+				},
+				onUploadProgress: (progressEvent) => {
+					if (!progressEvent.total) return;
+
+					const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+					onUploadProgress?.(percent);
 				},
 			})
 			.then((response) => response.data)
@@ -120,9 +129,9 @@ const profileApi = {
 				);
 			});
 	},
-	updateResume: () =>
+	updateResume: (data: ResumeRequest): Promise<ResumeResponse | null> =>
 		client
-			.put("/profile/resume")
+			.put("/profile/resume", data)
 			.then((response) => response.data)
 			.catch((error) => {
 				if (error.response?.status === 401) {
@@ -161,7 +170,7 @@ const profileApi = {
 			}),
 	previewResume: () =>
 		client
-			.get("/profile/resume/preview")
+			.get("/profile/resume/preview", { responseType: "blob" })
 			.then((response) => response.data)
 			.catch((error) => {
 				if (error.response?.status === 401) {

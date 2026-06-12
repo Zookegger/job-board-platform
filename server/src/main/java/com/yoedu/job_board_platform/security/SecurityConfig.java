@@ -30,8 +30,14 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(List.of("http://localhost:5173"));
-		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
+		var origins = List.of(
+				"http://localhost:5173", // Vite dev server
+				"http://localhost:3000", // Docker nginx
+				"http://localhost:8080" // direct API access
+		);
+
+		config.setAllowedOrigins(origins);
+		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 		config.setAllowedHeaders(List.of("*"));
 		config.setAllowCredentials(true);
 
@@ -50,7 +56,7 @@ public class SecurityConfig {
 								"/api/auth/register/candidate", "/api/auth/refresh-token", "/api/auth/logout")
 						.permitAll()
 						.requestMatchers("/api/public/**").permitAll()
-						.requestMatchers("/uploads/**").permitAll()
+						.requestMatchers("/uploads/**", "/api/profile/resume/preview").permitAll()
 						.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**",
 								"/v3/api-docs", "/v3/api-docs/**")
 						.permitAll()
@@ -59,7 +65,7 @@ public class SecurityConfig {
 						UsernamePasswordAuthenticationFilter.class)
 				.httpBasic(basic -> basic.disable()).formLogin(form -> form.disable())
 				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, authException) -> {
-					res.sendError(HttpServletResponse.SC_UNAUTHORIZED);	
+					res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 				}));
 		return http.build();
 	}
