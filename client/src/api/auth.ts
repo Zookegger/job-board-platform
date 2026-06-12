@@ -2,7 +2,7 @@ import ApiError from "@/utils/ApiError";
 import type { AuthResponse, CandidateRegisterRequest, LoginRequest, UserResponse } from "../types/auth";
 import client from "./client";
 
-export const AuthApi = {
+const AuthApi = {
 	login: (request: LoginRequest): Promise<AuthResponse | null> =>
 		client
 			.post<AuthResponse>("/auth/login", request)
@@ -50,4 +50,5 @@ export const AuthApi = {
 
 	me: (): Promise<UserResponse> => client.get<UserResponse>("/auth/me").then((response) => response.data),
 };
+
 export default AuthApi;

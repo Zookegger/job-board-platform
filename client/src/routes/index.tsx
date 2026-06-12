@@ -1,12 +1,9 @@
-import AdminLayout from "@/layouts/AdminLayout";
-import { CandidateLayout } from "@/layouts/CandidateLayout";
-import EmployerLayout from "@/layouts/EmployerLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
+import { setNavigate } from "@/lib/navigate";
 import { UserRole } from "@/types/auth";
 import RouterRoutes from "@/utils/RouterRoutes";
-import { createBrowserRouter, Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { setNavigate } from "@/lib/navigate";
+import { createBrowserRouter, Navigate, Outlet, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
@@ -18,7 +15,6 @@ import { JobDetailPage } from "@/features/jobs/JobDetailPage";
 import { JobListPage } from "@/features/jobs/JobListPage";
 
 import CandidateApplicationsPage from "@/features/candidate/ApplicationsPage";
-import CandidateProfilePage from "@/features/candidate/ProfilePage";
 import CandidateSavedJobsPage from "@/features/candidate/SavedJobsPage";
 import CandidateSettingsPage from "@/features/candidate/SettingsPage";
 
@@ -37,113 +33,114 @@ import AdminReportsPage from "@/features/admin/ReportsPage";
 import AdminSettingsPage from "@/features/admin/SettingsPage";
 import AdminUsersPage from "@/features/admin/UsersPage";
 import UnauthorizedPage from "@/features/home/UnauthorizedPage";
+import ProfilePage from "@/features/profile/ProfilePage";
 
+// eslint-disable-next-line react-refresh/only-export-components
 function RouterInit() {
-  const navigate = useNavigate();
-  useEffect(() => { setNavigate(navigate); }, [navigate]);
-  return <Outlet />;
+	const navigate = useNavigate();
+	useEffect(() => {
+		setNavigate(navigate);
+	}, [navigate]);
+	return <Outlet />;
 }
 
 export const router = createBrowserRouter([
-  {
-    element: <RouterInit />,
-    children: [
-      // Public routes
-      {
-        element: <PublicLayout />,
-        children: [
-          { index: true, element: <HomePage /> },
-          { path: RouterRoutes.LOGIN, element: <LoginPage /> },
-          { path: RouterRoutes.REGISTER, element: <RegisterPage /> },
-          { path: RouterRoutes.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
-          { path: RouterRoutes.JOBS, element: <JobListPage /> },
-          { path: RouterRoutes.JOB_DETAIL(":id"), element: <JobDetailPage /> },
-          { path: RouterRoutes.UNAUTHORIZED, element: <UnauthorizedPage /> },
-        ],
-      },
+	{
+		element: <RouterInit />,
+		children: [
+			// Public routes
+			{
+				element: <PublicLayout />,
+				children: [
+					{ index: true, element: <HomePage /> },
+					{ path: RouterRoutes.LOGIN, element: <LoginPage /> },
+					{ path: RouterRoutes.REGISTER, element: <RegisterPage /> },
+					{ path: RouterRoutes.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
+					{ path: RouterRoutes.JOBS, element: <JobListPage /> },
+					{ path: RouterRoutes.JOB_DETAIL(":id"), element: <JobDetailPage /> },
+					{ path: RouterRoutes.UNAUTHORIZED, element: <UnauthorizedPage /> },
+				],
+			},
+			// Shared authenticated routes (accessible by both candidates and employers)
+			{
+				element: <ProtectedRoute allowedRoles={[UserRole.CANDIDATE, UserRole.EMPLOYER]}></ProtectedRoute>,
+				children: [
+					{
+						path: RouterRoutes.PROFILE,
+						element: <ProfilePage />,
+					},
+				],
+			},
 
-      // Candidate routes (role-protected)
-      {
-        element: <ProtectedRoute allowedRoles={[UserRole.CANDIDATE]} />,
-        children: [
-          {
-            element: <CandidateLayout />,
-            children: [
-              {
-                index: true,
-                element: (
-                  <Navigate
-                    to={RouterRoutes.CANDIDATE_PROFILE}
-                    replace
-                  />
-                ),
-              },
-              { path: RouterRoutes.CANDIDATE_PROFILE, element: <CandidateProfilePage /> },
-              { path: RouterRoutes.CANDIDATE_APPLICATIONS, element: <CandidateApplicationsPage /> },
-              { path: RouterRoutes.CANDIDATE_SAVED_JOBS, element: <CandidateSavedJobsPage /> },
-              { path: RouterRoutes.CANDIDATE_SETTINGS, element: <CandidateSettingsPage /> },
-            ],
-          },
-        ],
-      },
+			// Candidate routes (role-protected)
+			{
+				element: <ProtectedRoute allowedRoles={[UserRole.CANDIDATE]} />,
+				children: [
+					{
+						children: [
+							{ path: RouterRoutes.CANDIDATE_APPLICATIONS, element: <CandidateApplicationsPage /> },
+							{ path: RouterRoutes.CANDIDATE_SAVED_JOBS, element: <CandidateSavedJobsPage /> },
+							{ path: RouterRoutes.CANDIDATE_SETTINGS, element: <CandidateSettingsPage /> },
+						],
+					},
+				],
+			},
 
-      // Employer routes (role-protected)
-      {
-        element: <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]} />,
-        children: [
-          {
-            element: <EmployerLayout />,
-            children: [
-              {
-                index: true,
-                element: (
-                  <Navigate
-                    to={RouterRoutes.EMPLOYER_DASHBOARD}
-                    replace
-                  />
-                ),
-              },
-              { path: RouterRoutes.EMPLOYER_DASHBOARD, element: <EmployerDashboardPage /> },
-              { path: RouterRoutes.EMPLOYER_JOBS, element: <EmployerJobsPage /> },
-              { path: RouterRoutes.EMPLOYER_CREATE_JOB, element: <EmployerCreateJobPage /> },
-              { path: RouterRoutes.EMPLOYER_JOB_DETAIL(":id"), element: <EmployerJobDetailPage /> },
-              { path: RouterRoutes.EMPLOYER_APPLICATIONS, element: <EmployerApplicationsPage /> },
-              { path: RouterRoutes.EMPLOYER_COMPANY, element: <EmployerCompanyPage /> },
-              { path: RouterRoutes.EMPLOYER_SETTINGS, element: <EmployerSettingsPage /> },
-            ],
-          },
-        ],
-      },
+			// Employer routes (role-protected)
+			{
+				element: <ProtectedRoute allowedRoles={[UserRole.EMPLOYER]} />,
+				children: [
+					{
+						children: [
+							{
+								index: true,
+								element: (
+									<Navigate
+										to={RouterRoutes.EMPLOYER_DASHBOARD}
+										replace
+									/>
+								),
+							},
+							{ path: RouterRoutes.EMPLOYER_DASHBOARD, element: <EmployerDashboardPage /> },
+							{ path: RouterRoutes.EMPLOYER_JOBS, element: <EmployerJobsPage /> },
+							{ path: RouterRoutes.EMPLOYER_CREATE_JOB, element: <EmployerCreateJobPage /> },
+							{ path: RouterRoutes.EMPLOYER_JOB_DETAIL(":id"), element: <EmployerJobDetailPage /> },
+							{ path: RouterRoutes.EMPLOYER_APPLICATIONS, element: <EmployerApplicationsPage /> },
+							{ path: RouterRoutes.EMPLOYER_COMPANY, element: <EmployerCompanyPage /> },
+							{ path: RouterRoutes.EMPLOYER_SETTINGS, element: <EmployerSettingsPage /> },
+						],
+					},
+				],
+			},
 
-      // Admin routes (role-protected)
-      {
-        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
-        children: [
-          {
-            element: <AdminLayout />,
-            children: [
-              {
-                index: true,
-                element: (
-                  <Navigate
-                    to={RouterRoutes.ADMIN_DASHBOARD}
-                    replace
-                  />
-                ),
-              },
-              { path: RouterRoutes.ADMIN_DASHBOARD, element: <AdminDashboardPage /> },
-              { path: RouterRoutes.ADMIN_USERS, element: <AdminUsersPage /> },
-              { path: RouterRoutes.ADMIN_COMPANIES, element: <AdminCompaniesPage /> },
-              { path: RouterRoutes.ADMIN_JOBS, element: <AdminJobsPage /> },
-              { path: RouterRoutes.ADMIN_REPORTS, element: <AdminReportsPage /> },
-              { path: RouterRoutes.ADMIN_SETTINGS, element: <AdminSettingsPage /> },
-            ],
-          },
-        ],
-      },
+			// Admin routes (role-protected)
+			{
+				element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+				children: [
+					{
+						children: [
+							{
+								index: true,
+								element: (
+									<Navigate
+										to={RouterRoutes.ADMIN_DASHBOARD}
+										replace
+									/>
+								),
+							},
+							{ path: RouterRoutes.ADMIN_DASHBOARD, element: <AdminDashboardPage /> },
+							{ path: RouterRoutes.ADMIN_USERS, element: <AdminUsersPage /> },
+							{ path: RouterRoutes.ADMIN_COMPANIES, element: <AdminCompaniesPage /> },
+							{ path: RouterRoutes.ADMIN_JOBS, element: <AdminJobsPage /> },
+							{ path: RouterRoutes.ADMIN_REPORTS, element: <AdminReportsPage /> },
+							{ path: RouterRoutes.ADMIN_SETTINGS, element: <AdminSettingsPage /> },
+						],
+					},
+				],
+			},
 
-      // 404
-      { path: "*", element: <NotFoundPage /> },
-    ],
-  },
+			// 404
+			{ path: "*", element: <NotFoundPage /> },
+		],
+	},
 ]);
