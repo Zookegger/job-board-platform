@@ -44,6 +44,11 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+/**
+ * Khởi tạo dữ liệu mẫu (seed) cho database khi chạy lần đầu.
+ * Tạo tài khoản admin, nhà tuyển dụng (kèm công ty và tin tuyển dụng),
+ * và ứng viên (kèm kỹ năng).
+ */
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -57,6 +62,10 @@ public class DataInitializer implements CommandLineRunner {
     private final JobSkillRepository jobSkillRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Thực thi seed dữ liệu khi ứng dụng khởi động.
+     * Bỏ qua nếu database đã có dữ liệu.
+     */
     @Override
     @Transactional
     public void run(String... args) {

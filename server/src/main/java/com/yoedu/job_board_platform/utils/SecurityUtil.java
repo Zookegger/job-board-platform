@@ -1,0 +1,38 @@
+package com.yoedu.job_board_platform.utils;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+
+import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
+import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.repositories.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Tiện ích lấy thông tin người dùng hiện tại từ SecurityContext.
+ * <p>
+ * Được inject vào các service để tránh phụ thuộc vòng (circular dependency)
+ * giữa {@code AuthServiceImpl} và {@code ProfileServiceImpl}.
+ */
+@Component
+@RequiredArgsConstructor
+public class SecurityUtil {
+    private final UserRepository userRepository;
+
+    /**
+     * Lấy thông tin người dùng hiện tại từ SecurityContext.
+     *
+     * @return {@link User} đã xác thực
+     * @throws ResourceNotFoundException nếu không có authentication hoặc không tìm thấy user
+     */
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
+        }
+        return userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại"));
+    }
+}

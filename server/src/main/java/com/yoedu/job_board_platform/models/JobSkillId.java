@@ -8,6 +8,9 @@ import lombok.Data;
 
 @Embeddable
 @Data
+/**
+ * Khóa phức hợp cho JobSkill, gồm jobId và skillId.
+ */
 public class JobSkillId implements Serializable {
     private static final long serialVersionUID = 1L;
 

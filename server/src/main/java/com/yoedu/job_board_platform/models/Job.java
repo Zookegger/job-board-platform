@@ -32,6 +32,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
+/**
+ * Đại diện cho một tin tuyển dụng trên nền tảng.
+ * Chứa thông tin chi tiết về vị trí, mức lương, địa điểm, loại hình làm việc,
+ * cấp độ kinh nghiệm và trạng thái của bài đăng.
+ */
 public class Job {
     @Id
     @Column(columnDefinition = "uuid")

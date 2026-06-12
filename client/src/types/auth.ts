@@ -16,6 +16,7 @@ export interface UserResponse {
 	role: UserRole;
 	fullName: string;
 	isActive: boolean;
+	avatarUrl: string | null;
 }
 
 export const UserRole = {

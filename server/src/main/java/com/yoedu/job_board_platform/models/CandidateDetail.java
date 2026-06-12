@@ -22,6 +22,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+/**
+ * Chi tiết hồ sơ của ứng viên. Liên kết 1-1 với Profile.
+ * Được dùng làm đầu mối cho Resume (CV) của ứng viên.
+ */
 public class CandidateDetail {
     @Id
     @Column(name = "profile_id", columnDefinition = "uuid")
@@ -31,6 +35,4 @@ public class CandidateDetail {
     @JoinColumn(name = "profile_id", insertable = false, updatable = false)
     private Profile profile;
 
-    @Column(name = "cv_file_url", unique = true, columnDefinition = "text")
-    private String cvFileUrl;
 }

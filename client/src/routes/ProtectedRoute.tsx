@@ -1,21 +1,22 @@
 import { LoadingBackdrop } from "@/components/shared/LoadingBackdrop";
-import type { UserRole } from "@/types/auth";
+import AdminLayout from "@/layouts/AdminLayout";
+import { CandidateLayout } from "@/layouts/CandidateLayout";
+import EmployerLayout from "@/layouts/EmployerLayout";
+import { UserRole } from "@/types/auth";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-export default function ProtectedRoute({
-	allowedRoles,
-}: {
-	allowedRoles: UserRole[];
-	children?: React.ReactNode;
-	fallback?: React.ReactNode;
-}) {
+const ROLE_LAYOUTS: Partial<Record<UserRole, React.ElementType>> = {
+	[UserRole.CANDIDATE]: CandidateLayout,
+	[UserRole.EMPLOYER]: EmployerLayout,
+	[UserRole.ADMIN]: AdminLayout,
+};
+
+export default function ProtectedRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
 	const { isAuthenticated, user, isLoading } = useAuth();
 	const location = useLocation();
 
-	if (isLoading) {
-		return <LoadingBackdrop />;
-	}
+	if (isLoading) return <LoadingBackdrop />;
 
 	if (!isAuthenticated) {
 		return (
@@ -27,7 +28,7 @@ export default function ProtectedRoute({
 		);
 	}
 
-	const hasAccess = allowedRoles.includes(user?.role as UserRole);
+	const hasAccess = !!user?.role && allowedRoles.includes(user.role);
 
 	if (!hasAccess) {
 		return (
@@ -39,5 +40,13 @@ export default function ProtectedRoute({
 		);
 	}
 
-	return <Outlet />;
+	const Layout = user?.role ? ROLE_LAYOUTS[user.role] : null;
+
+	return Layout ? (
+		<Layout>
+			<Outlet />
+		</Layout>
+	) : (
+		<Outlet />
+	);
 }

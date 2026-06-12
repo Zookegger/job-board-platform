@@ -27,6 +27,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
+/**
+ * Token dùng để làm mới phiên đăng nhập (refresh token).
+ * Mỗi token có thời gian hết hạn và có thể bị thu hồi.
+ */
 public class RefreshToken {
     @Id
     @Column(columnDefinition = "uuid")

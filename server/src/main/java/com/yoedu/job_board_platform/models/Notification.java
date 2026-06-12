@@ -33,6 +33,10 @@ import lombok.Setter;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 
+/**
+ * Thông báo gửi đến người dùng. Mỗi thông báo thuộc một loại (NotificationStatus)
+ * và liên kết với một thực thể cụ thể (entityId).
+ */
 public class Notification {
     @Id
     @Column(columnDefinition = "uuid")

@@ -1,16 +1,17 @@
 package com.yoedu.job_board_platform.mappers;
 
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
 import com.yoedu.job_board_platform.models.Company;
-import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.User;
 
 @Mapper(componentModel = "spring")
+/**
+ * MapStruct mapper cho Company entity.
+ * Chuyển đổi CompanyRegisterRequest thành User và Company entity khi đăng ký nhà tuyển dụng.
+ */
 public interface CompanyMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -21,26 +22,6 @@ public interface CompanyMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "role", constant = "EMPLOYER")
     User toUser(CompanyRegisterRequest request);
-
-    /**
-     * Tạo hồ sơ (Profile) cho người dùng đại diện công ty sau khi ánh xạ các trường
-     * cơ bản.
-     * Phương thức này được gọi tự động sau {@link #toUser(CompanyRegisterRequest)},
-     * dùng để xây dựng đối tượng {@link Profile} với tên đầy đủ từ request
-     * và liên kết nó với đối tượng {@link User} đã được ánh xạ.
-     *
-     * @param request thông tin đăng ký từ client chứa họ tên
-     * @param user    đối tượng User đích đã được map một phần, cần gán profile
-     */
-    @AfterMapping
-    default void createProfile(CompanyRegisterRequest request, @MappingTarget User user) {
-        Profile profile = Profile.builder()
-                .user(user)
-                .fullName(request.fullName())
-                .phone(request.userPhone())
-                .build();
-        user.setProfile(profile);
-    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "slug", ignore = true)

@@ -27,6 +27,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
+/**
+ * Đại diện cho một công ty trên nền tảng. Mỗi công ty có thông tin chi tiết,
+ * trạng thái duyệt, và liên kết với nhà tuyển dụng thông qua CompanyEmployerDetail.
+ */
 public class Company {
     @Id
     @Column(columnDefinition = "uuid")

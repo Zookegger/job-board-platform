@@ -2,7 +2,6 @@ package com.yoedu.job_board_platform.mappers;
 
 import java.util.List;
 
-import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -12,14 +11,19 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import com.yoedu.job_board_platform.dtos.user.CreateUserRequest;
 import com.yoedu.job_board_platform.dtos.user.UpdateUserRequest;
 import com.yoedu.job_board_platform.dtos.user.UserResponse;
-import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.User;
 
 @Mapper(componentModel = "spring")
+/**
+ * MapStruct mapper cho User entity.
+ * Chuyển đổi giữa User entity, CreateUserRequest, UpdateUserRequest và
+ * UserResponse.
+ */
 public interface UserMapper {
     @Mapping(target = "role", source = "role")
     @Mapping(target = "fullName", source = "profile.fullName")
     @Mapping(target = "isActive", source = "active")
+    @Mapping(target = "avatarUrl", source = "profile.avatarUrl")
     UserResponse toResponse(User user);
 
     List<UserResponse> toResponseList(List<User> users);
@@ -29,17 +33,6 @@ public interface UserMapper {
     @Mapping(target = "isActive", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     User toEntity(CreateUserRequest request);
-
-    @AfterMapping
-    default void createProfile(CreateUserRequest request, @MappingTarget User user) {
-        Profile profile = Profile.builder()
-                .user(user)
-                .fullName(request.fullName())
-                .phone(request.phone())
-                .avatarUrl(request.avatarUrl())
-                .build();
-        user.setProfile(profile);
-    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "profile", ignore = true)

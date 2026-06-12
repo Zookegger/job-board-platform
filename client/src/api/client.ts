@@ -1,18 +1,15 @@
+import { navigateTo } from "@/lib/navigate";
 import ApiRoutes from "@/utils/ApiRoutes";
 import RouterRoutes from "@/utils/RouterRoutes";
 import axios from "axios";
 import { toast } from "sonner";
-import { navigateTo } from "@/lib/navigate";
 import AuthApi from "./auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 const client = axios.create({
-	baseURL: API_BASE_URL,
+	baseURL: API_BASE_URL + "/api",
 	withCredentials: true,
-	headers: {
-		"Content-Type": "application/json",
-	},
 });
 
 client.interceptors.response.use(

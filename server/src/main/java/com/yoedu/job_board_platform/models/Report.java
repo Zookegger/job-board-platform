@@ -30,6 +30,10 @@ import lombok.Setter;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 
+/**
+ * Báo cáo vi phạm liên quan đến công việc hoặc công ty.
+ * Người dùng có thể báo cáo spam, lừa đảo hoặc nội dung không phù hợp.
+ */
 public class Report {
     @Id
     @Column(columnDefinition = "uuid")

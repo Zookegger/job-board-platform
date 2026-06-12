@@ -19,6 +19,11 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
+/**
+ * Cấu hình bảo mật Spring Security.
+ * Thiết lập CORS, CSRF (tắt), session stateless, filter JWT,
+ * và phân quyền cho các endpoint.
+ */
 public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -45,6 +50,7 @@ public class SecurityConfig {
 								"/api/auth/register/candidate", "/api/auth/refresh-token", "/api/auth/logout")
 						.permitAll()
 						.requestMatchers("/api/public/**").permitAll()
+						.requestMatchers("/uploads/**").permitAll()
 						.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**",
 								"/v3/api-docs", "/v3/api-docs/**")
 						.permitAll()
