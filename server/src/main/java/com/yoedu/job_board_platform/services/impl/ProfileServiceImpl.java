@@ -192,15 +192,19 @@ public class ProfileServiceImpl implements ProfileService {
 
         if (userProfile.getAvatarUrl() != null && !userProfile.getAvatarUrl().isBlank()) {
             try {
-                Files.deleteIfExists(Paths.get(userProfile.getAvatarUrl()));
+                var oldPath = userProfile.getAvatarUrl().startsWith("/uploads/")
+                        ? Paths.get(uploadDir, userProfile.getAvatarUrl().replace("/uploads/", ""))
+                        : Paths.get(userProfile.getAvatarUrl());
+                Files.deleteIfExists(oldPath);
             } catch (IOException e) {
                 log.error("Lỗi xóa ảnh avatar cũ", e);
                 throw new RuntimeException("Lỗi xóa ảnh avatar cũ", e);
             }
         }
 
-        userProfile.setAvatarUrl(targetPath.toString());
+        var avatarUrl = "/uploads/avatars/" + fileName;
+        userProfile.setAvatarUrl(avatarUrl);
         profileRepository.save(userProfile);
-        return targetPath.toString();
+        return avatarUrl;
     }
 }

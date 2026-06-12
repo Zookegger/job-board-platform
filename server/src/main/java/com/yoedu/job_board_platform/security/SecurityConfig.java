@@ -50,6 +50,7 @@ public class SecurityConfig {
 								"/api/auth/register/candidate", "/api/auth/refresh-token", "/api/auth/logout")
 						.permitAll()
 						.requestMatchers("/api/public/**").permitAll()
+						.requestMatchers("/uploads/**").permitAll()
 						.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**",
 								"/v3/api-docs", "/v3/api-docs/**")
 						.permitAll()
