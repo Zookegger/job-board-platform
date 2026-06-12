@@ -59,8 +59,7 @@ public class UserServiceImplTest {
                 .isActive(true)
                 .createdAt(OffsetDateTime.now())
                 .build();
-        UserResponse expectedResponse = new UserResponse(savedUser.getId(), savedUser.getEmail(),
-                savedUser.getRole().name(), savedUser.isActive(), "New User");
+        UserResponse expectedResponse = new UserResponse(savedUser.getId(), savedUser.getEmail(), savedUser.getRole().name(), savedUser.isActive(), "New User", "");
 
         User unsavedUser = User.builder()
                 .email("newuser@example.com")
