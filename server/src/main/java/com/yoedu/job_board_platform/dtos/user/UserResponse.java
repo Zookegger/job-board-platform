@@ -18,6 +18,9 @@ public record UserResponse(
         boolean isActive,
 
         @Schema(description = "Họ và tên", example = "Nguyễn Văn A")
-        String fullName
+        String fullName,
+
+        @Schema(description = "Avatar URL", example = "http://localhost:8080/uploads/avatars/12312.jpeg")
+        String avatarUrl
 ) {
 }

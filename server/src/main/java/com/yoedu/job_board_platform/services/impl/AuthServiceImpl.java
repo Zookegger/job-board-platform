@@ -26,10 +26,10 @@ import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.security.JwtService;
-import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.services.AuthService;
 import com.yoedu.job_board_platform.services.ProfileService;
 import com.yoedu.job_board_platform.services.RefreshTokenService;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.utils.StringUtils;
 
 import lombok.RequiredArgsConstructor;
