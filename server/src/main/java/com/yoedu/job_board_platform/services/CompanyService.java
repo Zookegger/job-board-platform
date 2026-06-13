@@ -27,17 +27,10 @@ public interface CompanyService {
     /**
      * Lấy thông tin công ty theo nhà tuyển dụng.
      *
+     * @throws ForbiddenException nếu người dùng không phải nhà tuyển dụng
      * @return CompanyResponse thông tin công ty
      */
     CompanyResponse findCompanyByEmployerId(UUID userUuid);
-
-    /**
-     * Lấy thông tin công ty của nhà tuyển dụng.
-     *
-     * @return CompanyResponse thông tin công ty
-     * @throws ForbiddenException nếu người dùng hiện tại không phải nhà tuyển dụng
-     */
-    CompanyResponse getCompanyFromRecruiter();
 
     /**
      * Lấy thông tin công ty từ bài đăng tuyển dụng.
