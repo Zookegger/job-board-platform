@@ -18,30 +18,30 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Admin", description = "Quan tri he thong va kiem duyet. Yeu cau role ADMIN.")
 public interface AdminApi {
 
-    @Operation(summary = "Dashboard tong quan")
-    @ApiResponse(responseCode = "200", description = "Du lieu dashboard", content = @Content)
+    @Operation(summary = "Dashboard tổng quan")
+    @ApiResponse(responseCode = "200", description = "Dữ liệu dashboard", content = @Content)
     ResponseEntity<?> getDashboard();
 
-    @Operation(summary = "Danh sach nguoi dung")
+    @Operation(summary = "Danh sách người dùng")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Danh sach nguoi dung", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Chi ADMIN moi duoc truy cap", content = @Content)
+            @ApiResponse(responseCode = "200", description = "Danh sách người dùng", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Chỉ ADMIN mới được truy cập", content = @Content)
     })
     ResponseEntity<?> getUsers(
-            @Parameter(description = "Loc theo vai tro", example = "EMPLOYER") UserRole role,
-            @Parameter(description = "So trang bat dau tu 0", example = "0") int page);
+            @Parameter(description = "Lọc theo vai trò", example = "EMPLOYER") UserRole role,
+            @Parameter(description = "Số trang bắt đầu từ 0", example = "0") int page);
 
-    @Operation(summary = "Thong ke nguoi dung")
-    @ApiResponse(responseCode = "200", description = "Du lieu thong ke nguoi dung", content = @Content)
+    @Operation(summary = "Thống kê người dùng")
+    @ApiResponse(responseCode = "200", description = "Dữ liệu thống kê người dùng", content = @Content)
     ResponseEntity<?> getUserStats();
 
-    @Operation(summary = "Khoa tai khoan")
+    @Operation(summary = "Khóa tài khoản")
     ResponseEntity<?> suspendUser(
-            @Parameter(description = "ID nguoi dung", required = true) UUID id);
+            @Parameter(description = "ID người dùng", required = true) UUID id);
 
-    @Operation(summary = "Mo khoa tai khoan")
+    @Operation(summary = "Mở khóa tài khoản")
     ResponseEntity<?> reactivateUser(
-            @Parameter(description = "ID nguoi dung", required = true) UUID id);
+            @Parameter(description = "ID người dùng", required = true) UUID id);
 
     @Operation(
             summary = "Danh sach cong ty cho duyet",
@@ -77,36 +77,36 @@ public interface AdminApi {
             @Parameter(description = "ID cong ty can tu choi", required = true) UUID id,
             @Parameter(description = "Ly do tu choi", required = true) String reason);
 
-    @Operation(summary = "Danh sach tat ca tin tuyen dung")
+    @Operation(summary = "Danh sách tất cả tin tuyển dụng")
     ResponseEntity<?> getAllJobs(
-            @Parameter(description = "Loc theo trang thai", example = "PENDING_APPROVAL") String status,
-            @Parameter(description = "So trang bat dau tu 0", example = "0") int page);
+            @Parameter(description = "Lọc theo trạng thái", example = "PENDING_APPROVAL") String status,
+            @Parameter(description = "Số trang bắt đầu từ 0", example = "0") int page);
 
-    @Operation(summary = "Duyet tin tuyen dung")
+    @Operation(summary = "Duyệt tin tuyển dụng")
     ResponseEntity<?> approveJob(
-            @Parameter(description = "ID tin tuyen dung", required = true) Long id);
+            @Parameter(description = "ID tin tuyển dụng", required = true) Long id);
 
-    @Operation(summary = "Tu choi tin tuyen dung")
+    @Operation(summary = "Từ chối tin tuyển dụng")
     ResponseEntity<?> rejectJob(
-            @Parameter(description = "ID tin tuyen dung", required = true) Long id,
-            @Parameter(description = "Ly do tu choi", required = true) String reason);
+            @Parameter(description = "ID tin tuyển dụng", required = true) Long id,
+            @Parameter(description = "Lý do từ chối", required = true) String reason);
 
-    @Operation(summary = "Xoa tin vi pham")
+    @Operation(summary = "Xóa tin vi phạm")
     ResponseEntity<?> deleteJob(
-            @Parameter(description = "ID tin tuyen dung", required = true) Long id,
-            @Parameter(description = "Ly do xoa") String reason);
+            @Parameter(description = "ID tin tuyển dụng", required = true) Long id,
+            @Parameter(description = "Lý do xóa") String reason);
 
-    @Operation(summary = "Danh sach nganh nghe")
+    @Operation(summary = "Danh sách ngành nghề")
     ResponseEntity<?> getCategories();
 
-    @Operation(summary = "Them nganh nghe moi")
+    @Operation(summary = "Thêm ngành nghề mới")
     ResponseEntity<?> createCategory();
 
-    @Operation(summary = "Cap nhat nganh nghe")
+    @Operation(summary = "Cập nhật ngành nghề")
     ResponseEntity<?> updateCategory(
-            @Parameter(description = "ID nganh nghe", required = true) Long id);
+            @Parameter(description = "ID ngành nghề", required = true) Long id);
 
-    @Operation(summary = "Xoa nganh nghe")
+    @Operation(summary = "Xóa ngành nghề")
     ResponseEntity<?> deleteCategory(
-            @Parameter(description = "ID nganh nghe", required = true) Long id);
+            @Parameter(description = "ID ngành nghề", required = true) Long id);
 }

@@ -24,6 +24,13 @@ import {
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+	Sheet,
+	SheetContent,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+} from "@/components/ui/sheet";
 
 const PAGE_SIZE = 10;
 
@@ -129,6 +136,10 @@ export default function AdminCompaniesPage() {
 		setPage(0);
 	}, [deferredSearch, taxCodeFilter, contactFilter, sortOption]);
 
+	const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+	const [selectedCompanyToReject, setSelectedCompanyToReject] = useState<AdminPendingCompanyResponse | null>(null);
+	const [rejectReason, setRejectReason] = useState("");
+
 	const queryParams = useMemo(() => {
 		const sort = sortConfig[sortOption];
 		return {
@@ -161,14 +172,27 @@ export default function AdminCompaniesPage() {
 		});
 	};
 
-	const handleReject = (company: AdminPendingCompanyResponse) => {
-		const reason = window.prompt(`Lý do từ chối "${company.companyName}"`);
-		if (!reason?.trim()) return;
+	const openRejectDialog = (company: AdminPendingCompanyResponse) => {
+		setSelectedCompanyToReject(company);
+		setRejectReason("");
+		setRejectDialogOpen(true);
+	};
+
+	const handleReject = () => {
+		if (!selectedCompanyToReject) return;
+
+		if (!rejectReason.trim()) {
+			toast.error("Vui lòng nhập lý do từ chối");
+			return;
+		}
 
 		rejectCompany.mutate(
-			{ companyId: company.id, reason: reason.trim() },
+			{ companyId: selectedCompanyToReject.id, reason: rejectReason.trim() },
 			{
-				onSuccess: () => toast.success("Đã từ chối công ty"),
+				onSuccess: () => {
+					toast.success("Đã từ chối công ty");
+					setRejectDialogOpen(false);
+				},
 				onError: (mutationError) => toast.error(getErrorMessage(mutationError, "Không thể từ chối công ty")),
 			},
 		);
@@ -359,7 +383,7 @@ export default function AdminCompaniesPage() {
 													variant="destructive"
 													size="sm"
 													disabled={actionPending}
-													onClick={() => handleReject(company)}
+													onClick={() => openRejectDialog(company)}
 												>
 													<XCircle />
 													Từ chối
@@ -399,6 +423,55 @@ export default function AdminCompaniesPage() {
 					</div>
 				</div>
 			</div>
+
+			<Sheet
+				open={rejectDialogOpen}
+				onOpenChange={(open) => {
+					if (!open) {
+						setSelectedCompanyToReject(null);
+						setRejectReason("");
+					}
+					setRejectDialogOpen(open);
+				}}
+			>
+				<SheetContent side="bottom" className="max-w-xl">
+					<SheetHeader>
+						<SheetTitle>Từ chối hồ sơ công ty</SheetTitle>
+						<p className="text-sm text-muted-foreground">
+							Nhập lý do từ chối cho công ty {selectedCompanyToReject?.companyName ?? ""}.
+						</p>
+					</SheetHeader>
+					<div className="space-y-4 px-4">
+						<label className="block text-sm font-medium text-foreground">Lý do từ chối</label>
+						<textarea
+							value={rejectReason}
+							onChange={(event) => setRejectReason(event.target.value)}
+							rows={6}
+							placeholder="Nhập lý do từ chối"
+							className="w-full rounded-md border border-input bg-background p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/50"
+						/>
+					</div>
+					<SheetFooter>
+						<div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+							<Button
+								variant="secondary"
+								onClick={() => setRejectDialogOpen(false)}
+							>
+								Hủy
+							</Button>
+							<Button
+								variant="destructive"
+								size="sm"
+								onClick={handleReject}
+								disabled={actionPending}
+							>
+								<XCircle />
+								Xác nhận từ chối
+							</Button>
+						</div>
+					</SheetFooter>
+				</SheetContent>
+			</Sheet>
 		</div>
 	);
 }

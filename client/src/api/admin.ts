@@ -20,7 +20,7 @@ export interface PendingCompaniesParams {
 	keyword?: string;
 	hasTaxCode?: boolean;
 	hasContact?: boolean;
-	sortBy?: "createdAt" | "companyName" | "taxCode";
+	sortBy?: "createdAt" | "companyName";
 	direction?: "asc" | "desc";
 }
 

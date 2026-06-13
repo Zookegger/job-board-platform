@@ -3,6 +3,7 @@ package com.yoedu.job_board_platform.dtos.admin;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yoedu.job_board_platform.models.CompanyStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,6 +42,7 @@ public record PendingCompanyResponse(
         @Schema(description = "Trang thai duyet", example = "PENDING")
         CompanyStatus status,
 
+        @JsonProperty("isApproved")
         @Schema(description = "Da duoc duyet?", example = "false")
         boolean isApproved,
 
