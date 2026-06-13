@@ -32,29 +32,29 @@ public class AdminController implements AdminApi {
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard() {
-        return ResponseEntity.ok("Dashboard thong ke");
+        return ResponseEntity.ok("Dashboard thống kê");
     }
 
     @GetMapping("/users")
     public ResponseEntity<?> getUsers(
             @RequestParam(required = false) UserRole role,
             @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok("Danh sach user");
+        return ResponseEntity.ok("Danh sách user");
     }
 
     @GetMapping("/users/stats")
     public ResponseEntity<?> getUserStats() {
-        return ResponseEntity.ok("Thong ke user");
+        return ResponseEntity.ok("Thống kê user");
     }
 
     @PostMapping("/users/{id}/suspend")
     public ResponseEntity<?> suspendUser(@PathVariable UUID id) {
-        return ResponseEntity.ok("Khoa tai khoan thanh cong");
+        return ResponseEntity.ok("Khóa tài khoản thành công");
     }
 
     @PostMapping("/users/{id}/reactivate")
     public ResponseEntity<?> reactivateUser(@PathVariable UUID id) {
-        return ResponseEntity.ok("Mo khoa thanh cong");
+        return ResponseEntity.ok("Mở khóa thành công");
     }
 
     @GetMapping("/companies/pending")
@@ -79,54 +79,54 @@ public class AdminController implements AdminApi {
     @PostMapping("/companies/{id}/approve")
     public ResponseEntity<ApiResponse> approveCompany(@PathVariable UUID id) {
         adminService.approveCompany(id);
-        return ResponseEntity.ok(new ApiResponse("Duyet cong ty thanh cong"));
+        return ResponseEntity.ok(new ApiResponse("Duyệt công ty thành công"));
     }
 
     @PostMapping("/companies/{id}/reject")
     public ResponseEntity<ApiResponse> rejectCompany(@PathVariable UUID id, @RequestParam String reason) {
         adminService.rejectCompany(id, reason);
-        return ResponseEntity.ok(new ApiResponse("Tu choi cong ty thanh cong"));
+        return ResponseEntity.ok(new ApiResponse("Từ chối công ty thành công"));
     }
 
     @GetMapping("/jobs")
     public ResponseEntity<?> getAllJobs(
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok("Danh sach tin");
+        return ResponseEntity.ok("Danh sách tin");
     }
 
     @PostMapping("/jobs/{id}/approve")
     public ResponseEntity<?> approveJob(@PathVariable Long id) {
-        return ResponseEntity.ok("Duyet tin thanh cong");
+        return ResponseEntity.ok("Duyệt tin thành công");
     }
 
     @PostMapping("/jobs/{id}/reject")
     public ResponseEntity<?> rejectJob(@PathVariable Long id, @RequestParam String reason) {
-        return ResponseEntity.ok("Tu choi tin");
+        return ResponseEntity.ok("Từ chối tin");
     }
 
     @DeleteMapping("/jobs/{id}")
     public ResponseEntity<?> deleteJob(@PathVariable Long id, @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok("Xoa tin thanh cong");
+        return ResponseEntity.ok("Xóa tin thành công");
     }
 
     @GetMapping("/categories")
     public ResponseEntity<?> getCategories() {
-        return ResponseEntity.ok("Danh sach nganh");
+        return ResponseEntity.ok("Danh sách ngành");
     }
 
     @PostMapping("/categories")
     public ResponseEntity<?> createCategory() {
-        return ResponseEntity.ok("Tao nganh thanh cong");
+        return ResponseEntity.ok("Tạo ngành thành công");
     }
 
     @PutMapping("/categories/{id}")
     public ResponseEntity<?> updateCategory(@PathVariable Long id) {
-        return ResponseEntity.ok("Cap nhat nganh thanh cong");
+        return ResponseEntity.ok("Cập nhật ngành thành công");
     }
 
     @DeleteMapping("/categories/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
-        return ResponseEntity.ok("Xoa nganh thanh cong");
+        return ResponseEntity.ok("Xóa ngành thành công");
     }
 }

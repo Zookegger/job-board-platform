@@ -1,8 +1,13 @@
 package com.yoedu.job_board_platform.controllers;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.time.OffsetDateTime;
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,15 +29,10 @@ import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
+import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
 import jakarta.servlet.http.Cookie;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -42,6 +42,9 @@ class AdminControllerTest {
 
     @Autowired
     MockMvc mockMvc;
+
+    @Autowired
+    JobRepository jobRepository;
 
     @Autowired
     UserRepository userRepository;
@@ -56,6 +59,7 @@ class AdminControllerTest {
 
     @BeforeEach
     void cleanup() {
+        jobRepository.deleteAll();
         companyRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -130,7 +134,7 @@ class AdminControllerTest {
         mockMvc.perform(post("/api/admin/companies/" + company.getId() + "/approve")
                         .cookie(adminCookie))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Duyet cong ty thanh cong"));
+                .andExpect(jsonPath("$.message").value("Duyệt công ty thành công"));
 
         Company updated = companyRepository.findById(company.getId()).orElseThrow();
         assertThat(updated.getStatus()).isEqualTo(CompanyStatus.APPROVED);
@@ -147,7 +151,7 @@ class AdminControllerTest {
                         .cookie(adminCookie)
                         .param("reason", "Thông tin không hợp lệ"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Tu choi cong ty thanh cong"));
+                .andExpect(jsonPath("$.message").value("Từ chối công ty thành công"));
 
         Company updated = companyRepository.findById(company.getId()).orElseThrow();
         assertThat(updated.getStatus()).isEqualTo(CompanyStatus.REJECTED);

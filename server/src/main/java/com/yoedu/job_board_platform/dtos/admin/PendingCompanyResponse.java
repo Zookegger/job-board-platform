@@ -9,19 +9,19 @@ import com.yoedu.job_board_platform.models.CompanyStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record PendingCompanyResponse(
-        @Schema(description = "ID cong ty", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        @Schema(description = "ID công ty", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
         UUID id,
 
-        @Schema(description = "Ten cong ty", example = "Yoedu Technology Corporation")
+        @Schema(description = "Tên công ty", example = "Yoedu Technology Corporation")
         String companyName,
 
         @Schema(description = "Slug", example = "yoedu-technology-corporation")
         String slug,
 
-        @Schema(description = "Dia chi", example = "123 Nguyen Hue, Quan 1, TP.HCM")
+        @Schema(description = "Địa chỉ", example = "123 Nguyễn Huệ, Quận 1, TP.HCM")
         String address,
 
-        @Schema(description = "Mo ta cong ty")
+        @Schema(description = "Mô tả công ty")
         String description,
 
         @Schema(description = "Website", example = "https://company.com")
@@ -30,38 +30,38 @@ public record PendingCompanyResponse(
         @Schema(description = "URL logo", example = "https://example.com/logo.png")
         String logoUrl,
 
-        @Schema(description = "Email cong ty", example = "contact@yoedu.com")
+        @Schema(description = "Email công ty", example = "contact@yoedu.com")
         String email,
 
-        @Schema(description = "So dien thoai cong ty", example = "02812345678")
+        @Schema(description = "Số điện thoại công ty", example = "02812345678")
         String phone,
 
-        @Schema(description = "Ma so thue", example = "0123456789")
+        @Schema(description = "Mã số thuế", example = "0123456789")
         String taxCode,
 
-        @Schema(description = "Trang thai duyet", example = "PENDING")
+        @Schema(description = "Trạng thái duyệt", example = "PENDING")
         CompanyStatus status,
 
         @JsonProperty("isApproved")
-        @Schema(description = "Da duoc duyet?", example = "false")
+        @Schema(description = "Đã được duyệt?", example = "false")
         boolean isApproved,
 
-        @Schema(description = "Ngay dang ky", example = "2026-06-13T10:30:00+07:00")
+        @Schema(description = "Ngày đăng ký", example = "2026-06-13T10:30:00+07:00")
         OffsetDateTime createdAt,
 
-        @Schema(description = "Ngay duyet", example = "2026-06-13T10:30:00+07:00")
+        @Schema(description = "Ngày duyệt", example = "2026-06-13T10:30:00+07:00")
         OffsetDateTime approvedAt,
 
-        @Schema(description = "Ten nguoi phu trach", example = "Nguyen Van A")
+        @Schema(description = "Tên người phụ trách", example = "Nguyễn Văn A")
         String employerName,
 
-        @Schema(description = "Email tai khoan nha tuyen dung", example = "hr@company.com")
+        @Schema(description = "Email tài khoản nhà tuyển dụng", example = "hr@company.com")
         String employerEmail,
 
-        @Schema(description = "So dien thoai nguoi phu trach", example = "0901234567")
+        @Schema(description = "Số điện thoại người phụ trách", example = "0901234567")
         String employerPhone,
 
-        @Schema(description = "Vai tro trong cong ty", example = "HR")
+        @Schema(description = "Vai trò trong công ty", example = "HR")
         String roleInCompany
 ) {
 }

@@ -34,7 +34,8 @@ public class SecurityConfig {
 		var origins = List.of(
 				"http://localhost:5173", // Vite dev server
 				"http://localhost:3000", // Docker nginx
-				"http://localhost:5000" // direct API access
+				"http://localhost:8080", // direct API access
+				"http://localhost:5000"  // direct API access
 		);
 
 		config.setAllowedOrigins(origins);
@@ -63,7 +64,6 @@ public class SecurityConfig {
 						.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**",
 								"/v3/api-docs", "/v3/api-docs/**")
 						.permitAll()
-						.requestMatchers("/api/admin/**").hasRole("ADMIN")
 						.anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter,
 						UsernamePasswordAuthenticationFilter.class)

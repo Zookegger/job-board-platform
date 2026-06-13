@@ -20,11 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
+import com.yoedu.job_board_platform.mappers.AdminMapper;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyStatus;
-import com.yoedu.job_board_platform.models.Profile;
-import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.services.AdminService;
@@ -43,6 +42,7 @@ public class AdminServiceeImpl implements AdminService {
 
     private final CompanyRepository companyRepository;
     private final CompanyEmployerDetailRepository employerDetailRepository;
+    private final AdminMapper adminMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -71,7 +71,7 @@ public class AdminServiceeImpl implements AdminService {
                                 Function.identity(),
                                 (first, ignored) -> first));
 
-        return companies.map(company -> toPendingCompanyResponse(company, detailsByCompanyId.get(company.getId())));
+        return companies.map(company -> adminMapper.toPendingCompanyResponse(company, detailsByCompanyId.get(company.getId())));
     }
 
     @Override
@@ -138,31 +138,6 @@ public class AdminServiceeImpl implements AdminService {
 
             return cb.and(predicates.toArray(Predicate[]::new));
         };
-    }
-
-    private PendingCompanyResponse toPendingCompanyResponse(Company company, CompanyEmployerDetail detail) {
-        Profile profile = detail != null ? detail.getProfile() : null;
-        User user = profile != null ? profile.getUser() : null;
-
-        return new PendingCompanyResponse(
-                company.getId(),
-                company.getCompanyName(),
-                company.getSlug(),
-                company.getAddress(),
-                company.getDescription(),
-                company.getWebsite(),
-                company.getLogoUrl(),
-                company.getEmail(),
-                company.getPhone(),
-                company.getTaxCode(),
-                company.getStatus(),
-                company.isApproved(),
-                company.getCreatedAt(),
-                company.getApprovedAt(),
-                profile != null ? profile.getFullName() : null,
-                user != null ? user.getEmail() : null,
-                profile != null ? profile.getPhone() : null,
-                detail != null ? detail.getRoleInCompany() : null);
     }
 
     private Predicate like(CriteriaBuilder cb, Root<Company> root, String field, String pattern) {
