@@ -1,7 +1,7 @@
 $kind: http-request
 name: Refresh Token
 method: POST
-url: '{{baseUrl}}/auth/refresh'
+url: '{{baseUrl}}/auth/refresh-token'
 order: 3000
 headers:
   - key: Cookie

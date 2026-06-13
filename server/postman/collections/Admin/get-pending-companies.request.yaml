@@ -1,0 +1,47 @@
+$kind: http-request
+name: Get Pending Companies
+method: GET
+url: '{{baseUrl}}/admin/companies/pending?page=0&size=10&sortBy=createdAt&direction=desc'
+order: 3000
+headers:
+  - key: Cookie
+    value: 'accessToken={{accessToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("returns 200", function () {
+        pm.response.to.have.status(200);
+      });
+
+      var page = pm.response.json();
+
+      pm.test("returns Spring page shape", function () {
+        pm.expect(page).to.have.property("content");
+        pm.expect(page.content).to.be.an("array");
+        pm.expect(page).to.have.property("totalElements");
+        pm.expect(page).to.have.property("totalPages");
+        pm.expect(page).to.have.property("number");
+      });
+
+      pm.test("all returned companies are pending", function () {
+        page.content.forEach(function (company) {
+          pm.expect(company.status).to.eql("PENDING");
+          pm.expect(company.isApproved).to.eql(false);
+        });
+      });
+
+      pm.test("review fields are available", function () {
+        if (page.content.length === 0) return;
+
+        var company = page.content[0];
+        pm.expect(company).to.have.property("id");
+        pm.expect(company).to.have.property("companyName");
+        pm.expect(company).to.have.property("taxCode");
+        pm.expect(company).to.have.property("address");
+        pm.expect(company).to.have.property("createdAt");
+        pm.expect(company).to.have.property("employerName");
+        pm.expect(company).to.have.property("employerEmail");
+        pm.expect(company).to.have.property("employerPhone");
+      });
+

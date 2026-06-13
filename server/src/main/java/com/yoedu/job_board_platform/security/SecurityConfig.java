@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
+@EnableMethodSecurity
 /**
  * Cấu hình bảo mật Spring Security.
  * Thiết lập CORS, CSRF (tắt), session stateless, filter JWT,
@@ -34,7 +36,8 @@ public class SecurityConfig {
 		var origins = List.of(
 				"http://localhost:5173", // Vite dev server
 				"http://localhost:3000", // Docker nginx
-				"http://localhost:8080" // direct API access
+				"http://localhost:8080", // direct API access
+				"http://localhost:5000" // direct API access
 		);
 
 		config.setAllowedOrigins(origins);
@@ -69,6 +72,8 @@ public class SecurityConfig {
 				.httpBasic(basic -> basic.disable()).formLogin(form -> form.disable())
 				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, authException) -> {
 					res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+				}).accessDeniedHandler((req, res, accessDeniedException) -> {
+					res.sendError(HttpServletResponse.SC_FORBIDDEN);
 				}));
 		return http.build();
 	}
