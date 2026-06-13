@@ -1,5 +1,7 @@
 package com.yoedu.job_board_platform.utils;
 
+import java.util.UUID;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -25,7 +27,8 @@ public class SecurityUtil {
      * Lấy thông tin người dùng hiện tại từ SecurityContext.
      *
      * @return {@link User} đã xác thực
-     * @throws ResourceNotFoundException nếu không có authentication hoặc không tìm thấy user
+     * @throws ResourceNotFoundException nếu không có authentication hoặc không tìm
+     *                                   thấy user
      */
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -34,5 +37,22 @@ public class SecurityUtil {
         }
         return userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại"));
+    }
+
+    /**
+     * Lấy ID người dùng hiện tại từ SecurityContext.
+     *
+     * @return ID {@link User} đã xác thực
+     * @throws ResourceNotFoundException nếu không có authentication hoặc không tìm
+     *                                   thấy user
+     */
+    public UUID getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResourceNotFoundException("Không tìm thấy người dùng hiện tại");
+        }
+        return userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại")).getId();
+
     }
 }

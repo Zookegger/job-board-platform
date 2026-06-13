@@ -6,6 +6,6 @@ package com.yoedu.job_board_platform.common.exceptions;
  */
 public class ForbiddenException extends RuntimeException {
     public ForbiddenException(String message) {
-        super(message);
+        super((message.isEmpty() || message.isBlank()) ? "Người dùng không có quyền truy cập tài nguyên này" : message);
     }
 }
