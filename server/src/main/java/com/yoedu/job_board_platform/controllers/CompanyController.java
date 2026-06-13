@@ -38,7 +38,7 @@ public class CompanyController implements CompanyApi {
 
     @Override
     @PutMapping
-    @PreAuthorize("hasRole('CANDIDATE')")
+    @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<CompanyResponse> update(@Valid @RequestBody CompanyRequest request) {
         UUID employerId = securityUtil.getCurrentUserId();
         CompanyResponse updated = companyService.update(employerId, request);
