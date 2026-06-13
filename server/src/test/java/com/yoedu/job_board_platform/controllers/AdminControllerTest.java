@@ -25,11 +25,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yoedu.job_board_platform.TestcontainersConfiguration;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyStatus;
+import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
+import com.yoedu.job_board_platform.repositories.ProfileRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
 import jakarta.servlet.http.Cookie;
@@ -55,12 +59,20 @@ class AdminControllerTest {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    ProfileRepository profileRepository;
+
+    @Autowired
+    CompanyEmployerDetailRepository employerDetailRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void cleanup() {
         jobRepository.deleteAll();
+        employerDetailRepository.deleteAll();
         companyRepository.deleteAll();
+        profileRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -88,7 +100,7 @@ class AdminControllerTest {
     }
 
     private Company createPendingCompany(String companyName, String taxCode, String email, String phone) {
-        return companyRepository.save(Company.builder()
+        Company company = companyRepository.save(Company.builder()
                 .companyName(companyName)
                 .slug(companyName.toLowerCase().replace(' ', '-'))
                 .address("123 Address")
@@ -102,6 +114,30 @@ class AdminControllerTest {
                 .isApproved(false)
                 .createdAt(OffsetDateTime.now())
                 .build());
+
+        User employer = User.builder()
+                .email("employer." + email)
+                .password(passwordEncoder.encode("password123"))
+                .role(UserRole.EMPLOYER)
+                .isActive(true)
+                .build();
+
+        Profile profile = Profile.builder()
+                .user(employer)
+                .fullName("Test " + companyName)
+                .phone(phone)
+                .build();
+
+        employer.setProfile(profile);
+        userRepository.save(employer);
+
+        employerDetailRepository.save(CompanyEmployerDetail.builder()
+                .profile(profile)
+                .company(company)
+                .roleInCompany("HR")
+                .build());
+
+        return company;
     }
 
     @Test

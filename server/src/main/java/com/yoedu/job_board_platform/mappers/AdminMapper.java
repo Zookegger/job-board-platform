@@ -17,4 +17,29 @@ public interface AdminMapper {
     @Mapping(target = "employerPhone", source = "detail.profile.phone")
     @Mapping(target = "roleInCompany", source = "detail.roleInCompany")
     PendingCompanyResponse toPendingCompanyResponse(Company company, CompanyEmployerDetail detail);
+
+    default PendingCompanyResponse toPendingCompanyResponseSafe(Company company, CompanyEmployerDetail detail) {
+        if (detail == null) {
+            return new PendingCompanyResponse(
+                    company.getId(),
+                    company.getCompanyName(),
+                    company.getSlug(),
+                    company.getAddress(),
+                    company.getDescription(),
+                    company.getWebsite(),
+                    company.getLogoUrl(),
+                    company.getEmail(),
+                    company.getPhone(),
+                    company.getTaxCode(),
+                    company.getStatus(),
+                    company.isApproved(),
+                    company.getCreatedAt(),
+                    company.getApprovedAt(),
+                    null,
+                    null,
+                    null,
+                    null);
+        }
+        return toPendingCompanyResponse(company, detail);
+    }
 }

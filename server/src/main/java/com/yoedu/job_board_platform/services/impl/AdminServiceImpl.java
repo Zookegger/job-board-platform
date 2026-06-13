@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AdminServiceeImpl implements AdminService {
+public class AdminServiceImpl implements AdminService {
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 100;
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("createdAt", "companyName", "taxCode");
@@ -71,7 +71,7 @@ public class AdminServiceeImpl implements AdminService {
                                 Function.identity(),
                                 (first, ignored) -> first));
 
-        return companies.map(company -> adminMapper.toPendingCompanyResponse(company, detailsByCompanyId.get(company.getId())));
+        return companies.map(company -> adminMapper.toPendingCompanyResponseSafe(company, detailsByCompanyId.get(company.getId())));
     }
 
     @Override
