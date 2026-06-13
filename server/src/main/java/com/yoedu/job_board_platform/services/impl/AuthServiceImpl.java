@@ -18,6 +18,7 @@ import com.yoedu.job_board_platform.mappers.CompanyMapper;
 import com.yoedu.job_board_platform.models.CandidateDetail;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
+import com.yoedu.job_board_platform.models.CompanyReviewReason;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.RefreshToken;
 import com.yoedu.job_board_platform.models.User;
@@ -137,6 +138,7 @@ public class AuthServiceImpl implements AuthService {
         Company company = companyMapper.toEntity(request);
         company.setSlug(
                 StringUtils.slugifyUnique(request.companyName(), (slug) -> companyRepository.existsBySlug(slug)));
+        company.setReviewReason(CompanyReviewReason.NEW_COMPANY);
         companyRepository.save(company);
 
         // 7. Tạo CompanyEmployerDetail: link Profile → Company, roleInCompany = "HR
