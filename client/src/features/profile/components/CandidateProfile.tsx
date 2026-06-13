@@ -1,4 +1,4 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+﻿import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, Loader2, Pencil, Save, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,6 +15,7 @@ import { useCandidateProfile, useUpdateCandidateProfile, useUploadAvatar } from 
 import { candidateProfileSchema, type CandidateProfileFormData } from "@/lib/schemas/profile";
 import { useToast } from "@/providers/ToastProvider";
 import getErrorMessage from "@/utils/getErrorMessage";
+import SkillSelector from "./SkillSelector";
 
 export default function CandidateProfile() {
 	const { data: profile, isLoading } = useCandidateProfile();
@@ -110,6 +111,14 @@ export default function CandidateProfile() {
 									className='flex-1 sm:flex-initial'
 								>
 									Hồ sơ cá nhân
+								</TabsTrigger>
+							</CardTitle>
+							<CardTitle>
+								<TabsTrigger
+									value='skills'
+									className='flex-1 sm:flex-initial'
+								>
+									Kỹ năng
 								</TabsTrigger>
 							</CardTitle>
 							<CardTitle>
@@ -251,6 +260,12 @@ export default function CandidateProfile() {
 									)}
 								</div>
 							</div>
+						</CardContent>
+					</TabsContent>
+
+					<TabsContent value='skills'>
+						<CardContent>
+							<SkillSelector />
 						</CardContent>
 					</TabsContent>
 

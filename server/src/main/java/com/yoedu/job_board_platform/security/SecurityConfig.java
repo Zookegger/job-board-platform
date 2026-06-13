@@ -33,7 +33,7 @@ public class SecurityConfig {
 		var origins = List.of(
 				"http://localhost:5173", // Vite dev server
 				"http://localhost:3000", // Docker nginx
-				"http://localhost:8080" // direct API access
+				"http://localhost:5000" // direct API access
 		);
 
 		config.setAllowedOrigins(origins);
@@ -56,7 +56,7 @@ public class SecurityConfig {
 								"/api/auth/register/candidate", "/api/auth/refresh-token", "/api/auth/logout")
 						.permitAll()
 						.requestMatchers("/api/public/**").permitAll()
-						.requestMatchers("/uploads/**", "/api/profile/resume/preview").permitAll()
+						.requestMatchers("/uploads/**", "/api/profile/resume/preview", "/api/skills").permitAll()
 						.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**",
 								"/v3/api-docs", "/v3/api-docs/**")
 						.permitAll()
