@@ -24,6 +24,8 @@ import jakarta.servlet.http.Cookie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yoedu.job_board_platform.TestcontainersConfiguration;
+import com.yoedu.job_board_platform.models.CompanyReviewReason;
+import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.EmploymentType;
 import com.yoedu.job_board_platform.models.ExperienceLevel;
 import com.yoedu.job_board_platform.models.Job;
@@ -124,6 +126,9 @@ class CompanyControllerTest {
         assertThat(json.get("slug")).isNotNull();
         assertThat(json.get("taxCode").asText()).isEqualTo("0123456789");
         assertThat(json.get("status").asText()).isEqualTo("PENDING");
+        assertThat(json.get("isApproved").asBoolean()).isFalse();
+        assertThat(json.get("rejectionReason")).isNull();
+        assertThat(json.get("reviewReason").asText()).isEqualTo("NEW_COMPANY");
     }
 
     @Test
@@ -210,6 +215,40 @@ class CompanyControllerTest {
         assertThat(json.get("address").asText()).isEqualTo("789 Partial Street");
         assertThat(json.get("website").asText()).isEqualTo("https://partial.com");
         assertThat(json.get("description").asText()).isEqualTo("Partial description");
+    }
+
+    @Test
+    void employer_updateCompany_approvedCompanyTriggersReview() throws Exception {
+        Cookie tokenCookie = registerAndLogin("employer-review@test.com", "password123", false);
+
+        MvcResult companyRes = mockMvc.perform(get("/api/company/employer")
+                        .cookie(tokenCookie))
+                .andExpect(status().isOk())
+                .andReturn();
+        var companyJson = objectMapper.readTree(companyRes.getResponse().getContentAsString());
+        UUID companyId = UUID.fromString(companyJson.get("id").asText());
+
+        var company = companyRepository.findById(companyId).orElseThrow();
+        company.setStatus(CompanyStatus.APPROVED);
+        company.setApproved(true);
+        companyRepository.save(company);
+
+        var updatePayload = objectMapper.writeValueAsString(
+                java.util.Map.of("companyName", "Review Trigger Corp"));
+
+        MvcResult res = mockMvc.perform(put("/api/company")
+                        .cookie(tokenCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updatePayload))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var json = objectMapper.readTree(res.getResponse().getContentAsString());
+        assertThat(json.get("companyName").asText()).isEqualTo("Review Trigger Corp");
+        assertThat(json.get("status").asText()).isEqualTo("PENDING");
+        assertThat(json.get("isApproved").asBoolean()).isFalse();
+        assertThat(json.get("rejectionReason")).isNull();
+        assertThat(json.get("reviewReason").asText()).isEqualTo("INFO_UPDATED");
     }
 
     @Test

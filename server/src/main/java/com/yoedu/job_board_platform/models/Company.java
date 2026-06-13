@@ -29,7 +29,8 @@ import lombok.NoArgsConstructor;
 @EntityListeners(AuditingEntityListener.class)
 /**
  * Đại diện cho một công ty trên nền tảng. Mỗi công ty có thông tin chi tiết,
- * trạng thái duyệt, và liên kết với nhà tuyển dụng thông qua CompanyEmployerDetail.
+ * trạng thái duyệt, và liên kết với nhà tuyển dụng thông qua
+ * CompanyEmployerDetail.
  */
 public class Company {
     @Id
@@ -83,4 +84,16 @@ public class Company {
 
     @Column(name = "approved_at")
     private OffsetDateTime approvedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "review_reason")
+    private CompanyReviewReason reviewReason;
+
+    public void markForReview(CompanyReviewReason reason) {
+        this.status = CompanyStatus.PENDING;
+        this.isApproved = false;
+        this.approvedAt = null;
+        this.rejectionReason = null;
+        this.reviewReason = reason;
+    }
 }

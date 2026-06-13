@@ -3,10 +3,13 @@ package com.yoedu.job_board_platform.dtos.company;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.yoedu.job_board_platform.models.CompanyReviewReason;
 import com.yoedu.job_board_platform.models.CompanyStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record CompanyResponse(
         @Schema(description = "ID công ty", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
         UUID id,
@@ -48,6 +51,12 @@ public record CompanyResponse(
         OffsetDateTime createdAt,
 
         @Schema(description = "Ngày duyệt", example = "2026-06-13T10:30:00+07:00")
-        OffsetDateTime approvedAt
+        OffsetDateTime approvedAt,
+
+        @Schema(description = "Lý do từ chối", example = "Thông tin công ty không hợp lệ")
+        String rejectionReason,
+
+        @Schema(description = "Lý do yêu cầu duyệt", example = "NEW_COMPANY")
+        CompanyReviewReason reviewReason
 ) {
 }
