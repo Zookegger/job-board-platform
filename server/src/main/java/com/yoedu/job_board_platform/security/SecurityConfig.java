@@ -37,7 +37,7 @@ public class SecurityConfig {
 				"http://localhost:5173", // Vite dev server
 				"http://localhost:3000", // Docker nginx
 				"http://localhost:8080", // direct API access
-				"http://localhost:5000"  // direct API access
+				"http://localhost:5000" // direct API access
 		);
 
 		config.setAllowedOrigins(origins);
@@ -72,6 +72,8 @@ public class SecurityConfig {
 				.httpBasic(basic -> basic.disable()).formLogin(form -> form.disable())
 				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, authException) -> {
 					res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+				}).accessDeniedHandler((req, res, accessDeniedException) -> {
+					res.sendError(HttpServletResponse.SC_FORBIDDEN);
 				}));
 		return http.build();
 	}
