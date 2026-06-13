@@ -7,8 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.CompanyApi;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
@@ -21,11 +23,13 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping(ApiPaths.BASE + "/company")
 public class CompanyController implements CompanyApi {
     private final CompanyService companyService;
     private final SecurityUtil securityUtil;
 
     @Override
+    @GetMapping("/employer")
     public ResponseEntity<CompanyResponse> findCompanyByEmployerId() {
         UUID employerId = securityUtil.getCurrentUserId();
         CompanyResponse company = companyService.findCompanyByEmployerId(employerId);
@@ -42,7 +46,7 @@ public class CompanyController implements CompanyApi {
     }
 
     @Override
-    @GetMapping
+    @GetMapping("/job-post")
     public ResponseEntity<CompanyResponse> getCompanyByJobPost(UUID jobPostId) {
         return ResponseEntity.ok(companyService.getCompanyByJobPost(jobPostId));
     }
