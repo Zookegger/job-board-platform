@@ -14,250 +14,103 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
+import com.yoedu.job_board_platform.controllers.api.AdminApi;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.services.AdminService;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/admin")
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN.")
 @RequiredArgsConstructor
-public class AdminController {
+public class AdminController implements AdminApi {
     private final AdminService adminService;
 
-    // ========== DASHBOARD ==========
     @GetMapping("/dashboard")
-    @Operation(summary = "Dashboard tổng quan", description = """
-            Thống kê toàn nền tảng: tổng số user, tổng số công ty, tổng số tin tuyển dụng,
-            số lượng user mới, số tin chờ duyệt, số công ty chờ duyệt, ... 
-            Dùng cho màn hình Admin Dashboard.
-            """)
-    @ApiResponse(responseCode = "200", description = "Dữ liệu thống kê tổng quan nền tảng", content = @Content)
     public ResponseEntity<?> getDashboard() {
         return ResponseEntity.ok("Dashboard thống kê");
     }
 
-    // ========== QUẢN LÝ USER ==========
     @GetMapping("/users")
-    @Operation(summary = "Danh sách người dùng", description = """
-            Lấy danh sách tất cả người dùng trên hệ thống (CANDIDATE, EMPLOYER, ADMIN).
-            Có thể lọc theo role và phân trang.
-            """)
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Danh sách người dùng (có phân trang)", content = @Content),
-        @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
-    })
     public ResponseEntity<?> getUsers(
-            @Parameter(description = "Lọc theo vai trò: CANDIDATE, EMPLOYER, ADMIN", example = "CANDIDATE")
             @RequestParam(required = false) UserRole role,
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
             @RequestParam(defaultValue = "0") int page
     ) {
         return ResponseEntity.ok("Danh sách user");
     }
 
     @GetMapping("/users/stats")
-    @Operation(summary = "Thống kê người dùng", description = "Thống kê số lượng user theo role, số user đăng ký mới theo ngày/tuần/tháng.")
-    @ApiResponse(responseCode = "200", description = "Dữ liệu thống kê người dùng", content = @Content)
     public ResponseEntity<?> getUserStats() {
         return ResponseEntity.ok("Thống kê user");
     }
 
     @PostMapping("/users/{id}/suspend")
-    @Operation(summary = "Khóa tài khoản", description = """
-            Khóa tài khoản người dùng. User bị khóa sẽ không thể đăng nhập hoặc sử dụng hệ thống.
-            Có thể khóa bất kỳ tài khoản nào (CANDIDATE, EMPLOYER, ADMIN).
-            """)
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Khóa tài khoản thành công", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng", content = @Content),
-        @ApiResponse(responseCode = "400", description = "Không thể khóa tài khoản ADMIN khác", content = @Content)
-    })
-    public ResponseEntity<?> suspendUser(
-            @Parameter(description = "ID của người dùng cần khóa", example = "1", required = true)
-            @PathVariable UUID id
-    ) {
+    public ResponseEntity<?> suspendUser(@PathVariable UUID id) {
         return ResponseEntity.ok("Khóa tài khoản thành công");
     }
 
     @PostMapping("/users/{id}/reactivate")
-    @Operation(summary = "Mở khóa tài khoản", description = "Mở khóa tài khoản đã bị khóa trước đó. User có thể đăng nhập và sử dụng hệ thống trở lại.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Mở khóa tài khoản thành công", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng", content = @Content)
-    })
-    public ResponseEntity<?> reactivateUser(
-            @Parameter(description = "ID của người dùng cần mở khóa", example = "1", required = true)
-            @PathVariable UUID id
-    ) {
+    public ResponseEntity<?> reactivateUser(@PathVariable UUID id) {
         return ResponseEntity.ok("Mở khóa thành công");
     }
+
     @GetMapping("/companies/pending")
-    @Operation(summary = "Danh sách công ty chờ duyệt", description = """
-            Lấy danh sách các công ty đang chờ admin phê duyệt (status = PENDING).
-            Dùng cho màn hình kiểm duyệt công ty.
-            """)
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Danh sách công ty chờ duyệt (có phân trang)", content = @Content),
-        @ApiResponse(responseCode = "403", description = "Không có quyền truy cập", content = @Content)
-    })
-    public ResponseEntity<?> getPendingCompanies(
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
-            @RequestParam(defaultValue = "0") int page
-    ) {
+    public ResponseEntity<?> getPendingCompanies(@RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok("Danh sách công ty chờ duyệt");
     }
 
     @PostMapping("/companies/{id}/approve")
-    @Operation(summary = "Duyệt công ty", description = "Phê duyệt công ty — sau khi duyệt, employer có thể đăng tin tuyển dụng. Hệ thống gửi email thông báo cho employer.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Duyệt công ty thành công — employer nhận được email thông báo", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
-    })
-    public ResponseEntity<?> approveCompany(
-            @Parameter(description = "ID của công ty cần duyệt", example = "1", required = true)
-            @PathVariable UUID id
-    ) {
+    public ResponseEntity<?> approveCompany(@PathVariable UUID id) {
         adminService.approveCompany(id);
         return ResponseEntity.ok("Duyệt công ty thành công");
     }
 
     @PostMapping("/companies/{id}/reject")
-    @Operation(summary = "Từ chối công ty", description = "Từ chối phê duyệt công ty kèm lý do. Hệ thống gửi email thông báo kèm lý do từ chối cho employer.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Từ chối công ty thành công — email thông báo đã được gửi", content = @Content),
-        @ApiResponse(responseCode = "400", description = "Thiếu lý do từ chối", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
-    })
-    public ResponseEntity<?> rejectCompany(
-            @Parameter(description = "ID của công ty cần từ chối", example = "1", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "Lý do từ chối (bắt buộc)", example = "Thông tin công ty không chính xác", required = true)
-            @RequestParam String reason
-    ) {
+    public ResponseEntity<?> rejectCompany(@PathVariable Long id, @RequestParam String reason) {
         return ResponseEntity.ok("Từ chối công ty");
     }
 
-    // ========== QUẢN LÝ TIN TUYỂN DỤNG ==========
     @GetMapping("/jobs")
-    @Operation(summary = "Danh sách tất cả tin tuyển dụng", description = """
-            Lấy danh sách tất cả tin tuyển dụng trên hệ thống, bao gồm cả tin của tất cả công ty.
-            Có thể lọc theo trạng thái. Dùng cho màn hình quản lý tin toàn hệ thống.
-            """)
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Danh sách tất cả tin tuyển dụng (có phân trang)", content = @Content),
-        @ApiResponse(responseCode = "403", description = "Không có quyền truy cập", content = @Content)
-    })
     public ResponseEntity<?> getAllJobs(
-            @Parameter(description = "Lọc theo trạng thái: DRAFT, PENDING_APPROVAL, ACTIVE, EXPIRED, REJECTED", example = "PENDING_APPROVAL")
             @RequestParam(required = false) String status,
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
             @RequestParam(defaultValue = "0") int page
     ) {
         return ResponseEntity.ok("Danh sách tin");
     }
 
     @PostMapping("/jobs/{id}/approve")
-    @Operation(summary = "Duyệt tin tuyển dụng", description = "Phê duyệt tin tuyển dụng — chuyển trạng thái từ PENDING_APPROVAL sang ACTIVE. Tin sẽ hiển thị công khai cho ứng viên.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Duyệt tin thành công — tin chuyển sang ACTIVE", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy tin tuyển dụng", content = @Content)
-    })
-    public ResponseEntity<?> approveJob(
-            @Parameter(description = "ID của tin tuyển dụng cần duyệt", example = "1", required = true)
-            @PathVariable Long id
-    ) {
+    public ResponseEntity<?> approveJob(@PathVariable Long id) {
         return ResponseEntity.ok("Duyệt tin thành công");
     }
 
     @PostMapping("/jobs/{id}/reject")
-    @Operation(summary = "Từ chối tin tuyển dụng", description = "Từ chối tin tuyển dụng kèm lý do. Hệ thống gửi email thông báo cho employer.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Từ chối tin thành công — email thông báo đã được gửi", content = @Content),
-        @ApiResponse(responseCode = "400", description = "Thiếu lý do từ chối", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy tin tuyển dụng", content = @Content)
-    })
-    public ResponseEntity<?> rejectJob(
-            @Parameter(description = "ID của tin tuyển dụng cần từ chối", example = "1", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "Lý do từ chối (bắt buộc)", example = "Nội dung không phù hợp", required = true)
-            @RequestParam String reason
-    ) {
+    public ResponseEntity<?> rejectJob(@PathVariable Long id, @RequestParam String reason) {
         return ResponseEntity.ok("Từ chối tin");
     }
 
     @DeleteMapping("/jobs/{id}")
-    @Operation(summary = "Xóa tin vi phạm", description = """
-            Xóa tin tuyển dụng vi phạm chính sách nền tảng.
-            Có thể kèm lý do xóa để ghi log.
-            Tin sẽ bị xóa vĩnh viễn khỏi hệ thống.
-            """)
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Xóa tin thành công", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy tin tuyển dụng", content = @Content)
-    })
-    public ResponseEntity<?> deleteJob(
-            @Parameter(description = "ID của tin tuyển dụng cần xóa", example = "1", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "Lý do xóa (ghi log)", example = "Nội dung vi phạm chính sách")
-            @RequestParam(required = false) String reason
-    ) {
+    public ResponseEntity<?> deleteJob(@PathVariable Long id, @RequestParam(required = false) String reason) {
         return ResponseEntity.ok("Xóa tin thành công");
     }
 
-    //QUẢN LÝ NGÀNH NGHỀ 
     @GetMapping("/categories")
-    @Operation(summary = "Danh sách ngành nghề", description = "Lấy danh sách tất cả ngành nghề đang có trong hệ thống.")
-    @ApiResponse(responseCode = "200", description = "Danh sách ngành nghề", content = @Content)
     public ResponseEntity<?> getCategories() {
         return ResponseEntity.ok("Danh sách ngành");
     }
 
     @PostMapping("/categories")
-    @Operation(summary = "Thêm ngành nghề mới", description = "Tạo một ngành nghề mới (ví dụ: Công nghệ thông tin, Kế toán, Xây dựng...). Tên ngành phải chưa tồn tại.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Tạo ngành nghề mới thành công", content = @Content),
-        @ApiResponse(responseCode = "400", description = "Tên ngành đã tồn tại hoặc dữ liệu không hợp lệ", content = @Content)
-    })
     public ResponseEntity<?> createCategory() {
         return ResponseEntity.ok("Tạo ngành thành công");
     }
 
     @PutMapping("/categories/{id}")
-    @Operation(summary = "Cập nhật ngành nghề", description = "Chỉnh sửa thông tin ngành nghề (tên, mô tả).")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Cập nhật ngành nghề thành công", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy ngành nghề", content = @Content)
-    })
-    public ResponseEntity<?> updateCategory(
-            @Parameter(description = "ID của ngành nghề cần sửa", example = "1", required = true)
-            @PathVariable Long id
-    ) {
+    public ResponseEntity<?> updateCategory(@PathVariable Long id) {
         return ResponseEntity.ok("Cập nhật ngành thành công");
     }
 
     @DeleteMapping("/categories/{id}")
-    @Operation(summary = "Xóa ngành nghề", description = """
-            Xóa ngành nghề khỏi hệ thống.
-            Chỉ xóa được nếu không có công việc nào đang thuộc ngành này.
-            """)
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Xóa ngành nghề thành công", content = @Content),
-        @ApiResponse(responseCode = "400", description = "Không thể xóa — ngành đang có công việc liên kết", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Không tìm thấy ngành nghề", content = @Content)
-    })
-    public ResponseEntity<?> deleteCategory(
-            @Parameter(description = "ID của ngành nghề cần xóa", example = "1", required = true)
-            @PathVariable Long id
-    ) {
+    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
         return ResponseEntity.ok("Xóa ngành thành công");
     }
 }

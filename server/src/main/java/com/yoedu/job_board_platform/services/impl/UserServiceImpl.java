@@ -35,13 +35,6 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final ProfileService profileService;
 
-    /**
-     * Tạo mới một người dùng dựa trên thông tin từ CreateUserRequest.
-     * 
-     * @param request thông tin người dùng cần tạo
-     * @return UserResponse thông tin người dùng đã được tạo
-     * @throws ConflictException nếu email đã tồn tại
-     */
     @Override
     @Transactional
     public UserResponse create(CreateUserRequest request) {
@@ -61,15 +54,6 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
-    /**
-     * Cập nhật thông tin người dùng dựa trên id và thông tin từ UpdateUserRequest.
-     * 
-     * @param id      id của người dùng cần cập nhật
-     * @param request thông tin cập nhật
-     * @return UserResponse thông tin người dùng đã được cập nhật
-     * @throws BadRequestException nếu email đã tồn tại, không tìm thấy người dùng
-     *                             hoặc có lỗi trong quá trình cập nhật người dùng
-     */
     @Override
     @Transactional
     public UserResponse update(UUID id, UpdateUserRequest request) {
