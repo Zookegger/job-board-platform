@@ -2,29 +2,35 @@ package com.yoedu.job_board_platform.services;
 
 import java.util.UUID;
 
-import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
 
-/**
- * Service quản trị hệ thống.
- * Xử lý phê duyệt và từ chối công ty đăng ký.
- */
+import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
+import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
+
 public interface AdminService {
+    Page<PendingCompanyResponse> getPendingCompanies(
+            int page,
+            int size,
+            String keyword,
+            Boolean hasTaxCode,
+            Boolean hasContact,
+            String sortBy,
+            String direction);
 
     /**
-     * Phê duyệt công ty đã đăng ký.
-     * Chuyển trạng thái công ty từ PENDING sang APPROVED.
+     * Approves a registered company and marks it public.
      *
-     * @param companyId ID của công ty cần duyệt
-     * @throws ResourceNotFoundException nếu không tìm thấy công ty
+     * @param companyId company ID to approve
+     * @throws ResourceNotFoundException when the company does not exist
      */
     void approveCompany(UUID companyId);
 
     /**
-     * Từ chối phê duyệt công ty.
-     * Chuyển trạng thái công ty từ PENDING sang REJECTED kèm lý do.
+     * Rejects a registered company with an admin-provided reason.
      *
-     * @param companyId ID của công ty cần từ chối
-     * @throws ResourceNotFoundException nếu không tìm thấy công ty
+     * @param companyId company ID to reject
+     * @param reason rejection reason
+     * @throws ResourceNotFoundException when the company does not exist
      */
-    void rejectCompany(UUID companyId);
+    void rejectCompany(UUID companyId, String reason);
 }
