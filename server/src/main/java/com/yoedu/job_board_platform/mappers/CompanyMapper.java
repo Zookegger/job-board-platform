@@ -39,6 +39,7 @@ public interface CompanyMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "approvedAt", ignore = true)
     @Mapping(target = "rejectionReason", ignore = true)
+    @Mapping(target = "reviewReason", ignore = true)
     // TODO: phone + email sẽ được cập nhật qua form trong Employer Dashboard (PUT /api/jobs/my-company)
     Company toEntity(CompanyRegisterRequest request);
 
@@ -59,6 +60,7 @@ public interface CompanyMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "approvedAt", ignore = true)
     @Mapping(target = "rejectionReason", ignore = true)
+    @Mapping(target = "reviewReason", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(CompanyRequest request, @MappingTarget Company company);
 }

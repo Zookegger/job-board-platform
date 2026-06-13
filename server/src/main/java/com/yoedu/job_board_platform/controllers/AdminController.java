@@ -2,6 +2,7 @@ package com.yoedu.job_board_platform.controllers;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,8 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
+import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.services.AdminService;
 
@@ -35,8 +38,7 @@ public class AdminController implements AdminApi {
     @GetMapping("/users")
     public ResponseEntity<?> getUsers(
             @RequestParam(required = false) UserRole role,
-            @RequestParam(defaultValue = "0") int page
-    ) {
+            @RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok("Danh sách user");
     }
 
@@ -56,26 +58,40 @@ public class AdminController implements AdminApi {
     }
 
     @GetMapping("/companies/pending")
-    public ResponseEntity<?> getPendingCompanies(@RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok("Danh sách công ty chờ duyệt");
+    public ResponseEntity<Page<PendingCompanyResponse>> getPendingCompanies(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Boolean hasTaxCode,
+            @RequestParam(required = false) Boolean hasContact,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        return ResponseEntity.ok(adminService.getPendingCompanies(
+                page,
+                size,
+                keyword,
+                hasTaxCode,
+                hasContact,
+                sortBy,
+                direction));
     }
 
     @PostMapping("/companies/{id}/approve")
-    public ResponseEntity<?> approveCompany(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> approveCompany(@PathVariable UUID id) {
         adminService.approveCompany(id);
-        return ResponseEntity.ok("Duyệt công ty thành công");
+        return ResponseEntity.ok(new ApiResponse("Duyệt công ty thành công"));
     }
 
     @PostMapping("/companies/{id}/reject")
-    public ResponseEntity<?> rejectCompany(@PathVariable Long id, @RequestParam String reason) {
-        return ResponseEntity.ok("Từ chối công ty");
+    public ResponseEntity<ApiResponse> rejectCompany(@PathVariable UUID id, @RequestParam String reason) {
+        adminService.rejectCompany(id, reason);
+        return ResponseEntity.ok(new ApiResponse("Từ chối công ty thành công"));
     }
 
     @GetMapping("/jobs")
     public ResponseEntity<?> getAllJobs(
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page
-    ) {
+            @RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok("Danh sách tin");
     }
 

@@ -26,6 +26,13 @@ export interface CompanyResponse {
 	approvedAt: string | null;
 }
 
+export interface AdminPendingCompanyResponse extends CompanyResponse {
+	employerName: string | null;
+	employerEmail: string | null;
+	employerPhone: string | null;
+	roleInCompany: string | null;
+}
+
 export const CompanyStatus = {
 	PENDING: "PENDING",
 	APPROVED: "APPROVED",

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,19 +18,29 @@ import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.services.CompanyService;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(ApiPaths.BASE + "/company")
+/**
+ * Controller xử lý các API liên quan đến thông tin công ty.
+ * Hỗ trợ xem, cập nhật thông tin công ty và tra cứu công ty từ bài đăng tuyển
+ * dụng.
+ */
 public class CompanyController implements CompanyApi {
     private final CompanyService companyService;
     private final SecurityUtil securityUtil;
 
     @Override
     @GetMapping("/employer")
+    /**
+     * Lấy thông tin công ty của nhà tuyển dụng hiện tại.
+     * Yêu cầu xác thực — người dùng phải đăng nhập.
+     *
+     * @return CompanyResponse thông tin công ty
+     */
     public ResponseEntity<CompanyResponse> findCompanyByEmployerId() {
         UUID employerId = securityUtil.getCurrentUserId();
         CompanyResponse company = companyService.findCompanyByEmployerId(employerId);
@@ -39,6 +50,14 @@ public class CompanyController implements CompanyApi {
     @Override
     @PutMapping
     @PreAuthorize("hasRole('EMPLOYER')")
+    /**
+     * Cập nhật thông tin công ty của nhà tuyển dụng hiện tại.
+     * Các trường null trong request được bỏ qua (partial update).
+     * Yêu cầu role EMPLOYER.
+     *
+     * @param request thông tin công ty cần cập nhật
+     * @return CompanyResponse thông tin công ty sau khi cập nhật
+     */
     public ResponseEntity<CompanyResponse> update(@Valid @RequestBody CompanyRequest request) {
         UUID employerId = securityUtil.getCurrentUserId();
         CompanyResponse updated = companyService.update(employerId, request);
@@ -47,12 +66,25 @@ public class CompanyController implements CompanyApi {
 
     @Override
     @GetMapping("/job-post")
+    /**
+     * Lấy thông tin công ty từ bài đăng tuyển dụng.
+     * API công khai — không yêu cầu xác thực.
+     *
+     * @param jobPostId UUID của bài đăng tuyển dụng
+     * @return CompanyResponse thông tin công ty
+     */
     public ResponseEntity<CompanyResponse> getCompanyByJobPost(UUID jobPostId) {
         return ResponseEntity.ok(companyService.getCompanyByJobPost(jobPostId));
     }
 
     @Override
     @GetMapping
+    /**
+     * Lấy danh sách tất cả các công ty trên hệ thống.
+     * API công khai — không yêu cầu xác thực.
+     *
+     * @return danh sách CompanyResponse
+     */
     public ResponseEntity<List<CompanyResponse>> listCompanies() {
         return ResponseEntity.ok(companyService.listCompanies());
     }

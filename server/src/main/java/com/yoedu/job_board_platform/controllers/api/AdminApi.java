@@ -2,8 +2,10 @@ package com.yoedu.job_board_platform.controllers.api;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
+import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.models.UserRole;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,14 +64,20 @@ public interface AdminApi {
 
     @Operation(summary = "Danh sách công ty chờ duyệt", description = """
             Lấy danh sách các công ty đang chờ admin phê duyệt (status = PENDING).
-            Dùng cho màn hình kiểm duyệt công ty.
+            Hỗ trợ tìm kiếm, lọc và phân trang. Dùng cho màn hình kiểm duyệt công ty.
             """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Danh sách công ty chờ duyệt (có phân trang)", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Không có quyền truy cập", content = @Content)
+            @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
     })
-    ResponseEntity<?> getPendingCompanies(
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") int page);
+    ResponseEntity<Page<PendingCompanyResponse>> getPendingCompanies(
+            @Parameter(description = "Số trang bắt đầu từ 0", example = "0") int page,
+            @Parameter(description = "Số công ty mỗi trang", example = "10") int size,
+            @Parameter(description = "Từ khóa tìm theo tên, email, phone, mã số thuế, địa chỉ, website") String keyword,
+            @Parameter(description = "true: có mã số thuế, false: thiếu mã số thuế") Boolean hasTaxCode,
+            @Parameter(description = "true: có email/phone, false: thiếu liên hệ") Boolean hasContact,
+            @Parameter(description = "createdAt, companyName hoặc taxCode", example = "createdAt") String sortBy,
+            @Parameter(description = "asc hoặc desc", example = "desc") String direction);
 
     @Operation(summary = "Duyệt công ty", description = "Phê duyệt công ty — sau khi duyệt, employer có thể đăng tin tuyển dụng. Hệ thống gửi email thông báo cho employer.")
     @ApiResponses({
@@ -77,7 +85,7 @@ public interface AdminApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
     })
     ResponseEntity<?> approveCompany(
-            @Parameter(description = "ID của công ty cần duyệt", example = "1", required = true) UUID id);
+            @Parameter(description = "ID công ty cần duyệt", required = true) UUID id);
 
     @Operation(summary = "Từ chối công ty", description = "Từ chối phê duyệt công ty kèm lý do. Hệ thống gửi email thông báo kèm lý do từ chối cho employer.")
     @ApiResponses({
@@ -86,8 +94,8 @@ public interface AdminApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
     })
     ResponseEntity<?> rejectCompany(
-            @Parameter(description = "ID của công ty cần từ chối", example = "1", required = true) Long id,
-            @Parameter(description = "Lý do từ chối (bắt buộc)", example = "Thông tin công ty không chính xác", required = true) String reason);
+            @Parameter(description = "ID công ty cần từ chối", required = true) UUID id,
+            @Parameter(description = "Lý do từ chối (bắt buộc)", required = true) String reason);
 
     @Operation(summary = "Danh sách tất cả tin tuyển dụng", description = """
             Lấy danh sách tất cả tin tuyển dụng trên hệ thống, bao gồm cả tin của tất cả công ty.

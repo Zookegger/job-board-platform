@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
@@ -13,6 +12,7 @@ import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.mappers.CompanyMapper;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyReviewReason;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
@@ -24,13 +24,13 @@ import com.yoedu.job_board_platform.services.CompanyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
-@RequiredArgsConstructor
-@Slf4j
 /**
  * Triển khai CompanyService. Xử lý các thao tác liên quan đến công ty
  * như cập nhật thông tin, lấy thông tin công ty của nhà tuyển dụng hiện tại.
  */
+@Service
+@RequiredArgsConstructor
+@Slf4j
 public class CompanyServiceImpl implements CompanyService {
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper;
@@ -38,7 +38,11 @@ public class CompanyServiceImpl implements CompanyService {
     private final JobRepository jobRepository;
 
     @Override
-    @Transactional
+    /**
+     * Cập nhật thông tin công ty.
+     * Kiểm tra quyền EMPLOYER, cập nhật các trường không null,
+     * và đưa công ty về trạng thái chờ duyệt nếu companyName hoặc taxCode thay đổi.
+     */
     public CompanyResponse update(UUID userId, CompanyRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
@@ -49,9 +53,18 @@ public class CompanyServiceImpl implements CompanyService {
 
         Company company = user.getProfile().getEmployerDetail().getCompany();
 
+        boolean requiresReview = hasChanged(request.companyName(), company.getCompanyName())
+                || hasChanged(request.taxCode(), company.getTaxCode());
+
         companyMapper.updateEntity(request, company);
 
-        return companyMapper.toResponse(companyRepository.save(company));
+        if (requiresReview && company.isApproved()) {
+            company.markForReview(CompanyReviewReason.INFO_UPDATED);
+        }
+
+        Company saved = companyRepository.save(company);
+
+        return companyMapper.toResponse(saved);
     }
 
     @Override
@@ -80,4 +93,15 @@ public class CompanyServiceImpl implements CompanyService {
         return companyRepository.findAll().stream().map(companyMapper::toResponse).toList();
     }
 
+    /**
+     * Kiểm tra xem giá trị mới có khác giá trị cũ hay không.
+     * Trả về false nếu giá trị mới là null (không có thay đổi).
+     *
+     * @param newValue giá trị mới (có thể null)
+     * @param oldValue giá trị cũ
+     * @return true nếu newValue khác null và khác oldValue
+     */
+    private boolean hasChanged(String newValue, String oldValue) {
+        return newValue != null && !newValue.equals(oldValue);
+    }
 }
