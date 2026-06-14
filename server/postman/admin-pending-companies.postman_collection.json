@@ -1,0 +1,261 @@
+{
+  "info": {
+    "name": "Admin - Pending Companies",
+    "description": "End-to-end checks for viewing pending company approvals: create pending company, login admin, list pending companies, search/filter pending companies.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register Pending Company",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"creates a company account waiting for approval\", function () {",
+              "  pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companyName\": \"Postman Pending {{$timestamp}}\",\n  \"taxCode\": \"PM{{$timestamp}}\",\n  \"address\": \"123 Postman Street, Ho Chi Minh City\",\n  \"fullName\": \"Postman HR\",\n  \"userEmail\": \"postman.hr.{{$timestamp}}@example.com\",\n  \"userPhone\": \"0901234567\",\n  \"password\": \"password123\",\n  \"confirmPassword\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register/company",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register",
+            "company"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"admin login succeeds\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var res = pm.response.json();",
+              "if (res.accessToken) pm.environment.set(\"accessToken\", res.accessToken);",
+              "if (res.refreshToken) pm.environment.set(\"refreshToken\", res.refreshToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@yoedu.com\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Pending Companies",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"returns 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var page = pm.response.json();",
+              "",
+              "pm.test(\"returns Spring page shape\", function () {",
+              "  pm.expect(page).to.have.property(\"content\");",
+              "  pm.expect(page.content).to.be.an(\"array\");",
+              "  pm.expect(page).to.have.property(\"totalElements\");",
+              "  pm.expect(page).to.have.property(\"totalPages\");",
+              "  pm.expect(page).to.have.property(\"number\");",
+              "});",
+              "",
+              "pm.test(\"all returned companies are pending\", function () {",
+              "  page.content.forEach(function (company) {",
+              "    pm.expect(company.status).to.eql(\"PENDING\");",
+              "    pm.expect(company.isApproved).to.eql(false);",
+              "  });",
+              "});",
+              "",
+              "pm.test(\"review fields are available\", function () {",
+              "  if (page.content.length === 0) return;",
+              "  var company = page.content[0];",
+              "  pm.expect(company).to.have.property(\"id\");",
+              "  pm.expect(company).to.have.property(\"companyName\");",
+              "  pm.expect(company).to.have.property(\"taxCode\");",
+              "  pm.expect(company).to.have.property(\"address\");",
+              "  pm.expect(company).to.have.property(\"createdAt\");",
+              "  pm.expect(company).to.have.property(\"employerName\");",
+              "  pm.expect(company).to.have.property(\"employerEmail\");",
+              "  pm.expect(company).to.have.property(\"employerPhone\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "accessToken={{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/companies/pending?page=0&size=10&sortBy=createdAt&direction=desc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "companies",
+            "pending"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            },
+            {
+              "key": "sortBy",
+              "value": "createdAt"
+            },
+            {
+              "key": "direction",
+              "value": "desc"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Search and Filter Pending Companies",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"returns 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var page = pm.response.json();",
+              "",
+              "pm.test(\"search/filter response is paged\", function () {",
+              "  pm.expect(page.content).to.be.an(\"array\");",
+              "});",
+              "",
+              "pm.test(\"filtered companies match pending criteria\", function () {",
+              "  page.content.forEach(function (company) {",
+              "    pm.expect(company.status).to.eql(\"PENDING\");",
+              "    pm.expect(company.taxCode).to.not.be.empty;",
+              "    pm.expect(company.email).to.satisfy(function (value) {",
+              "      return value === null || value === \"\";",
+              "    });",
+              "    pm.expect(company.phone).to.satisfy(function (value) {",
+              "      return value === null || value === \"\";",
+              "    });",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "accessToken={{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/companies/pending?page=0&size=10&keyword=Postman%20Pending&hasTaxCode=true&hasContact=false&sortBy=createdAt&direction=desc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "companies",
+            "pending"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            },
+            {
+              "key": "keyword",
+              "value": "Postman Pending"
+            },
+            {
+              "key": "hasTaxCode",
+              "value": "true"
+            },
+            {
+              "key": "hasContact",
+              "value": "false"
+            },
+            {
+              "key": "sortBy",
+              "value": "createdAt"
+            },
+            {
+              "key": "direction",
+              "value": "desc"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -35,6 +35,14 @@ export interface EmployerProfileResponse {
 	companyId: string;
 	companyName: string;
 	roleInCompany: string;
+	logoUrl: string | null;
+	address: string | null;
+	description: string | null;
+	website: string | null;
+	companyEmail: string | null;
+	companyPhone: string | null;
+	taxCode: string | null;
+	companyStatus: string | null;
 }
 
 export type UploadResumeRequest = {

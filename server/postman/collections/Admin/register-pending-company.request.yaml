@@ -1,0 +1,29 @@
+$kind: http-request
+name: Register Pending Company
+method: POST
+url: '{{baseUrl}}/auth/register/company'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "companyName": "Postman Pending {{$timestamp}}",
+      "taxCode": "PM{{$timestamp}}",
+      "address": "123 Postman Street, Ho Chi Minh City",
+      "fullName": "Postman HR",
+      "userEmail": "postman.hr.{{$timestamp}}@example.com",
+      "userPhone": "0901234567",
+      "password": "password123",
+      "confirmPassword": "password123"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("creates a company account waiting for approval", function () {
+        pm.expect(pm.response.code).to.eql(201);
+      });
+
