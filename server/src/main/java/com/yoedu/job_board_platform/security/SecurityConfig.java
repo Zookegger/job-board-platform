@@ -29,12 +29,14 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-	private static final String[] AUTH_WHITELIST = {
+	private static final String[] PUBLIC_WHITELIST = {
 			"/api/auth/login",
 			"/api/auth/register/company",
 			"/api/auth/register/candidate",
 			"/api/auth/refresh-token",
-			"/api/auth/logout"
+			"/api/auth/logout",
+			"/api/public/**",
+			"/uploads/**", "/api/profile/resume/preview"
 	};
 
 	private static final String[] SWAGGER_WHITELIST = {
@@ -72,9 +74,7 @@ public class SecurityConfig {
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers(AUTH_WHITELIST).permitAll()
-						.requestMatchers("/api/public/**").permitAll()
-						.requestMatchers("/uploads/**", "/api/profile/resume/preview").permitAll()
+						.requestMatchers(PUBLIC_WHITELIST).permitAll()
 						.requestMatchers(SWAGGER_WHITELIST).permitAll()
 						.anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter,
