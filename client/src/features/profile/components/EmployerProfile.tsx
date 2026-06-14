@@ -193,9 +193,9 @@ export default function EmployerProfile() {
 										disabled={isSubmitting || updateProfile.isPending}
 									>
 										{isSubmitting || updateProfile.isPending ? (
-											<Loader2 className='h-4 w-4 animate-spin' />
+											<Loader2 key='loader' className='h-4 w-4 animate-spin' />
 										) : (
-											<Save className='h-4 w-4' />
+											<Save key='save' className='h-4 w-4' />
 										)}
 										Lưu thay đổi
 									</Button>

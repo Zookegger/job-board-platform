@@ -18,6 +18,8 @@ const companySchema = z.object({
 	address: z.string().min(1, "Địa chỉ không được để trống"),
 	description: z.string().optional(),
 	website: z.string().url("Website không hợp lệ").or(z.literal("")).optional(),
+	companyEmail: z.string().email("Email không hợp lệ").or(z.literal("")).optional(),
+	companyPhone: z.string().max(20, "Tối đa 20 ký tự").optional(),
 });
 
 type CompanyFormData = z.infer<typeof companySchema>;
@@ -42,6 +44,8 @@ export default function EmployerCompanyPage() {
 			address: profile?.address ?? "",
 			description: profile?.description ?? "",
 			website: profile?.website ?? "",
+			companyEmail: profile?.companyEmail ?? "",
+			companyPhone: profile?.companyPhone ?? "",
 		},
 	});
 
@@ -210,6 +214,36 @@ export default function EmployerCompanyPage() {
 								</Field>
 
 								<Field>
+									<FieldLabel htmlFor='companyEmail'>Email công ty</FieldLabel>
+									<FieldContent>
+										<Input
+											id='companyEmail'
+											type='email'
+											placeholder='contact@company.com'
+											{...register("companyEmail")}
+										/>
+									</FieldContent>
+									<FieldError
+										errors={errors.companyEmail ? [{ message: errors.companyEmail.message }] : []}
+									/>
+								</Field>
+
+								<Field>
+									<FieldLabel htmlFor='companyPhone'>Số điện thoại công ty</FieldLabel>
+									<FieldContent>
+										<Input
+											id='companyPhone'
+											type='tel'
+											placeholder='02812345678'
+											{...register("companyPhone")}
+										/>
+									</FieldContent>
+									<FieldError
+										errors={errors.companyPhone ? [{ message: errors.companyPhone.message }] : []}
+									/>
+								</Field>
+
+								<Field>
 									<FieldLabel htmlFor='description'>Mô tả công ty</FieldLabel>
 									<FieldContent>
 										<textarea
@@ -230,9 +264,9 @@ export default function EmployerCompanyPage() {
 									disabled={isSubmitting || updateProfile.isPending}
 								>
 									{isSubmitting || updateProfile.isPending ? (
-										<Loader2 className='h-4 w-4 animate-spin' />
+										<Loader2 key='loader' className='h-4 w-4 animate-spin' />
 									) : (
-										<Save className='h-4 w-4' />
+										<Save key='save' className='h-4 w-4' />
 									)}
 									Lưu thay đổi
 								</Button>

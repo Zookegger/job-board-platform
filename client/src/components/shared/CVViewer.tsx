@@ -25,7 +25,7 @@ import { useDeleteResume, usePreviewCV, useResume, useUpdateResume } from "@/hoo
 import { useToast } from "@/providers/ToastProvider";
 import getErrorMessage from "@/utils/getErrorMessage";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 function formatFileSize(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`;

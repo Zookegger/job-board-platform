@@ -22,6 +22,8 @@ export interface EmployerProfileRequest {
 	address?: string;
 	description?: string;
 	website?: string;
+	companyEmail?: string;
+	companyPhone?: string;
 	logoUrl?: string;
 }
 

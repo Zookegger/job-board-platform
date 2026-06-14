@@ -42,21 +42,28 @@ const buttonVariants = cva(
 	},
 );
 
-function Button({
-	className,
-	variant = "default",
-	size = "default",
-	asChild = false,
-	type = "button",
-	...props
-}: React.ComponentProps<"button"> &
-	VariantProps<typeof buttonVariants> & {
-		asChild?: boolean;
-	}) {
+const Button = React.forwardRef<
+	HTMLButtonElement,
+	React.ComponentProps<"button"> &
+		VariantProps<typeof buttonVariants> & {
+			asChild?: boolean;
+		}
+>(function Button(
+	{
+		className,
+		variant = "default",
+		size = "default",
+		asChild = false,
+		type = "button",
+		...props
+	},
+	ref,
+) {
 	const Comp = asChild ? Slot.Root : "button";
 
 	return (
 		<Comp
+			ref={ref}
 			data-slot='button'
 			data-variant={variant}
 			data-size={size}
@@ -65,7 +72,7 @@ function Button({
 			{...props}
 		/>
 	);
-}
+});
 
 // eslint-disable-next-line react-refresh/only-export-components
 export { Button, buttonVariants };
