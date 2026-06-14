@@ -5,7 +5,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import AuthApi from "./auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 const client = axios.create({
 	baseURL: API_BASE_URL + "/api",
@@ -19,7 +19,8 @@ client.interceptors.response.use(
 		if (
 			error.response?.status === 401 &&
 			!error.config._retry &&
-			!error.config.url?.includes(ApiRoutes.REFRESH_TOKEN)
+			!error.config.url?.includes(ApiRoutes.REFRESH_TOKEN) &&
+			!error.config.url?.includes(ApiRoutes.ME)
 		) {
 			error.config._retry = true;
 			try {

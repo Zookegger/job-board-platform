@@ -66,4 +66,13 @@ public interface ProfileService {
      * @return String đường dẫn URL của ảnh đại diện
      */
     String uploadAvatar(MultipartFile file);
+
+    /**
+     * Upload logo công ty cho nhà tuyển dụng hiện tại.
+     * Chấp nhận định dạng hình ảnh, kích thước tối đa 5MB.
+     *
+     * @param file file ảnh logo cần upload
+     * @return String đường dẫn URL của logo công ty
+     */
+    String uploadCompanyLogo(MultipartFile file);
 }

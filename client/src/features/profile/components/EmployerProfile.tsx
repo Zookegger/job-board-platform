@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEmployerProfile, useUpdateEmployerProfile, useUploadAvatar } from "@/hooks/useProfile";
+import { useEmployerProfile, useUpdateEmployerProfile, useUploadAvatar, useUploadCompanyLogo } from "@/hooks/useProfile";
 import { employerProfileSchema, type EmployerProfileFormData } from "@/lib/schemas/profile";
 import { useToast } from "@/providers/ToastProvider";
 import getErrorMessage from "@/utils/getErrorMessage";
@@ -18,8 +18,10 @@ export default function EmployerProfile() {
 	const { data: profile, isLoading } = useEmployerProfile();
 	const updateProfile = useUpdateEmployerProfile();
 	const uploadAvatar = useUploadAvatar();
+	const uploadLogo = useUploadCompanyLogo();
 	const toast = useToast();
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const logoInputRef = useRef<HTMLInputElement>(null);
 	const [isEditing, setIsEditing] = useState(false);
 
 	const {
@@ -84,6 +86,22 @@ export default function EmployerProfile() {
 		} catch (error) {
 			toast.error(getErrorMessage(error));
 		}
+	};
+
+	const handleLogoClick = () => {
+		logoInputRef.current?.click();
+	};
+
+	const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		try {
+			await uploadLogo.mutateAsync(file);
+			toast.success("Đã cập nhật logo công ty");
+		} catch (error) {
+			toast.error(getErrorMessage(error));
+		}
+		e.target.value = "";
 	};
 
 	const cancelEdit = () => {
@@ -229,6 +247,44 @@ export default function EmployerProfile() {
 				</CardHeader>
 				<CardContent>
 					<div className='space-y-4'>
+						{/* Logo upload */}
+						<div className='flex items-center gap-4'>
+							<button
+								type='button'
+								onClick={handleLogoClick}
+								className='group relative flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted hover:border-primary/50'
+								disabled={uploadLogo.isPending}
+							>
+								{profile?.logoUrl ? (
+									<img
+										src={profile.logoUrl}
+										alt='Logo công ty'
+										className='h-full w-full object-contain p-1'
+									/>
+								) : (
+									<Building2 className='h-8 w-8 text-muted-foreground' />
+								)}
+								<div className='absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 opacity-0 transition-opacity group-hover:opacity-100'>
+									{uploadLogo.isPending ? (
+										<Loader2 className='h-5 w-5 animate-spin text-white' />
+									) : (
+										<Camera className='h-5 w-5 text-white' />
+									)}
+								</div>
+							</button>
+							<div>
+								<p className='text-sm font-medium'>Logo công ty</p>
+								<p className='text-xs text-muted-foreground'>Nhấn vào để thay đổi. PNG, JPG tối đa 5MB.</p>
+							</div>
+							<input
+								ref={logoInputRef}
+								type='file'
+								accept='image/*'
+								className='hidden'
+								onChange={handleLogoChange}
+							/>
+						</div>
+
 						<div>
 							<p className='text-sm text-muted-foreground'>Tên công ty</p>
 							<p className='font-medium'>{profile?.companyName || "—"}</p>
