@@ -7,15 +7,14 @@ export interface CompanyStatusResponse {
 	taxCode: string | null;
 	approvalStatus: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
 	submittedAt: string;
-	reviewedBy: string | null;
 	reviewNote: string | null;
 	reviewedAt: string | null;
 }
 
 export interface ApprovalLogResponse {
 	actorId: string;
-	oldStatus: string | null;
-	newStatus: string;
+	oldStatus: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED" | null;
+	newStatus: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
 	note: string | null;
 	createdAt: string;
 }
@@ -24,7 +23,7 @@ const companyStatusApi = {
 	/** Lấy trạng thái phê duyệt công ty của employer hiện tại. */
 	getStatus: (): Promise<CompanyStatusResponse> =>
 		client
-			.get("/employer/company/status")
+			.get("/company/status")
 			.then((r) => r.data)
 			.catch((error) => {
 				throw new ApiError(
@@ -36,7 +35,7 @@ const companyStatusApi = {
 	/** Lấy lịch sử phê duyệt công ty của employer hiện tại. */
 	getHistory: (): Promise<ApprovalLogResponse[]> =>
 		client
-			.get("/employer/company/approval-history")
+			.get("/company/approval-history")
 			.then((r) => r.data)
 			.catch((error) => {
 				throw new ApiError(

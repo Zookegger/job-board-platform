@@ -9,6 +9,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
+import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.User;
 
@@ -45,6 +46,19 @@ public interface CompanyMapper {
 
     @Mapping(target = "isApproved", source = "approved")
     CompanyResponse toResponse(Company company);
+
+    /**
+     * Chuyển đổi Company entity thành CompanyStatusResponse cho employer.
+     * approvalStatus ← status, name ← companyName, submittedAt ← createdAt,
+     * reviewNote ← rejectionReason, reviewedAt ← approvedAt.
+     */
+    @Mapping(target = "companyId", source = "id")
+    @Mapping(target = "name", source = "companyName")
+    @Mapping(target = "approvalStatus", source = "status")
+    @Mapping(target = "submittedAt", source = "createdAt")
+    @Mapping(target = "reviewNote", source = "rejectionReason")
+    @Mapping(target = "reviewedAt", source = "approvedAt")
+    CompanyStatusResponse toStatusResponse(Company company);
 
     /**
      * Cập nhật thông tin công ty từ CompanyRequest vào entity Company.

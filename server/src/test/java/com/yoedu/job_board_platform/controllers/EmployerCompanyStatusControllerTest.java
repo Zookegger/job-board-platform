@@ -117,13 +117,13 @@ class EmployerCompanyStatusControllerTest {
         return result.getResponse().getCookie("accessToken");
     }
 
-    // ── GET /api/employer/company/status ──────────────────────────────────────
+    // ── GET /api/company/status ───────────────────────────────────────────────
 
     @Test
     void getStatus_WithValidEmployerToken_Returns200AndPendingStatus() throws Exception {
         EmployerContext ctx = createEmployerWithCompany(CompanyStatus.PENDING, "1");
 
-        mockMvc.perform(get("/api/employer/company/status")
+        mockMvc.perform(get("/api/company/status")
                         .cookie(ctx.cookie()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.approvalStatus").value("PENDING"))
@@ -133,7 +133,7 @@ class EmployerCompanyStatusControllerTest {
 
     @Test
     void getStatus_WithoutToken_Returns401() throws Exception {
-        mockMvc.perform(get("/api/employer/company/status"))
+        mockMvc.perform(get("/api/company/status"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -147,7 +147,7 @@ class EmployerCompanyStatusControllerTest {
                 .build());
         Cookie adminCookie = loginAs(admin.getEmail(), "password123");
 
-        mockMvc.perform(get("/api/employer/company/status")
+        mockMvc.perform(get("/api/company/status")
                         .cookie(adminCookie))
                 .andExpect(status().isForbidden());
     }
@@ -169,19 +169,19 @@ class EmployerCompanyStatusControllerTest {
 
         Cookie cookie = loginAs(employer.getEmail(), "password123");
 
-        mockMvc.perform(get("/api/employer/company/status")
+        mockMvc.perform(get("/api/company/status")
                         .cookie(cookie))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").isNotEmpty());
     }
 
-    // ── GET /api/employer/company/approval-history ────────────────────────────
+    // ── GET /api/company/approval-history ─────────────────────────────────────
 
     @Test
     void getHistory_WithValidToken_ReturnsEmptyList() throws Exception {
         EmployerContext ctx = createEmployerWithCompany(CompanyStatus.APPROVED, "2");
 
-        mockMvc.perform(get("/api/employer/company/approval-history")
+        mockMvc.perform(get("/api/company/approval-history")
                         .cookie(ctx.cookie()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
@@ -189,7 +189,7 @@ class EmployerCompanyStatusControllerTest {
 
     @Test
     void getHistory_WithoutToken_Returns401() throws Exception {
-        mockMvc.perform(get("/api/employer/company/approval-history"))
+        mockMvc.perform(get("/api/company/approval-history"))
                 .andExpect(status().isUnauthorized());
     }
 }

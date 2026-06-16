@@ -1,8 +1,10 @@
 package com.yoedu.job_board_platform.dtos.company;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.yoedu.job_board_platform.models.CompanyStatus;
 
 /**
  * Thông tin trạng thái phê duyệt của công ty trả về cho employer.
@@ -12,12 +14,8 @@ public record CompanyStatusResponse(
         UUID companyId,
         String name,
         String taxCode,
-        /** Tên enum dạng String: PENDING | APPROVED | REJECTED | SUSPENDED */
-        String approvalStatus,
-        /** ISO 8601 */
-        String submittedAt,
-        UUID reviewedBy,
+        CompanyStatus approvalStatus,
+        OffsetDateTime submittedAt,
         String reviewNote,
-        /** ISO 8601, null nếu chưa duyệt */
-        String reviewedAt
+        OffsetDateTime reviewedAt
 ) {}
