@@ -36,7 +36,8 @@ public class SecurityConfig {
 			"/api/auth/refresh-token",
 			"/api/auth/logout",
 			"/api/public/**",
-			"/uploads/**", "/api/profile/resume/preview"
+			"/uploads/**", "/api/profile/resume/preview",
+			"/api/company", "/api/company/job-post"
 	};
 
 	private static final String[] SWAGGER_WHITELIST = {
