@@ -36,10 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-/**
- * Triển khai ProfileService. Xử lý các thao tác CRUD trên hồ sơ người dùng
- * và upload avatar. Phân quyền dựa trên UserRole để phân biệt ứng viên/nhà tuyển dụng.
- */
 public class ProfileServiceImpl implements ProfileService {
     private final ProfileRepository profileRepository;
     private final ProfileMapper profileMapper;
@@ -136,6 +132,18 @@ public class ProfileServiceImpl implements ProfileService {
         }
         if (request.logoUrl() != null) {
             company.setLogoUrl(request.logoUrl());
+            companyChanged = true;
+        }
+        if (request.companyEmail() != null) {
+            company.setEmail(request.companyEmail());
+            companyChanged = true;
+        }
+        if (request.companyPhone() != null) {
+            company.setPhone(request.companyPhone());
+            companyChanged = true;
+        }
+        if (request.taxCode() != null) {
+            company.setTaxCode(request.taxCode());
             companyChanged = true;
         }
         if (companyChanged) {
