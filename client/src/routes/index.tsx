@@ -20,6 +20,7 @@ import CandidateSettingsPage from "@/features/candidate/SettingsPage";
 
 import EmployerApplicationsPage from "@/features/employer/ApplicationsPage";
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
+import EmployerCompanyStatusPage from "@/features/employer/CompanyStatusPage";
 import EmployerCreateJobPage from "@/features/employer/CreateJobPage";
 import EmployerDashboardPage from "@/features/employer/DashboardPage";
 import EmployerJobDetailPage from "@/features/employer/JobDetailPage";
@@ -107,6 +108,7 @@ export const router = createBrowserRouter([
 							{ path: RouterRoutes.EMPLOYER_JOB_DETAIL(":id"), element: <EmployerJobDetailPage /> },
 							{ path: RouterRoutes.EMPLOYER_APPLICATIONS, element: <EmployerApplicationsPage /> },
 							{ path: RouterRoutes.EMPLOYER_COMPANY, element: <EmployerCompanyPage /> },
+							{ path: RouterRoutes.EMPLOYER_COMPANY_STATUS, element: <EmployerCompanyStatusPage /> },
 							{ path: RouterRoutes.EMPLOYER_SETTINGS, element: <EmployerSettingsPage /> },
 						],
 					},

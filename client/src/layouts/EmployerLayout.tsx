@@ -1,6 +1,6 @@
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { Toaster } from "@/components/ui/sonner";
-import { Briefcase, Building2, LayoutDashboard, Menu, PlusCircle, Settings, Users } from "lucide-react";
+import { Briefcase, Building2, ClipboardCheck, LayoutDashboard, Menu, PlusCircle, Settings, Users } from "lucide-react";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ const navItems = [
 	{ to: "/employer/jobs/new", label: "Đăng tin tuyển dụng", icon: PlusCircle },
 	{ to: "/employer/applications", label: "Đơn ứng tuyển", icon: Users },
 	{ to: "/employer/company", label: "Công ty", icon: Building2 },
+	{ to: "/employer/company/status", label: "Trạng thái duyệt", icon: ClipboardCheck },
 	{ to: "/employer/settings", label: "Cài đặt", icon: Settings },
 ];
 

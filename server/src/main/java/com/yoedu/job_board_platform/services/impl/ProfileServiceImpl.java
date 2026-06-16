@@ -130,6 +130,14 @@ public class ProfileServiceImpl implements ProfileService {
             company.setWebsite(request.website());
             companyChanged = true;
         }
+        if (request.companyEmail() != null) {
+            company.setEmail(request.companyEmail());
+            companyChanged = true;
+        }
+        if (request.companyPhone() != null) {
+            company.setPhone(request.companyPhone());
+            companyChanged = true;
+        }
         if (request.logoUrl() != null) {
             company.setLogoUrl(request.logoUrl());
             companyChanged = true;

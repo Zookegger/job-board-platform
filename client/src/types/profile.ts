@@ -22,9 +22,9 @@ export interface EmployerProfileRequest {
 	address?: string;
 	description?: string;
 	website?: string;
-	logoUrl?: string;
 	companyEmail?: string;
 	companyPhone?: string;
+	logoUrl?: string;
 	taxCode?: string;
 }
 
