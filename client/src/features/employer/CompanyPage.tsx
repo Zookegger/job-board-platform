@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Camera, Globe, Loader2, Mail, MapPin, Pencil, Phone, Save, X } from "lucide-react";
+import { Building2, Camera, FileText, Globe, Loader2, Mail, MapPin, Pencil, Phone, Save, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,6 +18,13 @@ const companySchema = z.object({
 	address: z.string().min(1, "Địa chỉ không được để trống"),
 	description: z.string().optional(),
 	website: z.string().url("Website không hợp lệ").or(z.literal("")).optional(),
+	companyEmail: z.string().email("Email không hợp lệ").or(z.literal("")).optional(),
+	companyPhone: z
+		.string()
+		.regex(/^(\\+84|84|0)(3|5|7|8|9)[0-9]{8}$/, "Số điện thoại không hợp lệ (phải 10 số, bắt đầu bằng 0)")
+		.or(z.literal(""))
+		.optional(),
+	taxCode: z.string().max(20, "Mã số thuế không được quá 20 ký tự").optional(),
 });
 
 type CompanyFormData = z.infer<typeof companySchema>;
@@ -42,6 +49,9 @@ export default function EmployerCompanyPage() {
 			address: profile?.address ?? "",
 			description: profile?.description ?? "",
 			website: profile?.website ?? "",
+			companyEmail: profile?.companyEmail ?? "",
+			companyPhone: profile?.companyPhone ?? "",
+			taxCode: profile?.taxCode ?? "",
 		},
 	});
 
@@ -112,7 +122,7 @@ export default function EmployerCompanyPage() {
 					<button
 						type='button'
 						onClick={() => logoInputRef.current?.click()}
-						className='group relative flex h-24 w-24 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-muted-foreground/30 bg-muted hover:border-primary/50'
+						className='group relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-muted-foreground/30 bg-muted hover:border-primary/50'
 						disabled={uploadLogo.isPending}
 					>
 						{profile?.logoUrl ? (
@@ -190,9 +200,7 @@ export default function EmployerCompanyPage() {
 											{...register("address")}
 										/>
 									</FieldContent>
-									<FieldError
-										errors={errors.address ? [{ message: errors.address.message }] : []}
-									/>
+									<FieldError errors={errors.address ? [{ message: errors.address.message }] : []} />
 								</Field>
 
 								<Field>
@@ -204,9 +212,47 @@ export default function EmployerCompanyPage() {
 											{...register("website")}
 										/>
 									</FieldContent>
+									<FieldError errors={errors.website ? [{ message: errors.website.message }] : []} />
+								</Field>
+
+								<Field>
+									<FieldLabel htmlFor='companyEmail'>Email công ty</FieldLabel>
+									<FieldContent>
+										<Input
+											id='companyEmail'
+											placeholder='contact@company.com'
+											{...register("companyEmail")}
+										/>
+									</FieldContent>
 									<FieldError
-										errors={errors.website ? [{ message: errors.website.message }] : []}
+										errors={errors.companyEmail ? [{ message: errors.companyEmail.message }] : []}
 									/>
+								</Field>
+
+								<Field>
+									<FieldLabel htmlFor='companyPhone'>Số điện thoại công ty</FieldLabel>
+									<FieldContent>
+										<Input
+											id='companyPhone'
+											placeholder='02812345678'
+											{...register("companyPhone")}
+										/>
+									</FieldContent>
+									<FieldError
+										errors={errors.companyPhone ? [{ message: errors.companyPhone.message }] : []}
+									/>
+								</Field>
+
+								<Field>
+									<FieldLabel htmlFor='taxCode'>Mã số thuế</FieldLabel>
+									<FieldContent>
+										<Input
+											id='taxCode'
+											placeholder='Mã số thuế'
+											{...register("taxCode")}
+										/>
+									</FieldContent>
+									<FieldError errors={errors.taxCode ? [{ message: errors.taxCode.message }] : []} />
 								</Field>
 
 								<Field>
@@ -249,14 +295,14 @@ export default function EmployerCompanyPage() {
 					) : (
 						<div className='space-y-4'>
 							<div className='flex items-start gap-3'>
-								<MapPin className='mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground' />
+								<MapPin className='mt-0.5 h-4 w-4 shrink-0 text-muted-foreground' />
 								<div>
 									<p className='text-sm text-muted-foreground'>Địa chỉ</p>
 									<p className='font-medium'>{profile?.address || "—"}</p>
 								</div>
 							</div>
 							<div className='flex items-start gap-3'>
-								<Globe className='mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground' />
+								<Globe className='mt-0.5 h-4 w-4 shrink-0 text-muted-foreground' />
 								<div>
 									<p className='text-sm text-muted-foreground'>Website</p>
 									{profile?.website ? (
@@ -274,17 +320,24 @@ export default function EmployerCompanyPage() {
 								</div>
 							</div>
 							<div className='flex items-start gap-3'>
-								<Mail className='mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground' />
+								<Mail className='mt-0.5 h-4 w-4 shrink-0 text-muted-foreground' />
 								<div>
 									<p className='text-sm text-muted-foreground'>Email công ty</p>
 									<p className='font-medium'>{profile?.companyEmail || "—"}</p>
 								</div>
 							</div>
 							<div className='flex items-start gap-3'>
-								<Phone className='mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground' />
+								<Phone className='mt-0.5 h-4 w-4 shrink-0 text-muted-foreground' />
 								<div>
 									<p className='text-sm text-muted-foreground'>Số điện thoại công ty</p>
 									<p className='font-medium'>{profile?.companyPhone || "—"}</p>
+								</div>
+							</div>
+							<div className='flex items-start gap-3'>
+								<FileText className='mt-0.5 h-4 w-4 shrink-0 text-muted-foreground' />
+								<div>
+									<p className='text-sm text-muted-foreground'>Mã số thuế</p>
+									<p className='font-medium'>{profile?.taxCode || "—"}</p>
 								</div>
 							</div>
 							<div>
