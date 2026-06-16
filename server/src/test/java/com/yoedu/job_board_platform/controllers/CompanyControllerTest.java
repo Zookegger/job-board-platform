@@ -273,7 +273,7 @@ class CompanyControllerTest {
         mockMvc.perform(put("/api/company")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     // -----------------------------------------------------------------
