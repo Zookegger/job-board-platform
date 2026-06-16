@@ -29,6 +29,15 @@ public record EmployerProfileRequest(
         @Size(max = 255) String website,
 
         @Schema(description = "URL logo công ty", example = "https://example.com/logo.png")
-        String logoUrl
+        String logoUrl,
+
+        @Schema(description = "Email công ty", example = "contact@company.com")
+        @Size(max = 255) String companyEmail,
+
+        @Schema(description = "Số điện thoại công ty", example = "02812345678")
+        @Size(max = 15) String companyPhone,
+
+        @Schema(description = "Mã số thuế", example = "0123456789")
+        @Size(max = 20) String taxCode
 ) {
 }

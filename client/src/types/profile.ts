@@ -23,6 +23,9 @@ export interface EmployerProfileRequest {
 	description?: string;
 	website?: string;
 	logoUrl?: string;
+	companyEmail?: string;
+	companyPhone?: string;
+	taxCode?: string;
 }
 
 export interface EmployerProfileResponse {

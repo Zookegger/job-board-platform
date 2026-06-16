@@ -105,6 +105,9 @@ public class Job {
     @Column(name = "expiration_date")
     private OffsetDateTime expirationDate;
 
+    @Column(name = "rejection_reason", columnDefinition = "text")
+    private String rejectionReason;
+
     @Column(name = "created_at", nullable = false)
     @CreatedDate
     private OffsetDateTime createdAt;
@@ -112,4 +115,8 @@ public class Job {
     @Column(name = "updated_at", nullable = false)
     @LastModifiedDate
     private OffsetDateTime updatedAt;
+
+    public boolean hasCategoriesChanged(Integer newCategoryId) {
+        return newCategoryId != null && !newCategoryId.equals(this.getCategory().getId());
+    }
 }
