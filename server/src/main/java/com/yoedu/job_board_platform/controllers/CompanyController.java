@@ -94,7 +94,7 @@ public class CompanyController implements CompanyApi {
 
     @Override
     @GetMapping("/status")
-    @PreAuthorize("hasRole('EMPLOYER')")
+    @PreAuthorize(AuthorizationConstants.EMPLOYER)
     /**
      * Lấy trạng thái phê duyệt hiện tại của công ty.
      * Yêu cầu role EMPLOYER.
@@ -108,7 +108,7 @@ public class CompanyController implements CompanyApi {
 
     @Override
     @GetMapping("/approval-history")
-    @PreAuthorize("hasRole('EMPLOYER')")
+    @PreAuthorize(AuthorizationConstants.EMPLOYER)
     /**
      * Lấy lịch sử phê duyệt của công ty, sắp xếp mới nhất lên đầu.
      * Yêu cầu role EMPLOYER.
