@@ -1,6 +1,10 @@
 .env
 
 .vscode/*
+.vscode/
 .opencode/*
+.opencode/
 
 undefined/.config/*
+
+AGENTS.md

@@ -29,6 +29,26 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+	private static final String[] PUBLIC_WHITELIST = {
+			"/api/auth/login",
+			"/api/auth/register/company",
+			"/api/auth/register/candidate",
+			"/api/auth/refresh-token",
+			"/api/auth/logout",
+			"/api/public/**",
+			"/uploads/**", "/api/profile/resume/preview",
+			"/api/company", "/api/company/job-post"
+	};
+
+	private static final String[] SWAGGER_WHITELIST = {
+			"/swagger-ui.html",
+			"/swagger-ui/**",
+			"/api-docs",
+			"/api-docs/**",
+			"/v3/api-docs",
+			"/v3/api-docs/**"
+	};
+
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
@@ -55,15 +75,8 @@ public class SecurityConfig {
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/auth/login", "/api/auth/register/company",
-								"/api/auth/register/candidate", "/api/auth/refresh-token", "/api/auth/logout")
-						.permitAll()
-						.requestMatchers("/api/public/**").permitAll()
-						.requestMatchers("/api/company/**").permitAll()
-						.requestMatchers("/uploads/**", "/api/profile/resume/preview").permitAll()
-						.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**",
-								"/v3/api-docs", "/v3/api-docs/**")
-						.permitAll()
+						.requestMatchers(PUBLIC_WHITELIST).permitAll()
+						.requestMatchers(SWAGGER_WHITELIST).permitAll()
 						.anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter,
 						UsernamePasswordAuthenticationFilter.class)

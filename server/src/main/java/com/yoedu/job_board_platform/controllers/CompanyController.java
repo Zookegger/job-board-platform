@@ -17,6 +17,7 @@ import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.CompanyService;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 
@@ -51,7 +52,7 @@ public class CompanyController implements CompanyApi {
 
     @Override
     @PutMapping
-    @PreAuthorize("hasRole('EMPLOYER')")
+    @PreAuthorize(AuthorizationConstants.EMPLOYER)
     /**
      * Cập nhật thông tin công ty của nhà tuyển dụng hiện tại.
      * Các trường null trong request được bỏ qua (partial update).

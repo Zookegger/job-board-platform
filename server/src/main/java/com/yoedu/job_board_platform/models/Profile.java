@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,7 +34,8 @@ import lombok.Setter;
 /**
  * Hồ sơ người dùng, liên kết 1-1 với User.
  * Chứa thông tin cá nhân như họ tên, số điện thoại, avatar.
- * Có thể mở rộng thành CandidateDetail (ứng viên) hoặc CompanyEmployerDetail (nhà tuyển dụng).
+ * Có thể mở rộng thành CandidateDetail (ứng viên) hoặc CompanyEmployerDetail
+ * (nhà tuyển dụng).
  */
 public class Profile {
     @Id
@@ -48,6 +50,7 @@ public class Profile {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
+    @Pattern(regexp = "^(|(\\+84|84|0)(3|5|7|8|9)[0-9]{8})$", message = "Số điện thoại không hợp lệ")
     @Column(nullable = false, length = 15)
     private String phone;
 

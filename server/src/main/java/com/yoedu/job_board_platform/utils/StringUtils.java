@@ -10,44 +10,30 @@ import java.util.function.Predicate;
  * thành slug URL không dấu. Hỗ trợ tạo slug duy nhất với UUID suffix.
  */
 public class StringUtils {
+
     /**
      * Chuyển đổi chuỗi đầu vào thành slug URL (dạng thân thiện với SEO).
-     * Loại bỏ dấu tiếng Việt và ký tự đặc biệt.
+     * Loại bỏ dấu tiếng Việt, ký tự đặc biệt, và chuẩn hoá khoảng trắng.
+     * <p>
+     * Cơ chế: NFD normalization → xoá dấu kết hợp ({@code \\p{M}}) → xử lý riêng
+     * {@code đ/Đ} → lowercase → giữ lại {@code a-z0-9}, dấu cách, dấu gạch ngang
+     * → thay khoảng trắng bằng dấu gạch ngang → gộp dấu gạch ngang liên tiếp.
+     * <pre>{@code
+     * StringUtils.slugify("Công ty TNHH ABC");           // → "cong-ty-tnhh-abc"
+     * StringUtils.slugify("Đồng Nai");                   // → "dong-nai"
+     * StringUtils.slugify("  Hồ Chí  Minh  ");           // → "ho-chi-minh"
+     * StringUtils.slugify("Job #1 (Software Engineer)"); // → "job-1-software-engineer"
+     * }</pre>
      *
      * @param input chuỗi đầu vào (có thể có dấu tiếng Việt)
      * @return slug URL, ví dụ: "Công ty ABC" → "cong-ty-abc"
      */
     public static String slugify(String input) {
-        input = input.trim();
-        input = input.toLowerCase();
-
-        input = Normalizer.normalize(input, Normalizer.Form.NFD)
-                .replaceAll("[á|à|ả|ạ|ã|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ]", "a")
-                .replaceAll("[é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ]", "e")
-                .replaceAll("[i|í|ì|ỉ|ĩ|ị]", "i")
-                .replaceAll("[ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ]", "o")
-                .replaceAll("[ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự]", "u")
-                .replaceAll("[ý|ỳ|ỷ|ỹ|ỵ]", "y")
-                .replaceAll("[đ|Đ]", "d")
-                .replaceAll("[^\\p{ASCII}]", "")
-                .replaceAll("[^\\w+]", "-")
-                .replaceAll("\\s+", "-")
-                .replaceAll("[-]+", "-")
-                .replaceAll("^-", "")
-                .replaceAll("-$", "");
-        return input;
-    }
-
-    /**
-     * Chuyển đổi chuỗi thành slug bằng cách loại bỏ dấu Unicode (cách tiếp cận khác).
-     *
-     * @param value chuỗi đầu vào
-     * @return slug URL
-     */
-    public static String toSlug(String value) {
-        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "");
-        return normalized.toLowerCase(Locale.ROOT)
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        return normalized
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[đĐ]", "d")
+                .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9\\s-]", "")
                 .trim()
                 .replaceAll("\\s+", "-")
@@ -55,29 +41,24 @@ public class StringUtils {
     }
 
     /**
-     * Tạo slug duy nhất bằng cách thêm UUID suffix nếu slug đã tồn tại.
+     * Tạo slug duy nhất bằng cách thêm UUID suffix (8 ký tự đầu) nếu slug
+     * đã tồn tại trong hệ thống.
+     * <pre>{@code
+     * StringUtils.slugifyUnique("Công ty ABC",
+     *         slug -> companyRepository.existsBySlug(slug));
+     * // nếu "cong-ty-abc" đã tồn tại → "cong-ty-abc-a1b2c3d4"
+     * }</pre>
      *
      * @param input         chuỗi đầu vào
-     * @param existsChecker hàm kiểm tra slug đã tồn tại chưa
+     * @param existsChecker hàm kiểm tra slug đã tồn tại chưa (thường gọi repository)
      * @return slug duy nhất
      */
     public static String slugifyUnique(String input, Predicate<String> existsChecker) {
-        return toSlugUnique(input, existsChecker);
-    }
-
-    /**
-     * Tạo slug duy nhất (phiên bản sử dụng toSlug).
-     *
-     * @param value         chuỗi đầu vào
-     * @param existsChecker hàm kiểm tra slug đã tồn tại chưa
-     * @return slug duy nhất
-     */
-    public static String toSlugUnique(String value, Predicate<String> existsChecker) {
-        String slug = toSlug(value);
+        String slug = slugify(input);
         if (!existsChecker.test(slug)) {
             return slug;
         }
         String suffix = "-" + UUID.randomUUID().toString().substring(0, 8);
-        return toSlug(value) + suffix;
+        return slug + suffix;
     }
 }
