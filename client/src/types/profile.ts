@@ -25,8 +25,6 @@ export interface EmployerProfileRequest {
 	companyEmail?: string;
 	companyPhone?: string;
 	logoUrl?: string;
-	companyEmail?: string;
-	companyPhone?: string;
 	taxCode?: string;
 }
 
