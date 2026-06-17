@@ -1,13 +1,16 @@
 package com.yoedu.job_board_platform.utils;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -54,5 +57,19 @@ public class SecurityUtil {
         return userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng hiện tại")).getId();
 
+    }
+
+    public boolean isAuthorized(UUID userId, List<UserRole> roles) {
+        User user = getCurrentUser();
+
+        if (!user.getId().equals(userId)) {
+            throw new ForbiddenException("Người dùng không hợp lệ");
+        }
+
+        if (!roles.contains(user.getRole())) {
+            throw new ForbiddenException("Người dùng không có quyền truy cập tài nguyên này");
+        }
+
+        return true;
     }
 }

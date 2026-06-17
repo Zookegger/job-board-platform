@@ -1,6 +1,7 @@
 package com.yoedu.job_board_platform.dtos.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 public record EmployerProfileRequest(
@@ -28,7 +29,16 @@ public record EmployerProfileRequest(
         @Schema(description = "Website công ty", example = "https://company.com")
         @Size(max = 255) String website,
 
+        @Schema(description = "Email công ty", example = "contact@company.com")
+        @Email @Size(max = 100) String companyEmail,
+
+        @Schema(description = "Số điện thoại công ty", example = "02812345678")
+        @Size(max = 20) String companyPhone,
+
         @Schema(description = "URL logo công ty", example = "https://example.com/logo.png")
-        String logoUrl
+        String logoUrl,
+
+        @Schema(description = "Mã số thuế", example = "0123456789")
+        @Size(max = 20) String taxCode
 ) {
 }

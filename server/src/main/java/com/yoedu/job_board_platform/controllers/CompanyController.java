@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.CompanyApi;
+import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
+import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.CompanyService;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 
@@ -49,7 +52,7 @@ public class CompanyController implements CompanyApi {
 
     @Override
     @PutMapping
-    @PreAuthorize("hasRole('EMPLOYER')")
+    @PreAuthorize(AuthorizationConstants.EMPLOYER)
     /**
      * Cập nhật thông tin công ty của nhà tuyển dụng hiện tại.
      * Các trường null trong request được bỏ qua (partial update).
@@ -87,5 +90,33 @@ public class CompanyController implements CompanyApi {
      */
     public ResponseEntity<List<CompanyResponse>> listCompanies() {
         return ResponseEntity.ok(companyService.listCompanies());
+    }
+
+    @Override
+    @GetMapping("/status")
+    @PreAuthorize(AuthorizationConstants.EMPLOYER)
+    /**
+     * Lấy trạng thái phê duyệt hiện tại của công ty.
+     * Yêu cầu role EMPLOYER.
+     *
+     * @return CompanyStatusResponse trạng thái phê duyệt
+     */
+    public ResponseEntity<CompanyStatusResponse> getStatus() {
+        UUID employerId = securityUtil.getCurrentUserId();
+        return ResponseEntity.ok(companyService.getStatusByEmployerId(employerId));
+    }
+
+    @Override
+    @GetMapping("/approval-history")
+    @PreAuthorize(AuthorizationConstants.EMPLOYER)
+    /**
+     * Lấy lịch sử phê duyệt của công ty, sắp xếp mới nhất lên đầu.
+     * Yêu cầu role EMPLOYER.
+     *
+     * @return danh sách ApprovalLogResponse
+     */
+    public ResponseEntity<List<ApprovalLogResponse>> getApprovalHistory() {
+        UUID employerId = securityUtil.getCurrentUserId();
+        return ResponseEntity.ok(companyService.getHistoryByEmployerId(employerId));
     }
 }

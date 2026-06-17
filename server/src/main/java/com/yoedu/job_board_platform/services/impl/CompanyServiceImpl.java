@@ -8,10 +8,14 @@ import org.springframework.stereotype.Service;
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
+import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
+import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
+import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
 import com.yoedu.job_board_platform.mappers.CompanyMapper;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyReviewReason;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.User;
@@ -69,15 +73,20 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public CompanyResponse findCompanyByEmployerId(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
+        return companyMapper.toResponse(getCompanyEntityForEmployer(userId));
+    }
 
-        if (!user.getRole().equals(UserRole.EMPLOYER)) {
-            throw new BadRequestException("Người dùng không phải nhà tuyển dụng");
-        }
+    @Override
+    public CompanyStatusResponse getStatusByEmployerId(UUID userId) {
+        return companyMapper.toStatusResponse(getCompanyEntityForEmployer(userId));
+    }
 
-        Company company = user.getProfile().getEmployerDetail().getCompany();
-        return companyMapper.toResponse(company);
+    @Override
+    public List<ApprovalLogResponse> getHistoryByEmployerId(UUID userId) {
+        // Validate employer & company exist; lịch sử chưa được lưu — trả về rỗng.
+        // Có thể mở rộng sau khi thêm bảng approval_logs.
+        getCompanyEntityForEmployer(userId);
+        return List.of();
     }
 
     @Override
@@ -103,5 +112,24 @@ public class CompanyServiceImpl implements CompanyService {
      */
     private boolean hasChanged(String newValue, String oldValue) {
         return newValue != null && !newValue.equals(oldValue);
+    }
+
+    /**
+     * Tìm Company entity cho employer theo userId.
+     * Ném NotFoundException nếu user không tồn tại,
+     * BadRequestException nếu không phải EMPLOYER,
+     * ResourceNotFoundException nếu chưa có thông tin công ty.
+     */
+    private Company getCompanyEntityForEmployer(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
+        if (!user.getRole().equals(UserRole.EMPLOYER)) {
+            throw new BadRequestException("Người dùng không phải nhà tuyển dụng");
+        }
+        CompanyEmployerDetail detail = user.getProfile().getEmployerDetail();
+        if (detail == null) {
+            throw new ResourceNotFoundException("Không tìm thấy thông tin công ty cho tài khoản này");
+        }
+        return detail.getCompany();
     }
 }

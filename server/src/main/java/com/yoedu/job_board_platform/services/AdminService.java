@@ -3,54 +3,55 @@ package com.yoedu.job_board_platform.services;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
-import com.yoedu.job_board_platform.dtos.company.PendingCompanyResponse;
+import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 
-/**
- * Service quản trị hệ thống.
- * Xử lý phê duyệt, từ chối và tạm ngưng công ty đăng ký.
- */
 public interface AdminService {
-
     /**
-     * Lấy danh sách các công ty đang chờ duyệt.
+     * Lấy danh sách công ty đang chờ duyệt với phân trang, tìm kiếm, lọc và sắp xếp.
      *
-     * @param pageable thông tin phân trang
-     * @return danh sách các công ty PENDING
+     * @param page     số trang bắt đầu từ 0
+     * @param size     số phần tử trên mỗi trang
+     * @param keyword  từ khóa tìm theo tên, email, điện thoại, MST, địa chỉ hoặc website
+     * @param hasTaxCode true để chỉ lấy công ty có MST, false để lấy công ty thiếu MST
+     * @param hasContact true để chỉ lấy công ty có thông tin liên hệ, false để lấy công ty thiếu liên hệ
+     * @param sortBy   trường sắp xếp
+     * @param direction hướng sắp xếp (asc/desc)
+     * @return trang dữ liệu công ty pending
      */
-    Page<PendingCompanyResponse> getPendingCompanies(Pageable pageable);
+    Page<PendingCompanyResponse> getPendingCompanies(
+            int page,
+            int size,
+            String keyword,
+            Boolean hasTaxCode,
+            Boolean hasContact,
+            String sortBy,
+            String direction);
 
     /**
-     * Phê duyệt công ty đã đăng ký.
-     * Chuyển trạng thái công ty từ PENDING sang APPROVED.
-     * Tạo thông báo cho công ty thông báo việc phê duyệt.
+     * Duyệt một công ty đã đăng ký.
      *
-     * @param companyId ID của công ty cần duyệt
-     * @throws ResourceNotFoundException nếu không tìm thấy công ty
+     * @param companyId ID công ty cần duyệt
+     * @throws ResourceNotFoundException when the company does not exist
      */
     void approveCompany(UUID companyId);
 
     /**
-     * Từ chối phê duyệt công ty.
-     * Chuyển trạng thái công ty từ PENDING sang REJECTED kèm lý do.
-     * Tạo thông báo cho công ty thông báo việc từ chối.
+     * Từ chối một công ty đã đăng ký với lý do do admin cung cấp.
      *
-     * @param companyId ID của công ty cần từ chối
+     * @param companyId ID công ty cần từ chối
      * @param reason lý do từ chối
-     * @throws ResourceNotFoundException nếu không tìm thấy công ty
+     * @throws ResourceNotFoundException when the company does not exist
      */
     void rejectCompany(UUID companyId, String reason);
 
     /**
-     * Tạm ngưng hoạt động công ty.
-     * Chuyển trạng thái công ty sang SUSPENDED kèm lý do.
-     * Tạo thông báo cho công ty thông báo việc tạm ngưng.
+     * Tạm ngưng hoạt động của công ty kèm lý do.
      *
-     * @param companyId ID của công ty cần tạm ngưng
+     * @param companyId ID công ty cần tạm ngưng
      * @param reason lý do tạm ngưng
-     * @throws ResourceNotFoundException nếu không tìm thấy công ty
+     * @throws ResourceNotFoundException when the company does not exist
      */
     void suspendCompany(UUID companyId, String reason);
 }

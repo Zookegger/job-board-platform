@@ -1,0 +1,35 @@
+$kind: http-request
+name: Search and Filter Pending Companies
+method: GET
+url: '{{baseUrl}}/admin/companies/pending?page=0&size=10&keyword=Postman%20Pending&hasTaxCode=true&hasContact=false&sortBy=createdAt&direction=desc'
+order: 4000
+headers:
+  - key: Cookie
+    value: 'accessToken={{accessToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("returns 200", function () {
+        pm.response.to.have.status(200);
+      });
+
+      var page = pm.response.json();
+
+      pm.test("search/filter response is paged", function () {
+        pm.expect(page.content).to.be.an("array");
+      });
+
+      pm.test("filtered companies match pending criteria", function () {
+        page.content.forEach(function (company) {
+          pm.expect(company.status).to.eql("PENDING");
+          pm.expect(company.taxCode).to.not.be.empty;
+          pm.expect(company.email).to.satisfy(function (value) {
+            return value === null || value === "";
+          });
+          pm.expect(company.phone).to.satisfy(function (value) {
+            return value === null || value === "";
+          });
+        });
+      });
+

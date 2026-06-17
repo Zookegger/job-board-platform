@@ -30,6 +30,30 @@ public record EmployerProfileResponse(
         String companyName,
 
         @Schema(description = "Vai trò trong công ty", example = "HR Manager")
-        String roleInCompany
+        String roleInCompany,
+
+        @Schema(description = "URL logo công ty", example = "/uploads/logos/abc.png")
+        String logoUrl,
+
+        @Schema(description = "Địa chỉ công ty", example = "123 Nguyễn Huệ, Quận 1, TP.HCM")
+        String address,
+
+        @Schema(description = "Mô tả công ty")
+        String description,
+
+        @Schema(description = "Website công ty", example = "https://company.com")
+        String website,
+
+        @Schema(description = "Email công ty", example = "contact@company.com")
+        String companyEmail,
+
+        @Schema(description = "Số điện thoại công ty", example = "02812345678")
+        String companyPhone,
+
+        @Schema(description = "Mã số thuế", example = "0123456789")
+        String taxCode,
+
+        @Schema(description = "Trạng thái công ty", example = "PENDING")
+        String companyStatus
 ) {
 }

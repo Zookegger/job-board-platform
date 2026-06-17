@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.UUID;
 
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
+import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
+import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
 
 /**
  * Service quản lý thông tin công ty.
@@ -51,4 +53,20 @@ public interface CompanyService {
      * @return danh sách CompanyResponse
      */
     List<CompanyResponse> listCompanies();
+
+    /**
+     * Lấy trạng thái phê duyệt của công ty thuộc employer đang đăng nhập.
+     *
+     * @param employerId UUID của employer (= userId)
+     * @return thông tin trạng thái công ty
+     */
+    CompanyStatusResponse getStatusByEmployerId(UUID employerId);
+
+    /**
+     * Lấy lịch sử thay đổi trạng thái phê duyệt của công ty thuộc employer.
+     *
+     * @param employerId UUID của employer (= userId)
+     * @return danh sách log sắp xếp mới nhất lên đầu
+     */
+    List<ApprovalLogResponse> getHistoryByEmployerId(UUID employerId);
 }

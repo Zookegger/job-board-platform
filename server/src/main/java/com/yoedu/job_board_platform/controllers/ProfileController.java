@@ -68,6 +68,12 @@ public class ProfileController implements ProfileApi {
 		return ResponseEntity.ok(profileService.uploadAvatar(file));
 	}
 
+	@PostMapping("/logo")
+	@PreAuthorize("hasRole('EMPLOYER')")
+	public ResponseEntity<String> uploadCompanyLogo(@RequestParam MultipartFile file) {
+		return ResponseEntity.ok(profileService.uploadCompanyLogo(file));
+	}
+
 	@GetMapping("/resume")
 	@PreAuthorize("hasRole('CANDIDATE')")
 	public ResponseEntity<ResumeResponse> getResume() {

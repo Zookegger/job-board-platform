@@ -1,6 +1,8 @@
 allowBuilds:
-  canvas: set this to true or false
-  msw: set this to true or false
+  canvas: true
+  msw: true
 minimumReleaseAgeExclude:
   - vite@8.0.16
-onlyBuiltDependencies: '[]'
+onlyBuiltDependencies:
+  - msw
+  - "@napi-rs/canvas"

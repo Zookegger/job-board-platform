@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Camera, Loader2, Pencil, Save, X } from "lucide-react";
+import { Camera, ExternalLink, Loader2, Pencil, Save, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -13,6 +13,8 @@ import { useEmployerProfile, useUpdateEmployerProfile, useUploadAvatar } from "@
 import { employerProfileSchema, type EmployerProfileFormData } from "@/lib/schemas/profile";
 import { useToast } from "@/providers/ToastProvider";
 import getErrorMessage from "@/utils/getErrorMessage";
+import RouterRoutes from "@/utils/RouterRoutes";
+import { Link } from "react-router-dom";
 
 export default function EmployerProfile() {
 	const { data: profile, isLoading } = useEmployerProfile();
@@ -39,22 +41,22 @@ export default function EmployerProfile() {
 
 	if (isLoading) {
 		return (
-			<div className="mx-auto max-w-2xl space-y-6 p-6">
-				<Skeleton className="h-8 w-48" />
+			<div className='mx-auto max-w-2xl space-y-6 p-6'>
+				<Skeleton className='h-8 w-48' />
 				<Card>
-					<CardContent className="flex items-center gap-4 p-6">
-						<Skeleton className="h-16 w-16 rounded-full" />
-						<div className="space-y-2">
-							<Skeleton className="h-5 w-40" />
-							<Skeleton className="h-4 w-60" />
+					<CardContent className='flex items-center gap-4 p-6'>
+						<Skeleton className='h-16 w-16 rounded-full' />
+						<div className='space-y-2'>
+							<Skeleton className='h-5 w-40' />
+							<Skeleton className='h-4 w-60' />
 						</div>
 					</CardContent>
 				</Card>
 				<Card>
-					<CardContent className="space-y-3 p-6">
-						<Skeleton className="h-5 w-32" />
-						<Skeleton className="h-4 w-full" />
-						<Skeleton className="h-4 w-3/4" />
+					<CardContent className='space-y-3 p-6'>
+						<Skeleton className='h-5 w-32' />
+						<Skeleton className='h-4 w-full' />
+						<Skeleton className='h-4 w-3/4' />
 					</CardContent>
 				</Card>
 			</div>
@@ -106,7 +108,6 @@ export default function EmployerProfile() {
 							type='button'
 							onClick={handleAvatarClick}
 							className='group relative cursor-pointer w-full max-w-40 aspect-square rounded-full overflow-hidden'
-							
 						>
 							<UserAvatar
 								fill
@@ -166,6 +167,18 @@ export default function EmployerProfile() {
 										</FieldContent>
 										<FieldError errors={errors.phone ? [{ message: errors.phone.message }] : []} />
 									</Field>
+									
+									<Field>
+										<FieldLabel htmlFor='title'>Chức danh</FieldLabel>
+										<FieldContent>
+											<Input
+												id='title'
+												placeholder='Nhập chức danh'
+												{...register("roleInCompany")}
+											/>
+										</FieldContent>
+										<FieldError errors={errors.roleInCompany ? [{ message: errors.roleInCompany.message }] : []} />
+									</Field>
 								</FieldGroup>
 
 								<div className='mt-6 flex gap-3'>
@@ -175,9 +188,9 @@ export default function EmployerProfile() {
 										disabled={isSubmitting || updateProfile.isPending}
 									>
 										{isSubmitting || updateProfile.isPending ? (
-											<Loader2 className='h-4 w-4 animate-spin' />
+											<Loader2 key='loader' className='h-4 w-4 animate-spin' />
 										) : (
-											<Save className='h-4 w-4' />
+											<Save key='save' className='h-4 w-4' />
 										)}
 										Lưu thay đổi
 									</Button>
@@ -205,6 +218,21 @@ export default function EmployerProfile() {
 									<p className='text-sm text-muted-foreground'>Số điện thoại</p>
 									<p className='font-medium'>{profile?.phone || "—"}</p>
 								</div>
+								<div>
+									<p className='text-sm text-muted-foreground'>Chức danh</p>
+									<p className='font-medium'>{profile?.roleInCompany || "—"}</p>
+								</div>
+								<div className='flex items-center gap-2'>
+									<div>
+										<p className='text-sm text-muted-foreground'>Tên công ty</p>
+										<p className='font-medium'>{profile?.companyName || "—"}</p>
+									</div>
+									<Button asChild>
+										<Link to={RouterRoutes.EMPLOYER_COMPANY}>
+											<ExternalLink className='h-4 w-4 text-muted-foreground' />
+										</Link>
+									</Button>
+								</div>
 
 								<Button
 									variant='outline'
@@ -215,28 +243,6 @@ export default function EmployerProfile() {
 								</Button>
 							</div>
 						)}
-					</div>
-				</CardContent>
-			</Card>
-
-			{/* Company info card */}
-			<Card>
-				<CardHeader>
-					<CardTitle className='flex items-center gap-2'>
-						<Building2 className='h-5 w-5' />
-						Thông tin công ty
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className='space-y-4'>
-						<div>
-							<p className='text-sm text-muted-foreground'>Tên công ty</p>
-							<p className='font-medium'>{profile?.companyName || "—"}</p>
-						</div>
-						<div>
-							<p className='text-sm text-muted-foreground'>Chức danh</p>
-							<p className='font-medium'>{profile?.roleInCompany || "—"}</p>
-						</div>
 					</div>
 				</CardContent>
 			</Card>

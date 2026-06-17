@@ -27,8 +27,8 @@ import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
-import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.services.ProfileService;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-/**
- * Triển khai ProfileService. Xử lý các thao tác CRUD trên hồ sơ người dùng
- * và upload avatar. Phân quyền dựa trên UserRole để phân biệt ứng viên/nhà tuyển dụng.
- */
 public class ProfileServiceImpl implements ProfileService {
     private final ProfileRepository profileRepository;
     private final ProfileMapper profileMapper;
@@ -134,8 +130,28 @@ public class ProfileServiceImpl implements ProfileService {
             company.setWebsite(request.website());
             companyChanged = true;
         }
+        if (request.companyEmail() != null) {
+            company.setEmail(request.companyEmail());
+            companyChanged = true;
+        }
+        if (request.companyPhone() != null) {
+            company.setPhone(request.companyPhone());
+            companyChanged = true;
+        }
         if (request.logoUrl() != null) {
             company.setLogoUrl(request.logoUrl());
+            companyChanged = true;
+        }
+        if (request.companyEmail() != null) {
+            company.setEmail(request.companyEmail());
+            companyChanged = true;
+        }
+        if (request.companyPhone() != null) {
+            company.setPhone(request.companyPhone());
+            companyChanged = true;
+        }
+        if (request.taxCode() != null) {
+            company.setTaxCode(request.taxCode());
             companyChanged = true;
         }
         if (companyChanged) {
@@ -206,5 +222,60 @@ public class ProfileServiceImpl implements ProfileService {
         userProfile.setAvatarUrl(avatarUrl);
         profileRepository.save(userProfile);
         return avatarUrl;
+    }
+
+    @Override
+    public String uploadCompanyLogo(MultipartFile file) {
+        User user = securityUtil.getCurrentUser();
+
+        if (user.getRole() != UserRole.EMPLOYER)
+            throw new ForbiddenException("Chỉ nhà tuyển dụng mới có thể upload logo công ty");
+
+        if (file.isEmpty())
+            throw new BadRequestException("Không có file");
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/"))
+            throw new BadRequestException("Chỉ hỗ trợ định dạng hình ảnh");
+
+        if (file.getSize() > 5 * 1024 * 1024)
+            throw new BadRequestException("File quá lớn. Dung lượng tối đa: 5MB");
+
+        var logoDir = Paths.get(uploadDir, "logos");
+        try {
+            Files.createDirectories(logoDir);
+        } catch (IOException e) {
+            log.error("Lỗi tạo thư mục logo", e);
+            throw new RuntimeException("Lỗi tạo thư mục logo công ty", e);
+        }
+
+        var ext = contentType.substring(contentType.lastIndexOf('/') + 1);
+        var fileName = UUID.randomUUID() + "." + ext;
+        var targetPath = logoDir.resolve(fileName);
+
+        try {
+            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Lỗi lưu ảnh logo", e);
+            throw new RuntimeException("Lỗi lưu logo công ty", e);
+        }
+
+        Company company = user.getProfile().getEmployerDetail().getCompany();
+
+        if (company.getLogoUrl() != null && !company.getLogoUrl().isBlank()) {
+            try {
+                var oldPath = company.getLogoUrl().startsWith("/uploads/")
+                        ? Paths.get(uploadDir, company.getLogoUrl().replace("/uploads/", ""))
+                        : Paths.get(company.getLogoUrl());
+                Files.deleteIfExists(oldPath);
+            } catch (IOException e) {
+                log.error("Lỗi xóa logo cũ", e);
+            }
+        }
+
+        var logoUrl = "/uploads/logos/" + fileName;
+        company.setLogoUrl(logoUrl);
+        companyRepository.save(company);
+        return logoUrl;
     }
 }
