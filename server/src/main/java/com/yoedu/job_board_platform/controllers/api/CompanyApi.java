@@ -5,8 +5,10 @@ import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 
+import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
+import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -46,4 +48,22 @@ public interface CompanyApi {
     @Operation(summary = "Danh sách công ty", description = "Lấy danh sách tất cả các công ty trên hệ thống. API công khai — không yêu cầu đăng nhập.")
     @ApiResponse(responseCode = "200", description = "Danh sách công ty", content = @Content)
     ResponseEntity<List<CompanyResponse>> listCompanies();
+
+    @Operation(summary = "Trạng thái phê duyệt công ty", description = "Lấy trạng thái phê duyệt hiện tại của công ty mà employer đang quản lý. Yêu cầu role EMPLOYER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Trạng thái phê duyệt công ty", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Chưa đăng nhập", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ EMPLOYER)", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Chưa có thông tin công ty", content = @Content)
+    })
+    ResponseEntity<CompanyStatusResponse> getStatus();
+
+    @Operation(summary = "Lịch sử phê duyệt công ty", description = "Lấy danh sách lịch sử thay đổi trạng thái phê duyệt của công ty, sắp xếp mới nhất lên đầu. Yêu cầu role EMPLOYER.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Danh sách lịch sử phê duyệt", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Chưa đăng nhập", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ EMPLOYER)", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Chưa có thông tin công ty", content = @Content)
+    })
+    ResponseEntity<List<ApprovalLogResponse>> getApprovalHistory();
 }

@@ -12,7 +12,7 @@ import { useToast } from "@/providers/ToastProvider";
 import { formatFileSize } from "@/utils/FileUtils";
 import getErrorMessage from "@/utils/getErrorMessage";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const ERROR_MESSAGES: Record<string, string> = {
 	"file-too-large": "File quá lớn. Vui lòng chọn file nhỏ hơn 10MB.",

@@ -59,7 +59,7 @@ public class JobSkillServiceImpl implements JobSkillService {
 
         return skillRepository.findAllById(skillIds)
                 .stream()
-                .map(skill -> new SkillResponse(skill.getId(), skill.getName()))
+                .map(skill -> new SkillResponse(skill.getId(), skill.getName(), skill.isActive()))
                 .toList();
     }
 }

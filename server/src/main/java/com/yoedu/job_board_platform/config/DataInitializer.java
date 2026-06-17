@@ -98,16 +98,16 @@ public class DataInitializer implements CommandLineRunner {
 
     private List<Skill> seedSkills() {
         List<Skill> skills = List.of(
-            Skill.builder().name("Java").build(),
-            Skill.builder().name("React").build(),
-            Skill.builder().name("Python").build(),
-            Skill.builder().name("TypeScript").build(),
-            Skill.builder().name("Spring Boot").build(),
-            Skill.builder().name("PostgreSQL").build(),
-            Skill.builder().name("Docker").build(),
-            Skill.builder().name("AWS").build(),
-            Skill.builder().name("Node.js").build(),
-            Skill.builder().name("Figma").build()
+            Skill.builder().name("Java").isActive(true).build(),
+            Skill.builder().name("React").isActive(true).build(),
+            Skill.builder().name("Python").isActive(true).build(),
+            Skill.builder().name("TypeScript").isActive(true).build(),
+            Skill.builder().name("Spring Boot").isActive(true).build(),
+            Skill.builder().name("PostgreSQL").isActive(true).build(),
+            Skill.builder().name("Docker").isActive(true).build(),
+            Skill.builder().name("AWS").isActive(true).build(),
+            Skill.builder().name("Node.js").isActive(true).build(),
+            Skill.builder().name("Figma").isActive(true).build()
         );
         return skillRepository.saveAll(skills);
     }

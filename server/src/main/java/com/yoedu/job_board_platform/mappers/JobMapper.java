@@ -21,6 +21,7 @@ public interface JobMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "postedDate", ignore = true)
     @Mapping(target = "expirationDate", ignore = true)
+    @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Job toEntity(JobRequest request);
@@ -42,6 +43,7 @@ public interface JobMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "postedDate", ignore = true)
     @Mapping(target = "expirationDate", ignore = true)
+    @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

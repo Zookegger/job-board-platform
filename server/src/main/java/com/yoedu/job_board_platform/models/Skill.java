@@ -28,4 +28,8 @@ public class Skill {
 
     @Column(nullable = false, unique = true, length = 100)
     private String name;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private boolean isActive = true;
 }
