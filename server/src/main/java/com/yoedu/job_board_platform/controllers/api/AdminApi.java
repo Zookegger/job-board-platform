@@ -3,12 +3,17 @@ package com.yoedu.job_board_platform.controllers.api;
 import java.util.UUID;
 
 import org.springdoc.core.annotations.ParameterObject;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
+import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
+import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
@@ -18,11 +23,21 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.Valid;
 
-@Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN.")
+@Tag(
+        name = "Admin — Kiểm duyệt & Quản trị",
+        description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN."
+)
+@Tag(
+        name = "Admin — Kiểm duyệt & Quản trị",
+        description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN."
+)
 public interface AdminApi {
 
         @Operation(summary = "Dashboard tổng quan", description = """
@@ -94,37 +109,45 @@ public interface AdminApi {
         ResponseEntity<?> approveCompany(
                         @Parameter(description = "ID công ty cần duyệt", required = true) UUID id);
 
-        @Operation(summary = "Từ chối công ty", description = "Từ chối phê duyệt công ty kèm lý do. Hệ thống gửi email thông báo kèm lý do từ chối cho employer.")
+        @Operation(
+                        summary = "Từ chối công ty",
+                        description = "Từ chối phê duyệt công ty kèm lý do. Hệ thống gửi thông báo kèm lý do từ chối cho employer."
+        )
         @ApiResponses({
-                        @ApiResponse(responseCode = "200", description = "Từ chối công ty thành công — email thông báo đã được gửi", content = @Content),
+                        @ApiResponse(responseCode = "200", description = "Từ chối công ty thành công", content = @Content),
                         @ApiResponse(responseCode = "400", description = "Thiếu lý do từ chối", content = @Content),
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
         })
         ResponseEntity<?> rejectCompany(
                         @Parameter(description = "ID công ty cần từ chối", required = true) UUID id,
-                        @Parameter(description = "Lý do từ chối (bắt buộc)", required = true) String reason);
+                        @Valid @RequestBody(description = "Lý do từ chối", required = true) CompanyRejectionRequest request);
 
-    @Operation(summary = "Tạm ngưng công ty", description = "Tạm ngưng hoạt động của công ty kèm lý do. Công ty bị tạm ngưng không thể đăng tin tuyển dụng.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Tạm ngưng công ty thành công — thông báo đã được gửi đến employer", content = @Content),
-            @ApiResponse(responseCode = "400", description = "Thiếu lý do tạm ngưng", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
-    })
-    ResponseEntity<?> suspendCompany(
-            @Parameter(description = "ID công ty cần tạm ngưng", required = true) UUID id,
-            @Parameter(description = "Lý do tạm ngưng (bắt buộc)", required = true) String reason);
+        @Operation(
+                        summary = "Tạm ngưng công ty",
+                        description = "Tạm ngưng công ty kèm lý do. Hệ thống gửi thông báo cho employer."
+        )
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Tạm ngưng công ty thành công", content = @Content),
+                        @ApiResponse(responseCode = "400", description = "Thiếu lý do tạm ngưng", content = @Content),
+                        @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
+        })
+        ResponseEntity<?> suspendCompany(
+                        @Parameter(description = "ID công ty cần tạm ngưng", required = true) UUID id,
+                        @Valid @RequestBody(description = "Lý do tạm ngưng", required = true) CompanySuspensionRequest request);
+
+        // ================ Jobs ================
 
         @Operation(summary = "Danh sách tất cả tin tuyển dụng", description = """
                         Lấy danh sách tất cả tin tuyển dụng trên hệ thống, bao gồm cả tin của tất cả công ty.
                         Có thể lọc theo trạng thái. Dùng cho màn hình quản lý tin toàn hệ thống.
                         """)
         @ApiResponses({
-                        @ApiResponse(responseCode = "200", description = "Danh sách tất cả tin tuyển dụng (có phân trang)", content = @Content),
+                        @ApiResponse(responseCode = "200", description = "Danh sách tất cả tin tuyển dụng", content = @Content),
                         @ApiResponse(responseCode = "403", description = "Không có quyền truy cập", content = @Content)
         })
         ResponseEntity<?> getAllJobs(
                         @Parameter(description = "Lọc theo trạng thái: DRAFT, PENDING_APPROVAL, ACTIVE, EXPIRED, REJECTED", example = "PENDING_APPROVAL") String status,
-                        @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") int page);
+                        @Parameter(description = "Số trang bắt đầu từ 0", example = "0") int page);
 
         @Operation(summary = "Duyệt tin tuyển dụng", description = "Phê duyệt tin tuyển dụng — chuyển trạng thái từ PENDING_APPROVAL sang ACTIVE. Tin sẽ hiển thị công khai cho ứng viên.")
         @ApiResponses({
@@ -136,18 +159,17 @@ public interface AdminApi {
 
         @Operation(summary = "Từ chối tin tuyển dụng", description = "Từ chối tin tuyển dụng kèm lý do. Hệ thống gửi email thông báo cho employer.")
         @ApiResponses({
-                        @ApiResponse(responseCode = "200", description = "Từ chối tin thành công — email thông báo đã được gửi", content = @Content),
+                        @ApiResponse(responseCode = "200", description = "Từ chối tin thành công", content = @Content),
                         @ApiResponse(responseCode = "400", description = "Thiếu lý do từ chối", content = @Content),
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy tin tuyển dụng", content = @Content)
         })
         ResponseEntity<?> rejectJob(
                         @Parameter(description = "ID của tin tuyển dụng cần từ chối", example = "1", required = true) Long id,
-                        @Parameter(description = "Lý do từ chối (bắt buộc)", example = "Nội dung không phù hợp", required = true) String reason);
+                        @Parameter(description = "Lý do từ chối", example = "Nội dung không phù hợp", required = true) String reason);
 
         @Operation(summary = "Xóa tin vi phạm", description = """
                         Xóa tin tuyển dụng vi phạm chính sách nền tảng.
                         Có thể kèm lý do xóa để ghi log.
-                        Tin sẽ bị xóa vĩnh viễn khỏi hệ thống.
                         """)
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Xóa tin thành công", content = @Content),
@@ -155,7 +177,7 @@ public interface AdminApi {
         })
         ResponseEntity<?> deleteJob(
                         @Parameter(description = "ID của tin tuyển dụng cần xóa", example = "1", required = true) Long id,
-                        @Parameter(description = "Lý do xóa (ghi log)", example = "Nội dung vi phạm chính sách") String reason);
+                        @Parameter(description = "Lý do xóa", example = "Nội dung vi phạm chính sách") String reason);
 
         @Operation(summary = "Danh sách ngành nghề", description = "Lấy danh sách tất cả ngành nghề đang có trong hệ thống.")
         @ApiResponse(responseCode = "200", description = "Danh sách ngành nghề", content = @Content)

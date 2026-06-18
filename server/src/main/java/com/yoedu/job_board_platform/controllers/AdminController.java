@@ -21,6 +21,9 @@ import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
+import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
+import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
+import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
@@ -37,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class AdminController implements AdminApi {
+
     private final AdminService adminService;
     private final SkillService skillService;
     private final SkillMapper skillMapper;
@@ -74,42 +78,39 @@ public class AdminController implements AdminApi {
 
     @GetMapping("/companies/pending")
     public ResponseEntity<Page<PendingCompanyResponse>> getPendingCompanies(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Boolean hasTaxCode,
             @RequestParam(required = false) Boolean hasContact,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            Pageable pageable) {
         return ResponseEntity.ok(adminService.getPendingCompanies(
-                page,
-                size,
-                keyword,
-                hasTaxCode,
-                hasContact,
-                sortBy,
-                direction));
+                keyword, hasTaxCode, hasContact, pageable));
     }
 
     @PostMapping("/companies/{id}/approve")
-    public ResponseEntity<ApiResponse> approveCompany(@PathVariable UUID id) {
-        adminService.approveCompany(id);
+    public ResponseEntity<ApiResponse> approveCompany(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompanyApprovalRequest request) {
+        adminService.approveCompany(id, request);
         return ResponseEntity.ok(new ApiResponse("Duyệt công ty thành công"));
     }
 
     @PostMapping("/companies/{id}/reject")
-    public ResponseEntity<ApiResponse> rejectCompany(@PathVariable UUID id, @RequestParam String reason) {
-        adminService.rejectCompany(id, reason);
+    public ResponseEntity<ApiResponse> rejectCompany(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompanyRejectionRequest request) {
+        adminService.rejectCompany(id, request);
         return ResponseEntity.ok(new ApiResponse("Từ chối công ty thành công"));
     }
 
-    // ================ Jobs ================
-
     @PostMapping("/companies/{id}/suspend")
-    public ResponseEntity<ApiResponse> suspendCompany(@PathVariable UUID id, @RequestParam String reason) {
-        adminService.suspendCompany(id, reason);
+    public ResponseEntity<ApiResponse> suspendCompany(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompanySuspensionRequest request) {
+        adminService.suspendCompany(id, request);
         return ResponseEntity.ok(new ApiResponse("Tạm ngưng công ty thành công"));
     }
+
+    // ================ Jobs ================
 
     @GetMapping("/jobs")
     public ResponseEntity<?> getAllJobs(
@@ -129,7 +130,9 @@ public class AdminController implements AdminApi {
     }
 
     @DeleteMapping("/jobs/{id}")
-    public ResponseEntity<?> deleteJob(@PathVariable Long id, @RequestParam(required = false) String reason) {
+    public ResponseEntity<?> deleteJob(
+            @PathVariable Long id,
+            @RequestParam(required = false) String reason) {
         return ResponseEntity.ok("Xóa tin thành công");
     }
 
