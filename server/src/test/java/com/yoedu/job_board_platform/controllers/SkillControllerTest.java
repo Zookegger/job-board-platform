@@ -26,9 +26,12 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yoedu.job_board_platform.TestcontainersConfiguration;
 import com.yoedu.job_board_platform.models.Skill;
+import com.yoedu.job_board_platform.repositories.ApplicationRepository;
+import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
 import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
+import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
@@ -53,6 +56,15 @@ class SkillControllerTest {
     SkillRepository skillRepository;
 
     @Autowired
+    ApplicationRepository applicationRepository;
+
+    @Autowired
+    ApplicationStatusLogRepository applicationStatusLogRepository;
+
+    @Autowired
+    RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
     CandidateSkillRepository candidateSkillRepository;
 
     @Autowired
@@ -68,6 +80,9 @@ class SkillControllerTest {
 
     @BeforeEach
     void cleanup() {
+        applicationStatusLogRepository.deleteAll();
+        applicationRepository.deleteAll();
+        refreshTokenRepository.deleteAll();
         candidateSkillRepository.deleteAll();
         jobSkillRepository.deleteAll();
         skillRepository.deleteAll();

@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { UserRole } from "@/types/auth";
+import { UserRole, type UserResponse } from "@/types/auth";
 import RouterRoutes from "@/utils/RouterRoutes";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -15,7 +15,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 
-function MobileNav({ isAuthenticated, user, logout }: { isAuthenticated: boolean; user: any; logout: () => void }) {
+function MobileNav({ isAuthenticated, user, logout }: { isAuthenticated: boolean; user: UserResponse | null; logout: () => void }) {
 	const navigate = useNavigate();
 
 	return (
@@ -124,6 +124,7 @@ export function Header() {
 			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.ADMIN_DASHBOARD)}>Bảng điều khiển</DropdownMenuItem>
 			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.ADMIN_USERS)}>Người dùng</DropdownMenuItem>
 			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.ADMIN_COMPANIES)}>Công ty</DropdownMenuItem>
+			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.ADMIN_SKILLS)}>Kỹ năng</DropdownMenuItem>
 		</>
 	);
 
@@ -186,7 +187,7 @@ export function Header() {
 								{open ? <X className='h-5 w-5' /> : <Menu className='h-5 w-5' />}
 							</Button>
 						</SheetTrigger>
-						<SheetContent side='right' className='w-[280px] sm:w-[320px]'>
+						<SheetContent side='right' className='w-70 sm:w-[320px]'>
 							<MobileNav isAuthenticated={!!isAuthenticated} user={user} logout={logout} />
 						</SheetContent>
 					</Sheet>
