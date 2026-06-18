@@ -22,7 +22,7 @@ const skillApi = {
 	/** Lấy kỹ năng hiện tại của ứng viên. */
 	getCandidateSkills: (): Promise<CandidateSkillResponse[]> =>
 		client
-			.get("/profile/skills")
+			.get("/skills/profile")
 			.then((r) => r.data)
 			.catch((error) => {
 				if (error.response?.status === 401) throw new ApiError("", 401);
@@ -35,7 +35,7 @@ const skillApi = {
 	/** Cập nhật toàn bộ kỹ năng của ứng viên (replace). */
 	updateCandidateSkills: (request: UpdateCandidateSkillsRequest): Promise<CandidateSkillResponse[]> =>
 		client
-			.put("/profile/skills", request)
+			.put("/skills/profile", request)
 			.then((r) => r.data)
 			.catch((error) => {
 				if (error.response?.status === 401) throw new ApiError("", 401);

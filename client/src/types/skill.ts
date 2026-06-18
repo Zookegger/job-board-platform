@@ -1,6 +1,14 @@
+export interface SkillRequest {
+	name: string;
+	isActive: boolean;
+}
+
 export interface SkillResponse {
 	id: number;
 	name: string;
+	isActive: boolean;
+	createdAt?: Date;
+	updatedAt?: Date;
 }
 
 export type ProficientLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";

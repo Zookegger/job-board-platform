@@ -1,4 +1,4 @@
-package com.yoedu.job_board_platform.services.impl;
+package com.yoedu.job_board_platform.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,7 +26,7 @@ import com.yoedu.job_board_platform.mappers.UserMapper;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.UserRepository;
-import com.yoedu.job_board_platform.services.ProfileService;
+import com.yoedu.job_board_platform.services.impl.UserServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
