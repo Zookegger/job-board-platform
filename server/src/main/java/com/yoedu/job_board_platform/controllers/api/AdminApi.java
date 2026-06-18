@@ -3,15 +3,13 @@ package com.yoedu.job_board_platform.controllers.api;
 import java.util.UUID;
 
 import org.springdoc.core.annotations.ParameterObject;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
+import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
@@ -23,21 +21,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.Valid;
 
-@Tag(
-        name = "Admin — Kiểm duyệt & Quản trị",
-        description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN."
-)
-@Tag(
-        name = "Admin — Kiểm duyệt & Quản trị",
-        description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN."
-)
+@Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN.")
 public interface AdminApi {
 
         @Operation(summary = "Dashboard tổng quan", description = """
@@ -93,13 +82,10 @@ public interface AdminApi {
                         @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
         })
         ResponseEntity<Page<PendingCompanyResponse>> getPendingCompanies(
-                        @Parameter(description = "Số trang bắt đầu từ 0", example = "0") int page,
-                        @Parameter(description = "Số công ty mỗi trang", example = "10") int size,
                         @Parameter(description = "Từ khóa tìm theo tên, email, phone, mã số thuế, địa chỉ, website") String keyword,
                         @Parameter(description = "true: có mã số thuế, false: thiếu mã số thuế") Boolean hasTaxCode,
                         @Parameter(description = "true: có email/phone, false: thiếu liên hệ") Boolean hasContact,
-                        @Parameter(description = "createdAt, companyName hoặc taxCode", example = "createdAt") String sortBy,
-                        @Parameter(description = "asc hoặc desc", example = "desc") String direction);
+                        @ParameterObject Pageable pageable);
 
         @Operation(summary = "Duyệt công ty", description = "Phê duyệt công ty — sau khi duyệt, employer có thể đăng tin tuyển dụng. Hệ thống gửi email thông báo cho employer.")
         @ApiResponses({
@@ -107,12 +93,10 @@ public interface AdminApi {
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
         })
         ResponseEntity<?> approveCompany(
-                        @Parameter(description = "ID công ty cần duyệt", required = true) UUID id);
+                        @Parameter(description = "ID công ty cần duyệt", required = true) UUID id,
+                        @Valid @RequestBody(description = "Lý do phê duyệt", required = true) CompanyApprovalRequest request);
 
-        @Operation(
-                        summary = "Từ chối công ty",
-                        description = "Từ chối phê duyệt công ty kèm lý do. Hệ thống gửi thông báo kèm lý do từ chối cho employer."
-        )
+        @Operation(summary = "Từ chối công ty", description = "Từ chối phê duyệt công ty kèm lý do. Hệ thống gửi thông báo kèm lý do từ chối cho employer.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Từ chối công ty thành công", content = @Content),
                         @ApiResponse(responseCode = "400", description = "Thiếu lý do từ chối", content = @Content),
@@ -122,10 +106,7 @@ public interface AdminApi {
                         @Parameter(description = "ID công ty cần từ chối", required = true) UUID id,
                         @Valid @RequestBody(description = "Lý do từ chối", required = true) CompanyRejectionRequest request);
 
-        @Operation(
-                        summary = "Tạm ngưng công ty",
-                        description = "Tạm ngưng công ty kèm lý do. Hệ thống gửi thông báo cho employer."
-        )
+        @Operation(summary = "Tạm ngưng công ty", description = "Tạm ngưng công ty kèm lý do. Hệ thống gửi thông báo cho employer.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Tạm ngưng công ty thành công", content = @Content),
                         @ApiResponse(responseCode = "400", description = "Thiếu lý do tạm ngưng", content = @Content),

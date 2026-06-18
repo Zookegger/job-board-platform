@@ -119,13 +119,7 @@ public class AdminServiceImpl implements AdminService {
         company.setApproved(false);
         company.setApprovedAt(null);
 
-        /*
-         * Nếu Company có field suspensionReason thì dùng dòng này:
-         * company.setSuspensionReason(request.reason().trim());
-         *
-         * Nếu chưa có field suspensionReason thì tạm dùng rejectionReason để lưu lý do:
-         */
-        company.setRejectionReason(request.reason().trim());
+        company.setSuspensionReason(request.reason().trim());
 
         Company savedCompany = companyRepository.save(company);
 

@@ -21,10 +21,6 @@ public final class CompanySpecification {
                 cb.equal(root.get("status"), CompanyStatus.PENDING);
     }
 
-    public static Specification<Company> pendingOnly() {
-        return isPending();
-    }
-
     public static Specification<Company> hasKeyword(String keyword) {
         return (root, query, cb) -> {
             String normalizedKeyword = normalizeKeyword(keyword);
@@ -73,16 +69,6 @@ public final class CompanySpecification {
                             missingValue(cb, root, "email"),
                             missingValue(cb, root, "phone")
                     );
-        };
-    }
-
-    public static Specification<Company> hasApproved(Boolean approved) {
-        return (root, query, cb) -> {
-            if (approved == null) {
-                return cb.conjunction();
-            }
-
-            return cb.equal(root.get("approved"), approved);
         };
     }
 

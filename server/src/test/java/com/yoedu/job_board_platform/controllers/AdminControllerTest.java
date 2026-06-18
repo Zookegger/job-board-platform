@@ -39,6 +39,7 @@ import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
+import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
 import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
@@ -81,6 +82,9 @@ class AdminControllerTest {
     @Autowired
     CandidateSkillRepository candidateSkillRepository;
 
+    @Autowired
+    NotificationRepository notificationRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private Skill savedSkillActive;
     private Skill savedSkillInactive;
@@ -91,6 +95,7 @@ class AdminControllerTest {
         jobSkillRepository.deleteAll();
         skillRepository.deleteAll();
         jobRepository.deleteAll();
+        notificationRepository.deleteAll();
         employerDetailRepository.deleteAll();
         companyRepository.deleteAll();
         profileRepository.deleteAll();
@@ -194,7 +199,9 @@ class AdminControllerTest {
         Cookie adminCookie = loginAsAdmin();
 
         mockMvc.perform(post("/api/admin/companies/" + company.getId() + "/approve")
-                        .cookie(adminCookie))
+                        .cookie(adminCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Phê duyệt\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Duyệt công ty thành công"));
 
@@ -211,7 +218,8 @@ class AdminControllerTest {
 
         mockMvc.perform(post("/api/admin/companies/" + company.getId() + "/reject")
                         .cookie(adminCookie)
-                        .param("reason", "Thông tin không hợp lệ"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Thông tin không hợp lệ\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Từ chối công ty thành công"));
 
