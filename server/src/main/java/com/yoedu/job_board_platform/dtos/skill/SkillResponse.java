@@ -7,6 +7,9 @@ public record SkillResponse(
         Integer id,
 
         @Schema(description = "Tên kỹ năng", example = "Java")
-        String name
+        String name,
+
+        @Schema(description = "Kỹ năng có đang hoạt động hay không", example = "true")
+        boolean isActive
 ) {
 }

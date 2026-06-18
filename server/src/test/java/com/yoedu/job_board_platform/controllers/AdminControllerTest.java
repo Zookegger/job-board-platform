@@ -1,8 +1,11 @@
 package com.yoedu.job_board_platform.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,12 +31,16 @@ import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.Profile;
+import com.yoedu.job_board_platform.models.Skill;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
+import com.yoedu.job_board_platform.repositories.JobSkillRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
+import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
 import jakarta.servlet.http.Cookie;
@@ -65,15 +72,34 @@ class AdminControllerTest {
     @Autowired
     CompanyEmployerDetailRepository employerDetailRepository;
 
+    @Autowired
+    SkillRepository skillRepository;
+
+    @Autowired
+    JobSkillRepository jobSkillRepository;
+
+    @Autowired
+    CandidateSkillRepository candidateSkillRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private Skill savedSkillActive;
+    private Skill savedSkillInactive;
 
     @BeforeEach
     void cleanup() {
+        candidateSkillRepository.deleteAll();
+        jobSkillRepository.deleteAll();
+        skillRepository.deleteAll();
         jobRepository.deleteAll();
         employerDetailRepository.deleteAll();
         companyRepository.deleteAll();
         profileRepository.deleteAll();
         userRepository.deleteAll();
+
+        savedSkillActive = skillRepository.save(
+                Skill.builder().name("Java").isActive(true).build());
+        savedSkillInactive = skillRepository.save(
+                Skill.builder().name("Kotlin").isActive(false).build());
     }
 
     private Cookie loginAsAdmin() throws Exception {
@@ -203,5 +229,124 @@ class AdminControllerTest {
 
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
         assertThat(json.get("totalElements").asInt()).isEqualTo(0);
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Skills — GET /api/admin/skills
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canListAllSkills() throws Exception {
+        Cookie adminCookie = loginAsAdmin();
+
+        MvcResult result = mockMvc.perform(get("/api/admin/skills")
+                        .cookie(adminCookie))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(json.get("content").isArray()).isTrue();
+        assertThat(json.get("content").size()).isEqualTo(2); // active + inactive
+        assertThat(json.get("totalElements").asInt()).isEqualTo(2);
+    }
+
+    @Test
+    void listSkills_withoutAuth_returns401() throws Exception {
+        mockMvc.perform(get("/api/admin/skills"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Skills — POST /api/admin/skills
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canCreateSkill() throws Exception {
+        Cookie adminCookie = loginAsAdmin();
+
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "name", "Rust",
+                "isActive", true));
+
+        mockMvc.perform(post("/api/admin/skills")
+                        .cookie(adminCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Rust"))
+                .andExpect(jsonPath("$.isActive").value(true));
+    }
+
+    @Test
+    void admin_createSkill_duplicateName_returns409() throws Exception {
+        Cookie adminCookie = loginAsAdmin();
+
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "name", "Java",
+                "isActive", true));
+
+        mockMvc.perform(post("/api/admin/skills")
+                        .cookie(adminCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isConflict());
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Skills — PUT /api/admin/skills/{id}
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canUpdateSkill() throws Exception {
+        Cookie adminCookie = loginAsAdmin();
+
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "name", "Java 8",
+                "isActive", true));
+
+        mockMvc.perform(put("/api/admin/skills/" + savedSkillActive.getId())
+                        .cookie(adminCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Java 8"));
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Skills — PUT /api/admin/skills/{id}/toggle-status
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canToggleSkillStatus() throws Exception {
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(patch("/api/admin/skills/" + savedSkillActive.getId() + "/toggle-status")
+                        .cookie(adminCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isActive").value(false)); // was active → becomes inactive
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Skills — DELETE /api/admin/skills/{id}
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canDeleteSkill() throws Exception {
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(delete("/api/admin/skills/" + savedSkillInactive.getId())
+                        .cookie(adminCookie))
+                .andExpect(status().isOk());
+
+        assertThat(skillRepository.findById(savedSkillInactive.getId())).isEmpty();
+    }
+
+    @Test
+    void admin_deleteSkill_notFound_returns404() throws Exception {
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(delete("/api/admin/skills/9999")
+                        .cookie(adminCookie))
+                .andExpect(status().isNotFound());
     }
 }
