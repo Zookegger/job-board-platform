@@ -74,6 +74,9 @@ public class Company {
     @Column(name = "rejection_reason", columnDefinition = "text")
     private String rejectionReason;
 
+    @Column(name = "suspension_reason", columnDefinition = "text")
+    private String suspensionReason;
+
     @Column(name = "is_approved", nullable = false)
     @Builder.Default
     private boolean isApproved = false;
