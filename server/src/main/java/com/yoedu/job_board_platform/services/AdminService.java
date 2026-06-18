@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
+import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 
 public interface AdminService {
     /**
@@ -45,4 +46,19 @@ public interface AdminService {
      * @throws ResourceNotFoundException when the company does not exist
      */
     void rejectCompany(UUID companyId, String reason);
+
+    /**
+     * Lấy danh sách tin tuyển dụng đang chờ duyệt (PENDING_APPROVAL).
+     */
+    Page<PendingJobResponse> getPendingJobs(int page, int size);
+
+    /**
+     * Duyệt tin tuyển dụng — chuyển trạng thái sang ACTIVE.
+     */
+    void approveJob(UUID jobId);
+
+    /**
+     * Từ chối tin tuyển dụng — chuyển trạng thái sang REJECTED với lý do.
+     */
+    void rejectJob(UUID jobId, String reason);
 }

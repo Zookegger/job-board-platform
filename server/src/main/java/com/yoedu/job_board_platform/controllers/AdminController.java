@@ -21,7 +21,9 @@ import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
+import com.yoedu.job_board_platform.dtos.admin.JobRejectRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
+import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.mappers.SkillMapper;
@@ -105,26 +107,30 @@ public class AdminController implements AdminApi {
 
     // ================ Jobs ================
 
-    @GetMapping("/jobs")
-    public ResponseEntity<?> getAllJobs(
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok("Danh sách tin");
+    @GetMapping("/jobs/pending")
+    public ResponseEntity<Page<PendingJobResponse>> getPendingJobs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(adminService.getPendingJobs(page, size));
     }
 
     @PostMapping("/jobs/{id}/approve")
-    public ResponseEntity<?> approveJob(@PathVariable Long id) {
-        return ResponseEntity.ok("Duyệt tin thành công");
+    public ResponseEntity<ApiResponse> approveJob(@PathVariable UUID id) {
+        adminService.approveJob(id);
+        return ResponseEntity.ok(new ApiResponse("Duyệt tin tuyển dụng thành công"));
     }
 
     @PostMapping("/jobs/{id}/reject")
-    public ResponseEntity<?> rejectJob(@PathVariable Long id, @RequestParam String reason) {
-        return ResponseEntity.ok("Từ chối tin");
+    public ResponseEntity<ApiResponse> rejectJob(
+            @PathVariable UUID id,
+            @Valid @RequestBody JobRejectRequest request) {
+        adminService.rejectJob(id, request.reason());
+        return ResponseEntity.ok(new ApiResponse("Từ chối tin tuyển dụng thành công"));
     }
 
     @DeleteMapping("/jobs/{id}")
-    public ResponseEntity<?> deleteJob(@PathVariable Long id, @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok("Xóa tin thành công");
+    public ResponseEntity<ApiResponse> deleteJob(@PathVariable Long id, @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(new ApiResponse("Xóa tin thành công"));
     }
 
     // ================ Categories ================
