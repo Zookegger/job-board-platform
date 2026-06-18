@@ -8,8 +8,8 @@ import org.springframework.data.domain.Pageable;
 import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
-import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.UpdateCandidateSkillsRequest;
+import com.yoedu.job_board_platform.models.Skill;
 
 /**
  * Service quản lý kỹ năng (Skills).
@@ -30,7 +30,7 @@ public interface SkillService {
      * @param request  bộ lọc (keyword, isActive)
      * @return trang kết quả {@link SkillResponse}
      */
-    Page<SkillResponse> getAllSkills(Pageable pageable, SkillFilterRequest request);
+    Page<Skill> getAllSkills(Pageable pageable, SkillFilterRequest request);
 
     /** Lấy danh sách kỹ năng hiện tại của ứng viên đang đăng nhập. */
     List<CandidateSkillResponse> getCandidateSkills();
@@ -51,7 +51,7 @@ public interface SkillService {
      * @param request thông tin kỹ năng (name bắt buộc, isActive tùy chọn)
      * @return kỹ năng đã tạo
      */
-    SkillResponse createSkill(SkillRequest request);
+    Skill createSkill(SkillRequest request);
 
     /**
      * Cập nhật thông tin kỹ năng.
@@ -61,7 +61,7 @@ public interface SkillService {
      * @param request thông tin mới
      * @return kỹ năng đã cập nhật
      */
-    SkillResponse updateSkill(Integer id, SkillRequest request);
+    Skill updateSkill(Integer id, SkillRequest request);
 
     /**
      * Bật/tắt trạng thái hoạt động của kỹ năng (đảo ngược isActive).
@@ -70,7 +70,7 @@ public interface SkillService {
      * @param id ID kỹ năng
      * @return kỹ năng với trạng thái mới
      */
-    SkillResponse toggleSkillActive(Integer id);
+    Skill toggleSkillActive(Integer id);
 
     /**
      * Xóa kỹ năng khỏi hệ thống.

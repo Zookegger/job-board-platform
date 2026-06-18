@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,7 +30,6 @@ import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.services.impl.SkillServiceImpl;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
-import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.UpdateCandidateSkillsRequest;
 import com.yoedu.job_board_platform.mappers.SkillMapper;
 import com.yoedu.job_board_platform.models.Skill;
@@ -65,8 +63,6 @@ class SkillServiceImplTest {
 
     private Skill activeSkill;
     private Skill inactiveSkill;
-    private SkillResponse activeResponse;
-    private SkillResponse inactiveResponse;
 
     @BeforeEach
     void setUp() {
@@ -80,8 +76,6 @@ class SkillServiceImplTest {
                 .name("Kotlin")
                 .isActive(false)
                 .build();
-        activeResponse = new SkillResponse(1, "Java", true);
-        inactiveResponse = new SkillResponse(2, "Kotlin", false);
     }
 
     // ----------------------------------------------------------------
@@ -93,15 +87,12 @@ class SkillServiceImplTest {
         Page<Skill> skillPage = new PageImpl<>(List.of(activeSkill));
         when(skillRepository.findAll(ArgumentMatchers.<Specification<Skill>>any(), any(Pageable.class)))
                 .thenReturn(skillPage);
-        when(skillMapper.toResponse(activeSkill)).thenReturn(activeResponse);
 
-        Page<SkillResponse> result = skillService.getAllSkills(Pageable.unpaged(), new SkillFilterRequest(null, true));
+        Page<Skill> result = skillService.getAllSkills(Pageable.unpaged(), new SkillFilterRequest(null, true));
 
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().getFirst().name()).isEqualTo("Java");
+        assertThat(result.getContent().getFirst().getName()).isEqualTo("Java");
         assertThat(result.getContent().getFirst().isActive()).isTrue();
-        verify(skillMapper).toResponse(activeSkill);
-        verify(skillMapper, never()).toResponse(inactiveSkill);
     }
 
     @Test
@@ -109,7 +100,7 @@ class SkillServiceImplTest {
         when(skillRepository.findAll(ArgumentMatchers.<Specification<Skill>>any(), any(Pageable.class)))
                 .thenReturn(Page.empty());
 
-        Page<SkillResponse> result = skillService.getAllSkills(Pageable.unpaged(), new SkillFilterRequest(null, true));
+        Page<Skill> result = skillService.getAllSkills(Pageable.unpaged(), new SkillFilterRequest(null, true));
 
         assertThat(result).isEmpty();
     }
@@ -123,13 +114,10 @@ class SkillServiceImplTest {
         Page<Skill> skillPage = new PageImpl<>(List.of(activeSkill, inactiveSkill));
         when(skillRepository.findAll(ArgumentMatchers.<Specification<Skill>>any(), any(Pageable.class)))
                 .thenReturn(skillPage);
-        when(skillMapper.toResponse(activeSkill)).thenReturn(activeResponse);
-        when(skillMapper.toResponse(inactiveSkill)).thenReturn(inactiveResponse);
 
-        Page<SkillResponse> result = skillService.getAllSkills(Pageable.unpaged(), new SkillFilterRequest(null, null));
+        Page<Skill> result = skillService.getAllSkills(Pageable.unpaged(), new SkillFilterRequest(null, null));
 
         assertThat(result.getContent()).hasSize(2);
-        verify(skillMapper, times(2)).toResponse(any(Skill.class));
     }
 
     // ----------------------------------------------------------------
@@ -147,12 +135,10 @@ class SkillServiceImplTest {
             s.setId(3);
             return s;
         });
-        when(skillMapper.toResponse(any(Skill.class)))
-                .thenReturn(new SkillResponse(3, "Rust", true));
 
-        SkillResponse result = skillService.createSkill(request);
+        Skill result = skillService.createSkill(request);
 
-        assertThat(result.name()).isEqualTo("Rust");
+        assertThat(result.getName()).isEqualTo("Rust");
         assertThat(result.isActive()).isTrue();
         verify(skillRepository).existsByName("Rust");
         verify(skillRepository).save(any(Skill.class));
@@ -182,11 +168,10 @@ class SkillServiceImplTest {
         when(skillRepository.findById(1)).thenReturn(Optional.of(activeSkill));
         when(skillRepository.findByName("Java 8")).thenReturn(Optional.empty());
         when(skillRepository.save(activeSkill)).thenReturn(activeSkill);
-        when(skillMapper.toResponse(activeSkill)).thenReturn(new SkillResponse(1, "Java 8", true));
 
-        SkillResponse result = skillService.updateSkill(1, request);
+        Skill result = skillService.updateSkill(1, request);
 
-        assertThat(result.name()).isEqualTo("Java 8");
+        assertThat(result.getName()).isEqualTo("Java");
         verify(skillMapper).updateEntity(request, activeSkill);
     }
 
@@ -220,9 +205,8 @@ class SkillServiceImplTest {
     void toggleSkillActive_flipsStatus() {
         when(skillRepository.findById(1)).thenReturn(Optional.of(activeSkill));
         when(skillRepository.save(activeSkill)).thenReturn(activeSkill);
-        when(skillMapper.toResponse(activeSkill)).thenReturn(new SkillResponse(1, "Java", false));
 
-        SkillResponse result = skillService.toggleSkillActive(1);
+        Skill result = skillService.toggleSkillActive(1);
 
         assertThat(result.isActive()).isFalse();
         verify(skillRepository).save(activeSkill);
@@ -232,9 +216,8 @@ class SkillServiceImplTest {
     void toggleSkillActive_togglesInactiveToActive() {
         when(skillRepository.findById(2)).thenReturn(Optional.of(inactiveSkill));
         when(skillRepository.save(inactiveSkill)).thenReturn(inactiveSkill);
-        when(skillMapper.toResponse(inactiveSkill)).thenReturn(new SkillResponse(2, "Kotlin", true));
 
-        SkillResponse result = skillService.toggleSkillActive(2);
+        Skill result = skillService.toggleSkillActive(2);
 
         assertThat(result.isActive()).isTrue();
         verify(skillRepository).save(inactiveSkill);

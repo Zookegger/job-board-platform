@@ -20,10 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
+import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
-import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
+import com.yoedu.job_board_platform.mappers.SkillMapper;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.SkillService;
@@ -38,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminController implements AdminApi {
     private final AdminService adminService;
     private final SkillService skillService;
+    private final SkillMapper skillMapper;
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard() {
@@ -150,26 +152,26 @@ public class AdminController implements AdminApi {
     // ================ Skills ================
 
     @GetMapping("/skills")
-    public ResponseEntity<Page<SkillResponse>> getAllSkills(Pageable pageable,
+    public ResponseEntity<Page<AdminSkillResponse>> getAllSkills(Pageable pageable,
             SkillFilterRequest request) {
-        return ResponseEntity.ok(skillService.getAllSkills(pageable, request));
+        return ResponseEntity.ok(skillService.getAllSkills(pageable, request).map(skillMapper::toAdminResponse));
     }
 
     @PostMapping("/skills")
-    public ResponseEntity<SkillResponse> createSkill(@Valid @RequestBody SkillRequest request) {
-        return ResponseEntity.ok(skillService.createSkill(request));
+    public ResponseEntity<AdminSkillResponse> createSkill(@Valid @RequestBody SkillRequest request) {
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.createSkill(request)));
     }
 
     @PutMapping("/skills/{id}")
-    public ResponseEntity<SkillResponse> updateSkill(
+    public ResponseEntity<AdminSkillResponse> updateSkill(
             @PathVariable Integer id,
             @Valid @RequestBody SkillRequest request) {
-        return ResponseEntity.ok(skillService.updateSkill(id, request));
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.updateSkill(id, request)));
     }
 
     @PatchMapping("/skills/{id}/toggle-status")
-    public ResponseEntity<SkillResponse> toggleSkillStatus(@PathVariable Integer id) {
-        return ResponseEntity.ok(skillService.toggleSkillActive(id));
+    public ResponseEntity<AdminSkillResponse> toggleSkillStatus(@PathVariable Integer id) {
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.toggleSkillActive(id)));
     }
 
     @DeleteMapping("/skills/{id}")

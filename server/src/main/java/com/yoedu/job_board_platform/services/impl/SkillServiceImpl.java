@@ -44,10 +44,10 @@ public class SkillServiceImpl implements SkillService {
     private final SkillMapper skillMapper;
 
     @Override
-    public Page<SkillResponse> getAllSkills(Pageable pageable, SkillFilterRequest request) {
+    public Page<Skill> getAllSkills(Pageable pageable, SkillFilterRequest request) {
         Specification<Skill> specs = Specification.where(SkillSpecification.withKeyword(request.keyword()))
                 .and(SkillSpecification.hasStatus(request.isActive()));
-        return skillRepository.findAll(specs, pageable).map(skillMapper::toResponse);
+        return skillRepository.findAll(specs, pageable);
     }
 
     @Override
@@ -93,7 +93,7 @@ public class SkillServiceImpl implements SkillService {
 
     @Override
     @Transactional
-    public SkillResponse createSkill(SkillRequest request) {
+    public Skill createSkill(SkillRequest request) {
         boolean isSkillExist = skillRepository.existsByName(request.name());
 
         if (isSkillExist) {
@@ -104,12 +104,12 @@ public class SkillServiceImpl implements SkillService {
         if (request.isActive() != null) {
             skill.setActive(request.isActive());
         }
-        return skillMapper.toResponse(skillRepository.save(skill));
+        return skillRepository.save(skill);
     }
 
     @Override
     @Transactional
-    public SkillResponse updateSkill(Integer id, SkillRequest request) {
+    public Skill updateSkill(Integer id, SkillRequest request) {
         Skill existingSkill = skillRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy kỹ năng yêu cầu"));
 
@@ -120,17 +120,16 @@ public class SkillServiceImpl implements SkillService {
         });
 
         skillMapper.updateEntity(request, existingSkill);
-        return skillMapper.toResponse(skillRepository.save(existingSkill));
+        return skillRepository.save(existingSkill);
     }
 
     @Override
     @Transactional
-    public SkillResponse toggleSkillActive(Integer id) {
+    public Skill toggleSkillActive(Integer id) {
         Skill skill = skillRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy kỹ năng yêu cầu"));
         skill.setActive(!skill.isActive());
-        skillRepository.save(skill);
-        return skillMapper.toResponse(skill);
+        return skillRepository.save(skill);
     }
 
     @Override

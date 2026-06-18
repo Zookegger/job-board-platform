@@ -7,7 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;

@@ -18,6 +18,7 @@ import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.UpdateCandidateSkillsRequest;
+import com.yoedu.job_board_platform.mappers.SkillMapper;
 import com.yoedu.job_board_platform.services.SkillService;
 
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class SkillController implements SkillApi {
 
     private final SkillService skillService;
+    private final SkillMapper skillMapper;
 
     /** Lấy toàn bộ danh sách kỹ năng có sẵn (không cần đăng nhập). */
     @GetMapping
@@ -37,7 +39,7 @@ public class SkillController implements SkillApi {
             SkillFilterRequest request) {
         SkillFilterRequest publicFilter = new SkillFilterRequest(request.keyword(), true);
 
-        return ResponseEntity.ok(skillService.getAllSkills(pageable, publicFilter));
+        return ResponseEntity.ok(skillService.getAllSkills(pageable, publicFilter).map(skillMapper::toResponse));
     }
 
     /** Lấy danh sách kỹ năng của ứng viên đang đăng nhập. */

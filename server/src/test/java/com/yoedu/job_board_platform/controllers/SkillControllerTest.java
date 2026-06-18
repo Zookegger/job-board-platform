@@ -3,6 +3,8 @@ package com.yoedu.job_board_platform.controllers;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,6 +112,7 @@ class SkillControllerTest {
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].name").value("Java"))
                 .andExpect(jsonPath("$.content[0].isActive").value(true))
+                .andExpect(jsonPath("$.content[*].id").value(not(hasItem(inactiveSkill.getId()))))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 

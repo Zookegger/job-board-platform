@@ -6,6 +6,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
+import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.models.Skill;
@@ -26,6 +27,9 @@ public interface SkillMapper {
      */
     @Mapping(target = "isActive", source = "active")
     SkillResponse toResponse(Skill skill);
+
+    @Mapping(target = "isActive", source = "active")
+    AdminSkillResponse toAdminResponse(Skill skill);
 
     /**
      * Cập nhật entity {@link Skill} từ {@link SkillRequest}.

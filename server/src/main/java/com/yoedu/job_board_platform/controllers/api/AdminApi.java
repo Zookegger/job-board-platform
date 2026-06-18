@@ -8,10 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 
+import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
-import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.models.UserRole;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -185,7 +185,7 @@ public interface AdminApi {
                         @ApiResponse(responseCode = "200", description = "Danh sách phân trang kỹ năng hệ thống"),
                         @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
         })
-        ResponseEntity<Page<SkillResponse>> getAllSkills(
+        ResponseEntity<Page<AdminSkillResponse>> getAllSkills(
                         @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable,
                         @Parameter(description = "Bộ lọc: từ khóa tên kỹ năng và trạng thái hoạt động (null: tất cả, true: active, false: inactive)") SkillFilterRequest request);
 
@@ -195,7 +195,7 @@ public interface AdminApi {
                         @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ (tên trống hoặc quá dài)", content = @Content),
                         @ApiResponse(responseCode = "409", description = "Tên kỹ năng đã tồn tại (Conflict)", content = @Content)
         })
-        ResponseEntity<SkillResponse> createSkill(
+        ResponseEntity<AdminSkillResponse> createSkill(
                         @RequestBody @Parameter(description = "Thông tin kỹ năng mới (name bắt buộc, isActive tùy chọn)", required = true) SkillRequest request);
 
         @Operation(summary = "Cập nhật kỹ năng", description = "Chỉnh sửa thông tin kỹ năng. Kiểm tra trùng tên nếu tên được thay đổi.")
@@ -204,7 +204,7 @@ public interface AdminApi {
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy kỹ năng", content = @Content),
                         @ApiResponse(responseCode = "409", description = "Tên kỹ năng đã tồn tại (Conflict)", content = @Content)
         })
-        ResponseEntity<SkillResponse> updateSkill(
+        ResponseEntity<AdminSkillResponse> updateSkill(
                         @Parameter(description = "ID kỹ năng cần sửa", example = "1", required = true) Integer id,
                         @RequestBody @Parameter(description = "Thông tin kỹ năng mới", required = true) SkillRequest request);
 
@@ -213,7 +213,7 @@ public interface AdminApi {
                         @ApiResponse(responseCode = "200", description = "Cập nhật trạng thái thành công", content = @Content),
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy kỹ năng", content = @Content)
         })
-        ResponseEntity<SkillResponse> toggleSkillStatus(
+        ResponseEntity<AdminSkillResponse> toggleSkillStatus(
                         @Parameter(description = "ID kỹ năng cần bật/tắt", example = "1", required = true) Integer id);
 
         @Operation(summary = "Xóa kỹ năng", description = "Xóa kỹ năng khỏi hệ thống. Các bản ghi liên quan trong job_skills và candidate_skills cũng bị xóa theo.")
