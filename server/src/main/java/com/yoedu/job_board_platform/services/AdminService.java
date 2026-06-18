@@ -5,10 +5,12 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
+import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 
 public interface AdminService {
 
@@ -54,4 +56,24 @@ public interface AdminService {
      * @param request lý do tạm ngưng
      */
     void suspendCompany(UUID companyId, CompanySuspensionRequest request);
+
+    /**
+     * Lấy danh sách tất cả tin tuyển dụng, có thể lọc theo trạng thái.
+     */
+    Page<AdminJobListResponse> getAllJobs(String status, Pageable pageable);
+
+    /**
+     * Lấy danh sách tin tuyển dụng đang chờ duyệt (PENDING_APPROVAL).
+     */
+    Page<PendingJobResponse> getPendingJobs(Pageable pageable);
+
+    /**
+     * Duyệt tin tuyển dụng — chuyển trạng thái sang ACTIVE.
+     */
+    void approveJob(UUID jobId);
+
+    /**
+     * Từ chối tin tuyển dụng — chuyển trạng thái sang REJECTED với lý do.
+     */
+    void rejectJob(UUID jobId, String reason);
 }

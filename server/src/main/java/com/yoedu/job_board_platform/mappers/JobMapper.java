@@ -6,6 +6,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
+import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobRequest;
 import com.yoedu.job_board_platform.dtos.job.JobResponse;
@@ -32,6 +33,11 @@ public interface JobMapper {
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "skills", ignore = true)
     JobResponse toResponse(Job job);
+
+    @Mapping(target = "companyName", source = "company.companyName")
+    @Mapping(target = "companyLogoUrl", source = "company.logoUrl")
+    @Mapping(target = "categoryName", source = "category.name")
+    AdminJobListResponse toAdminJobListResponse(Job job);
 
     @Mapping(target = "companyName", source = "company.companyName")
     JobListResponse toSummary(Job job);

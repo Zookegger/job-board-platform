@@ -1,4 +1,5 @@
 import type { AdminPendingCompanyResponse } from "@/types/company";
+import type { AdminPendingJobResponse } from "@/types/job";
 import { toPageableParams, type PaginationParams, type PaginationResponse } from "@/types/pagination";
 import type { SkillRequest, SkillResponse } from "@/types/skill";
 import ApiError from "@/utils/ApiError";
@@ -60,6 +61,40 @@ const adminApi = {
 			.catch((error) => {
 				throw new ApiError(
 					error.response?.data?.message || error.message || "Lỗi, Không thể từ chối công ty.",
+					error.response?.status || 500,
+				);
+			}),
+
+	// Jobs Review
+	getPendingJobs: (page = 0, size = 10): Promise<PageResponse<AdminPendingJobResponse>> =>
+		client
+			.get("/admin/jobs/pending", { params: { page, size } })
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể tải danh sách tin chờ duyệt.",
+					error.response?.status || 500,
+				);
+			}),
+
+	approveJob: (jobId: string) =>
+		client
+			.post(`/admin/jobs/${jobId}/approve`)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể duyệt tin tuyển dụng.",
+					error.response?.status || 500,
+				);
+			}),
+
+	rejectJob: (jobId: string, reason: string) =>
+		client
+			.post(`/admin/jobs/${jobId}/reject`, { reason })
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể từ chối tin tuyển dụng.",
 					error.response?.status || 500,
 				);
 			}),

@@ -30,6 +30,12 @@ import com.yoedu.job_board_platform.TestcontainersConfiguration;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyStatus;
+import com.yoedu.job_board_platform.models.EmploymentType;
+import com.yoedu.job_board_platform.models.ExperienceLevel;
+import com.yoedu.job_board_platform.models.Job;
+import com.yoedu.job_board_platform.models.JobCategory;
+import com.yoedu.job_board_platform.models.JobStatus;
+import com.yoedu.job_board_platform.models.LocationTypes;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.Skill;
 import com.yoedu.job_board_platform.models.User;
@@ -37,6 +43,7 @@ import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
+import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
 import com.yoedu.job_board_platform.repositories.NotificationRepository;
@@ -85,9 +92,13 @@ class AdminControllerTest {
     @Autowired
     NotificationRepository notificationRepository;
 
+    @Autowired
+    JobCategoryRepository jobCategoryRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private Skill savedSkillActive;
     private Skill savedSkillInactive;
+    private JobCategory savedCategory;
 
     @BeforeEach
     void cleanup() {
@@ -95,6 +106,7 @@ class AdminControllerTest {
         jobSkillRepository.deleteAll();
         skillRepository.deleteAll();
         jobRepository.deleteAll();
+        jobCategoryRepository.deleteAll();
         notificationRepository.deleteAll();
         employerDetailRepository.deleteAll();
         companyRepository.deleteAll();
@@ -105,6 +117,9 @@ class AdminControllerTest {
                 Skill.builder().name("Java").isActive(true).build());
         savedSkillInactive = skillRepository.save(
                 Skill.builder().name("Kotlin").isActive(false).build());
+
+        savedCategory = jobCategoryRepository.save(
+                JobCategory.builder().name("Công nghệ thông tin").build());
     }
 
     private Cookie loginAsAdmin() throws Exception {
@@ -128,6 +143,24 @@ class AdminControllerTest {
                 .andReturn();
 
         return loginResult.getResponse().getCookie("accessToken");
+    }
+
+    private Job createPendingJob(Company company, String title) {
+        return jobRepository.save(Job.builder()
+                .company(company)
+                .category(savedCategory)
+                .title(title)
+                .slug(title.toLowerCase().replace(' ', '-') + "-" + System.currentTimeMillis())
+                .description("Mô tả " + title)
+                .location("Hà Nội")
+                .locationTypes(LocationTypes.ONSITE)
+                .employmentType(EmploymentType.FULL_TIME)
+                .experienceLevel(ExperienceLevel.JUNIOR)
+                .salaryMin(new java.math.BigDecimal("10000000"))
+                .salaryMax(new java.math.BigDecimal("20000000"))
+                .numberOfOpenings(2)
+                .status(JobStatus.PENDING_APPROVAL)
+                .build());
     }
 
     private Company createPendingCompany(String companyName, String taxCode, String email, String phone) {
@@ -356,5 +389,183 @@ class AdminControllerTest {
         mockMvc.perform(delete("/api/admin/skills/9999")
                         .cookie(adminCookie))
                 .andExpect(status().isNotFound());
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Jobs — GET /api/admin/jobs
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canListAllJobs() throws Exception {
+        Company company = createPendingCompany("Jobs Corp", "555555555", "jobs@example.com", "0900000005");
+        createPendingJob(company, "Software Engineer");
+        createPendingJob(company, "Product Manager");
+
+        Cookie adminCookie = loginAsAdmin();
+
+        MvcResult result = mockMvc.perform(get("/api/admin/jobs")
+                        .cookie(adminCookie))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(json.get("content").isArray()).isTrue();
+        assertThat(json.get("totalElements").asInt()).isEqualTo(2);
+    }
+
+    @Test
+    void admin_canFilterJobsByStatus() throws Exception {
+        Company company = createPendingCompany("Filter Corp", "666666666", "filter@example.com", "0900000006");
+        createPendingJob(company, "Pending Job");
+        Job activeJob = createPendingJob(company, "Active Job");
+        activeJob.setStatus(JobStatus.ACTIVE);
+        jobRepository.save(activeJob);
+
+        Cookie adminCookie = loginAsAdmin();
+
+        MvcResult result = mockMvc.perform(get("/api/admin/jobs")
+                        .cookie(adminCookie)
+                        .param("status", "PENDING_APPROVAL"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(json.get("totalElements").asInt()).isEqualTo(1);
+        assertThat(json.get("content").get(0).get("status").asText()).isEqualTo("PENDING_APPROVAL");
+    }
+
+    @Test
+    void getAllJobs_withoutAuth_returns401() throws Exception {
+        mockMvc.perform(get("/api/admin/jobs"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Jobs — GET /api/admin/jobs/pending
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canListPendingJobs() throws Exception {
+        Company company = createPendingCompany("Pending Jobs Corp", "777777777", "pendingjobs@example.com", "0900000007");
+        createPendingJob(company, "Pending Engineer");
+        Job activeJob = createPendingJob(company, "Active Engineer");
+        activeJob.setStatus(JobStatus.ACTIVE);
+        jobRepository.save(activeJob);
+
+        Cookie adminCookie = loginAsAdmin();
+
+        MvcResult result = mockMvc.perform(get("/api/admin/jobs/pending")
+                        .cookie(adminCookie))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(json.get("totalElements").asInt()).isEqualTo(1);
+        assertThat(json.get("content").get(0).get("title").asText()).isEqualTo("Pending Engineer");
+    }
+
+    @Test
+    void getPendingJobs_withoutAuth_returns401() throws Exception {
+        mockMvc.perform(get("/api/admin/jobs/pending"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Jobs — PATCH /api/admin/jobs/{id}/approve
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canApprovePendingJob() throws Exception {
+        Company company = createPendingCompany("Approve Job Corp", "888888888", "approvejob@example.com", "0900000008");
+        Job job = createPendingJob(company, "Approvable Engineer");
+
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(patch("/api/admin/jobs/" + job.getId() + "/approve")
+                        .cookie(adminCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Duyệt tin tuyển dụng thành công"));
+
+        Job updated = jobRepository.findById(job.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(JobStatus.ACTIVE);
+        assertThat(updated.getRejectionReason()).isNull();
+    }
+
+    @Test
+    void admin_approveNonPendingJob_returns400() throws Exception {
+        Company company = createPendingCompany("NonPending Corp", "999999999", "nonpending@example.com", "0900000009");
+        Job job = createPendingJob(company, "Non Pending");
+        job.setStatus(JobStatus.DRAFT);
+        jobRepository.save(job);
+
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(patch("/api/admin/jobs/" + job.getId() + "/approve")
+                        .cookie(adminCookie))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Jobs — PATCH /api/admin/jobs/{id}/reject
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canRejectPendingJob_withReason() throws Exception {
+        Company company = createPendingCompany("Reject Job Corp", "101010101", "rejectjob@example.com", "0900000010");
+        Job job = createPendingJob(company, "Rejectable Engineer");
+
+        Cookie adminCookie = loginAsAdmin();
+
+        String payload = objectMapper.writeValueAsString(Map.of("reason", "Nội dung không phù hợp"));
+
+        mockMvc.perform(patch("/api/admin/jobs/" + job.getId() + "/reject")
+                        .cookie(adminCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Từ chối tin tuyển dụng thành công"));
+
+        Job updated = jobRepository.findById(job.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(JobStatus.REJECTED);
+        assertThat(updated.getRejectionReason()).isEqualTo("Nội dung không phù hợp");
+    }
+
+    @Test
+    void admin_rejectJob_withoutReason_returns400() throws Exception {
+        Company company = createPendingCompany("No Reason Corp", "111111112", "noreason@example.com", "0900000011");
+        Job job = createPendingJob(company, "No Reason Job");
+
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(patch("/api/admin/jobs/" + job.getId() + "/reject")
+                        .cookie(adminCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ----------------------------------------------------------------
+    // Admin Jobs — DELETE /api/admin/jobs/{id}
+    // ----------------------------------------------------------------
+
+    @Test
+    void admin_canDeleteJob() throws Exception {
+        Company company = createPendingCompany("Delete Job Corp", "121212121", "deletejob@example.com", "0900000012");
+        Job job = createPendingJob(company, "Deletable Engineer");
+
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(delete("/api/admin/jobs/" + job.getId())
+                        .cookie(adminCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Xóa tin thành công"));
+
+        assertThat(jobRepository.findById(job.getId())).isPresent();
+    }
+
+    @Test
+    void deleteJob_withoutAuth_returns401() throws Exception {
+        mockMvc.perform(delete("/api/admin/jobs/some-id"))
+                .andExpect(status().isUnauthorized());
     }
 }
