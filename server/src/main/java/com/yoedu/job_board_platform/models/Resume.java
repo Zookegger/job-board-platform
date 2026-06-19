@@ -5,9 +5,13 @@ import java.util.UUID;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -26,10 +30,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 /**
  * CV / Hồ sơ xin việc của ứng viên. Mỗi ứng viên có thể có nhiều resume,
  * nhưng chỉ một resume được gắn trực tiếp với CandidateDetail.
- * Lưu trữ thông tin file (đường dẫn, kích thước, loại) và thời gian tạo/cập nhật.
+ * Lưu trữ thông tin file (đường dẫn, kích thước, loại) và thời gian tạo/cập
+ * nhật.
  */
 public class Resume {
     @Id
@@ -57,8 +63,10 @@ public class Resume {
     private String fileType;
 
     @Column(name = "created_at", nullable = false)
+    @CreatedDate
     private OffsetDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
     private OffsetDateTime updatedAt;
 }

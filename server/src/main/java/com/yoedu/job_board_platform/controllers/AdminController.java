@@ -3,13 +3,16 @@ package com.yoedu.job_board_platform.controllers;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,10 +20,22 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
+import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
+import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
+import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
+import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
+import com.yoedu.job_board_platform.dtos.admin.JobRejectRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
+import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
+import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
+import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
+import com.yoedu.job_board_platform.mappers.SkillMapper;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.services.AdminService;
+import com.yoedu.job_board_platform.services.SkillService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -28,12 +43,17 @@ import lombok.RequiredArgsConstructor;
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class AdminController implements AdminApi {
+
     private final AdminService adminService;
+    private final SkillService skillService;
+    private final SkillMapper skillMapper;
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard() {
         return ResponseEntity.ok("Dashboard thống kê");
     }
+
+    // ================ Users ================
 
     @GetMapping("/users")
     public ResponseEntity<?> getUsers(
@@ -57,58 +77,76 @@ public class AdminController implements AdminApi {
         return ResponseEntity.ok("Mở khóa thành công");
     }
 
+    // ================ Companies ================
+
     @GetMapping("/companies/pending")
     public ResponseEntity<Page<PendingCompanyResponse>> getPendingCompanies(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Boolean hasTaxCode,
             @RequestParam(required = false) Boolean hasContact,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            Pageable pageable) {
         return ResponseEntity.ok(adminService.getPendingCompanies(
-                page,
-                size,
-                keyword,
-                hasTaxCode,
-                hasContact,
-                sortBy,
-                direction));
+                keyword, hasTaxCode, hasContact, pageable));
     }
 
     @PostMapping("/companies/{id}/approve")
-    public ResponseEntity<ApiResponse> approveCompany(@PathVariable UUID id) {
-        adminService.approveCompany(id);
+    public ResponseEntity<ApiResponse> approveCompany(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompanyApprovalRequest request) {
+        adminService.approveCompany(id, request);
         return ResponseEntity.ok(new ApiResponse("Duyệt công ty thành công"));
     }
 
     @PostMapping("/companies/{id}/reject")
-    public ResponseEntity<ApiResponse> rejectCompany(@PathVariable UUID id, @RequestParam String reason) {
-        adminService.rejectCompany(id, reason);
+    public ResponseEntity<ApiResponse> rejectCompany(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompanyRejectionRequest request) {
+        adminService.rejectCompany(id, request);
         return ResponseEntity.ok(new ApiResponse("Từ chối công ty thành công"));
     }
 
+    @PostMapping("/companies/{id}/suspend")
+    public ResponseEntity<ApiResponse> suspendCompany(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompanySuspensionRequest request) {
+        adminService.suspendCompany(id, request);
+        return ResponseEntity.ok(new ApiResponse("Tạm ngưng công ty thành công"));
+    }
+
+    // ================ Jobs ================
+
     @GetMapping("/jobs")
-    public ResponseEntity<?> getAllJobs(
+    public ResponseEntity<Page<AdminJobListResponse>> getAllJobs(
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok("Danh sách tin");
+            Pageable pageable) {
+        return ResponseEntity.ok(adminService.getAllJobs(status, pageable));
     }
 
-    @PostMapping("/jobs/{id}/approve")
-    public ResponseEntity<?> approveJob(@PathVariable Long id) {
-        return ResponseEntity.ok("Duyệt tin thành công");
+    @GetMapping("/jobs/pending")
+    public ResponseEntity<Page<PendingJobResponse>> getPendingJobs(Pageable pageable) {
+        return ResponseEntity.ok(adminService.getPendingJobs(pageable));
     }
 
-    @PostMapping("/jobs/{id}/reject")
-    public ResponseEntity<?> rejectJob(@PathVariable Long id, @RequestParam String reason) {
-        return ResponseEntity.ok("Từ chối tin");
+    @PatchMapping("/jobs/{id}/approve")
+    public ResponseEntity<ApiResponse> approveJob(@PathVariable UUID id) {
+        adminService.approveJob(id);
+        return ResponseEntity.ok(new ApiResponse("Duyệt tin tuyển dụng thành công"));
+    }
+
+    @PatchMapping("/jobs/{id}/reject")
+    public ResponseEntity<ApiResponse> rejectJob(
+            @PathVariable UUID id,
+            @Valid @RequestBody JobRejectRequest request) {
+        adminService.rejectJob(id, request.reason());
+        return ResponseEntity.ok(new ApiResponse("Từ chối tin tuyển dụng thành công"));
     }
 
     @DeleteMapping("/jobs/{id}")
-    public ResponseEntity<?> deleteJob(@PathVariable Long id, @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok("Xóa tin thành công");
+    public ResponseEntity<ApiResponse> deleteJob(@PathVariable UUID id, @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(new ApiResponse("Xóa tin thành công"));
     }
+
+    // ================ Categories ================
 
     @GetMapping("/categories")
     public ResponseEntity<?> getCategories() {
@@ -128,5 +166,36 @@ public class AdminController implements AdminApi {
     @DeleteMapping("/categories/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
         return ResponseEntity.ok("Xóa ngành thành công");
+    }
+
+    // ================ Skills ================
+
+    @GetMapping("/skills")
+    public ResponseEntity<Page<AdminSkillResponse>> getAllSkills(Pageable pageable,
+            SkillFilterRequest request) {
+        return ResponseEntity.ok(skillService.getAllSkills(pageable, request).map(skillMapper::toAdminResponse));
+    }
+
+    @PostMapping("/skills")
+    public ResponseEntity<AdminSkillResponse> createSkill(@Valid @RequestBody SkillRequest request) {
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.createSkill(request)));
+    }
+
+    @PutMapping("/skills/{id}")
+    public ResponseEntity<AdminSkillResponse> updateSkill(
+            @PathVariable Integer id,
+            @Valid @RequestBody SkillRequest request) {
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.updateSkill(id, request)));
+    }
+
+    @PatchMapping("/skills/{id}/toggle-status")
+    public ResponseEntity<AdminSkillResponse> toggleSkillStatus(@PathVariable Integer id) {
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.toggleSkillActive(id)));
+    }
+
+    @DeleteMapping("/skills/{id}")
+    public ResponseEntity<ApiResponse> deleteSkill(@PathVariable Integer id) {
+        skillService.deleteSkill(id);
+        return ResponseEntity.ok(new ApiResponse("Xóa kỹ năng thành công"));
     }
 }

@@ -32,6 +32,7 @@ import AdminDashboardPage from "@/features/admin/DashboardPage";
 import AdminJobsPage from "@/features/admin/JobsPage";
 import AdminReportsPage from "@/features/admin/ReportsPage";
 import AdminSettingsPage from "@/features/admin/SettingsPage";
+import AdminSkillPage from "@/features/admin/SkillsPage";
 import AdminUsersPage from "@/features/admin/UsersPage";
 import UnauthorizedPage from "@/features/home/UnauthorizedPage";
 import ProfilePage from "@/features/profile/ProfilePage";
@@ -136,6 +137,7 @@ export const router = createBrowserRouter([
 							{ path: RouterRoutes.ADMIN_JOBS, element: <AdminJobsPage /> },
 							{ path: RouterRoutes.ADMIN_REPORTS, element: <AdminReportsPage /> },
 							{ path: RouterRoutes.ADMIN_SETTINGS, element: <AdminSettingsPage /> },
+							{ path: RouterRoutes.ADMIN_SKILLS, element: <AdminSkillPage /> },
 						],
 					},
 				],

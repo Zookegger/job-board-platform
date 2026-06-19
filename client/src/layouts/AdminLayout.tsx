@@ -1,17 +1,19 @@
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { BarChart3, Briefcase, Building2, LayoutDashboard, Menu, Settings, Users } from "lucide-react";
+import RouterRoutes from "@/utils/RouterRoutes";
+import { BarChart3, Briefcase, Building2, GraduationCap, LayoutDashboard, Menu, Settings, Users } from "lucide-react";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
-	{ to: "/admin/dashboard", label: "Bảng điều khiển", icon: LayoutDashboard },
-	{ to: "/admin/users", label: "Người dùng", icon: Users },
-	{ to: "/admin/companies", label: "Công ty", icon: Building2 },
-	{ to: "/admin/jobs", label: "Việc làm", icon: Briefcase },
-	{ to: "/admin/reports", label: "Báo cáo", icon: BarChart3 },
-	{ to: "/admin/settings", label: "Cài đặt", icon: Settings },
+	{ to: RouterRoutes.ADMIN_DASHBOARD, label: "Bảng điều khiển", icon: LayoutDashboard },
+	{ to: RouterRoutes.ADMIN_USERS, label: "Người dùng", icon: Users },
+	{ to: RouterRoutes.ADMIN_COMPANIES, label: "Công ty", icon: Building2 },
+	{ to: RouterRoutes.ADMIN_JOBS, label: "Việc làm", icon: Briefcase },
+	{ to: RouterRoutes.ADMIN_REPORTS, label: "Báo cáo", icon: BarChart3 },
+	{ to: RouterRoutes.ADMIN_SETTINGS, label: "Cài đặt", icon: Settings },
+	{ to: RouterRoutes.ADMIN_SKILLS, label: "Kỹ năng", icon: GraduationCap },
 ];
 
 export default function AdminLayout() {

@@ -14,4 +14,6 @@ import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 public interface CompanyEmployerDetailRepository extends JpaRepository<CompanyEmployerDetail, UUID> {
     @EntityGraph(attributePaths = {"company", "profile", "profile.user"})
     List<CompanyEmployerDetail> findByCompany_IdIn(Collection<UUID> companyIds);
+
+    List<CompanyEmployerDetail> findAllByCompanyId(UUID companyId);
 }

@@ -6,6 +6,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
+import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobRequest;
 import com.yoedu.job_board_platform.dtos.job.JobResponse;
@@ -21,6 +22,7 @@ public interface JobMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "postedDate", ignore = true)
     @Mapping(target = "expirationDate", ignore = true)
+    @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Job toEntity(JobRequest request);
@@ -33,6 +35,11 @@ public interface JobMapper {
     JobResponse toResponse(Job job);
 
     @Mapping(target = "companyName", source = "company.companyName")
+    @Mapping(target = "companyLogoUrl", source = "company.logoUrl")
+    @Mapping(target = "categoryName", source = "category.name")
+    AdminJobListResponse toAdminJobListResponse(Job job);
+
+    @Mapping(target = "companyName", source = "company.companyName")
     JobListResponse toSummary(Job job);
 
     @Mapping(target = "id", ignore = true)
@@ -42,6 +49,7 @@ public interface JobMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "postedDate", ignore = true)
     @Mapping(target = "expirationDate", ignore = true)
+    @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

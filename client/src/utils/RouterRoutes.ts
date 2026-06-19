@@ -32,6 +32,7 @@ const RouterRoutes = {
 	ADMIN_JOBS: "/admin/jobs",
 	ADMIN_REPORTS: "/admin/reports",
 	ADMIN_SETTINGS: "/admin/settings",
+	ADMIN_SKILLS: "/admin/skills",
 };
 
 export default RouterRoutes;
