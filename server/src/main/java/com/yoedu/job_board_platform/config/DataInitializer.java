@@ -665,10 +665,10 @@ public class DataInitializer implements CommandLineRunner {
 
         // ── Report ──
         reportRepository.save(Report.builder()
-                .jobId(marketingInternJob.getId())
+                .job(marketingInternJob)
                 .reason(ReportReason.SPAM)
                 .details("This job posting appears to be a duplicate of another listing.")
-                .reportedBy(candidate.getId())
+                .reportedBy(candidate)
                 .build());
 
         // ── Resume ──

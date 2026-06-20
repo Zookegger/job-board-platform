@@ -42,11 +42,6 @@ public class PublicJobController implements PublicJobApi {
         return ResponseEntity.ok("Filter options");
     }
 
-    @GetMapping("/categories")
-    public ResponseEntity<?> getCategories() {
-        return ResponseEntity.ok("Danh sách ngành");
-    }
-
     @GetMapping("/companies/{id}")
     public ResponseEntity<?> getCompanyInfo(@PathVariable Long id) {
         return ResponseEntity.ok("Thông tin công ty");

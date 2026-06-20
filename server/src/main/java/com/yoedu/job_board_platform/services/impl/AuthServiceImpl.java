@@ -76,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResult refreshToken(String tokenString) {
         RefreshToken stored = refreshTokenService.validateRefreshToken(tokenString);
 
-        User user = userRepository.findById(stored.getUserId())
+        User user = userRepository.findById(stored.getUser().getId())
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         UserDetails userDetails = toUserDetails(user);

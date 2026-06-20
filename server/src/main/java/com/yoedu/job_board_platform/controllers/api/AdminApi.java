@@ -31,7 +31,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN.")
+@Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng, kiểm duyệt. Yêu cầu role ADMIN.")
 public interface AdminApi {
 
         @Operation(summary = "Dashboard tổng quan", description = """
@@ -173,37 +173,6 @@ public interface AdminApi {
         ResponseEntity<ApiResponse> deleteJob(
                         @Parameter(description = "ID của tin tuyển dụng cần xóa", required = true) UUID id,
                         @Parameter(description = "Lý do xóa", example = "Nội dung vi phạm chính sách") String reason);
-
-        @Operation(summary = "Danh sách ngành nghề", description = "Lấy danh sách tất cả ngành nghề đang có trong hệ thống.")
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách ngành nghề", content = @Content)
-        ResponseEntity<?> getCategories();
-
-        @Operation(summary = "Thêm ngành nghề mới", description = "Tạo một ngành nghề mới (ví dụ: Công nghệ thông tin, Kế toán, Xây dựng...). Tên ngành phải chưa tồn tại.")
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Tạo ngành nghề mới thành công", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Tên ngành đã tồn tại hoặc dữ liệu không hợp lệ", content = @Content)
-        })
-        ResponseEntity<?> createCategory();
-
-        @Operation(summary = "Cập nhật ngành nghề", description = "Chỉnh sửa thông tin ngành nghề (tên, mô tả).")
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cập nhật ngành nghề thành công", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy ngành nghề", content = @Content)
-        })
-        ResponseEntity<?> updateCategory(
-                        @Parameter(description = "ID của ngành nghề cần sửa", example = "1", required = true) Long id);
-
-        @Operation(summary = "Xóa ngành nghề", description = """
-                        Xóa ngành nghề khỏi hệ thống.
-                        Chỉ xóa được nếu không có công việc nào đang thuộc ngành này.
-                        """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Xóa ngành nghề thành công", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Không thể xóa — ngành đang có công việc liên kết", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy ngành nghề", content = @Content)
-        })
-        ResponseEntity<?> deleteCategory(
-                        @Parameter(description = "ID của ngành nghề cần xóa", example = "1", required = true) Long id);
 
         // ================ Skills ================
 

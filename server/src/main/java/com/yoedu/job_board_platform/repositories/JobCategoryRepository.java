@@ -7,4 +7,5 @@ import com.yoedu.job_board_platform.models.JobCategory;
 
 @Repository
 public interface JobCategoryRepository extends JpaRepository<JobCategory, Integer> {
+    java.util.Optional<JobCategory> findByName(String name);
 }

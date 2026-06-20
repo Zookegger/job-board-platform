@@ -16,6 +16,7 @@ import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.job.JobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobRequest;
 import com.yoedu.job_board_platform.dtos.job.JobResponse;
+import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.mappers.JobMapper;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.Job;
@@ -111,7 +112,12 @@ public class JobServiceImpl implements JobService {
             skills.stream().forEach(skill -> jobSkillRepository.save(new JobSkill(savedJob.getId(), skill.getId())));
         }
 
-        return jobMapper.toResponse(savedJob);
+        JobResponse response = jobMapper.toResponse(savedJob);
+        if (request.skillIds() != null && !request.skillIds().isEmpty()) {
+            response = response.withSkills(jobSkillService.getSkillsByJobId(savedJob.getId()));
+        }
+
+        return response;
     }
 
     @Override
@@ -139,6 +145,11 @@ public class JobServiceImpl implements JobService {
         Set<Integer> incomingSkillIds = request.skillIds() != null ? request.skillIds() : Set.of();
         jobSkillService.syncJobSkills(job.getId(), incomingSkillIds);
 
+        JobResponse response = jobMapper.toResponse(job);
+        if (request.skillIds() != null && !request.skillIds().isEmpty()) {
+            response = response.withSkills(jobSkillService.getSkillsByJobId(job.getId()));
+        }
+
         return jobMapper.toResponse(job);
     }
 
@@ -163,7 +174,14 @@ public class JobServiceImpl implements JobService {
     public JobResponse getJobDetail(UUID jobId, UUID employerId) {
         Company company = getAuthorizedEmployerCompany(employerId);
         Job job = findJobOwnedByCompany(jobId, company.getId());
-        return jobMapper.toResponse(job);
+
+        JobResponse response = jobMapper.toResponse(job);
+        List<SkillResponse> skills = jobSkillService.getSkillsByJobId(job.getId());
+
+        if (!skills.isEmpty()) {
+            response = response.withSkills(skills);
+        }
+        return response;
     }
 
     @Override

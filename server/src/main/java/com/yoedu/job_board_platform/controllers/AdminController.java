@@ -146,28 +146,6 @@ public class AdminController implements AdminApi {
         return ResponseEntity.ok(new ApiResponse("Xóa tin thành công"));
     }
 
-    // ================ Categories ================
-
-    @GetMapping("/categories")
-    public ResponseEntity<?> getCategories() {
-        return ResponseEntity.ok("Danh sách ngành");
-    }
-
-    @PostMapping("/categories")
-    public ResponseEntity<?> createCategory() {
-        return ResponseEntity.ok("Tạo ngành thành công");
-    }
-
-    @PutMapping("/categories/{id}")
-    public ResponseEntity<?> updateCategory(@PathVariable Long id) {
-        return ResponseEntity.ok("Cập nhật ngành thành công");
-    }
-
-    @DeleteMapping("/categories/{id}")
-    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
-        return ResponseEntity.ok("Xóa ngành thành công");
-    }
-
     // ================ Skills ================
 
     @GetMapping("/skills")
