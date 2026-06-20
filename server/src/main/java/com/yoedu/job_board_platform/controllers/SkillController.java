@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.SkillApi;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
@@ -44,14 +45,14 @@ public class SkillController implements SkillApi {
 
     /** Lấy danh sách kỹ năng của ứng viên đang đăng nhập. */
     @GetMapping("/profile")
-    @PreAuthorize("hasRole('CANDIDATE')")
+    @PreAuthorize(AuthorizationConstants.CANDIDATE)
     public ResponseEntity<List<CandidateSkillResponse>> getCandidateSkills() {
         return ResponseEntity.ok(skillService.getCandidateSkills());
     }
 
     /** Cập nhật toàn bộ kỹ năng của ứng viên đang đăng nhập (replace). */
     @PutMapping("/profile")
-    @PreAuthorize("hasRole('CANDIDATE')")
+    @PreAuthorize(AuthorizationConstants.CANDIDATE)
     public ResponseEntity<List<CandidateSkillResponse>> updateCandidateSkills(
             @Valid @RequestBody UpdateCandidateSkillsRequest request) {
         return ResponseEntity.ok(skillService.updateCandidateSkills(request));

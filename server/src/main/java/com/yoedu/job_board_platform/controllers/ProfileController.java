@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.yoedu.job_board_platform.controllers.api.ProfileApi;
 import com.yoedu.job_board_platform.dtos.profile.CandidateProfileRequest;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.dtos.profile.CandidateProfileResponse;
 import com.yoedu.job_board_platform.dtos.profile.EmployerProfileRequest;
 import com.yoedu.job_board_platform.dtos.profile.EmployerProfileResponse;
@@ -38,26 +39,26 @@ public class ProfileController implements ProfileApi {
 	private final ResumeService resumeService;
 
 	@GetMapping("/candidate")
-	@PreAuthorize("hasRole('CANDIDATE')")
+	@PreAuthorize(AuthorizationConstants.CANDIDATE)
 	public ResponseEntity<CandidateProfileResponse> getCandidateProfile() {
 		return ResponseEntity.ok(profileService.getCurrentCandidateProfile());
 	}
 
 	@GetMapping("/employer")
-	@PreAuthorize("hasRole('EMPLOYER')")
+	@PreAuthorize(AuthorizationConstants.EMPLOYER)
 	public ResponseEntity<EmployerProfileResponse> getEmployerProfile() {
 		return ResponseEntity.ok(profileService.getCurrentEmployerProfile());
 	}
 
 	@PutMapping("/candidate")
-	@PreAuthorize("hasRole('CANDIDATE')")
+	@PreAuthorize(AuthorizationConstants.CANDIDATE)
 	public ResponseEntity<CandidateProfileResponse> updateCandidateProfile(
 			@Valid @RequestBody CandidateProfileRequest request) {
 		return ResponseEntity.ok(profileService.updateCurrentCandidateProfile(request));
 	}
 
 	@PutMapping("/employer")
-	@PreAuthorize("hasRole('EMPLOYER')")
+	@PreAuthorize(AuthorizationConstants.EMPLOYER)
 	public ResponseEntity<EmployerProfileResponse> updateEmployerProfile(
 			@Valid @RequestBody EmployerProfileRequest request) {
 		return ResponseEntity.ok(profileService.updateCurrentEmployerProfile(request));
@@ -69,19 +70,19 @@ public class ProfileController implements ProfileApi {
 	}
 
 	@PostMapping("/logo")
-	@PreAuthorize("hasRole('EMPLOYER')")
+	@PreAuthorize(AuthorizationConstants.EMPLOYER)
 	public ResponseEntity<String> uploadCompanyLogo(@RequestParam MultipartFile file) {
 		return ResponseEntity.ok(profileService.uploadCompanyLogo(file));
 	}
 
 	@GetMapping("/resume")
-	@PreAuthorize("hasRole('CANDIDATE')")
+	@PreAuthorize(AuthorizationConstants.CANDIDATE)
 	public ResponseEntity<ResumeResponse> getResume() {
 		return ResponseEntity.ok(resumeService.getCurrentResume());
 	}
 
 	@PostMapping("/resume")
-	@PreAuthorize("hasRole('CANDIDATE')")
+	@PreAuthorize(AuthorizationConstants.CANDIDATE)
 	public ResponseEntity<ResumeResponse> uploadResume(
 			@RequestParam MultipartFile file,
 			@RequestParam(required = false) String title) {
@@ -89,20 +90,20 @@ public class ProfileController implements ProfileApi {
 	}
 
 	@PutMapping("/resume")
-	@PreAuthorize("hasRole('CANDIDATE')")
+	@PreAuthorize(AuthorizationConstants.CANDIDATE)
 	public ResponseEntity<ResumeResponse> updateResume(@Valid @RequestBody ResumeRequest request) {
 		return ResponseEntity.ok(resumeService.updateResume(request));
 	}
 
 	@DeleteMapping("/resume")
-	@PreAuthorize("hasRole('CANDIDATE')")
+	@PreAuthorize(AuthorizationConstants.CANDIDATE)
 	public ResponseEntity<Void> deleteResume() {
 		resumeService.deleteResume();
 		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping("/resume/download")
-	@PreAuthorize("hasRole('CANDIDATE')")
+	@PreAuthorize(AuthorizationConstants.CANDIDATE)
 	public ResponseEntity<Resource> downloadResume() {
 		Resource resource = resumeService.downloadResume();
 
@@ -121,7 +122,7 @@ public class ProfileController implements ProfileApi {
 	}
 
 	@GetMapping("/resume/preview")
-	@PreAuthorize("hasRole('CANDIDATE')")
+	@PreAuthorize(AuthorizationConstants.CANDIDATE)
 	public ResponseEntity<Resource> previewResume() {
 		var resource = resumeService.downloadResume();
 		return ResponseEntity.ok()

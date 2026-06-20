@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
 import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
@@ -40,7 +41,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize(AuthorizationConstants.ADMIN)
 @RequiredArgsConstructor
 public class AdminController implements AdminApi {
 
