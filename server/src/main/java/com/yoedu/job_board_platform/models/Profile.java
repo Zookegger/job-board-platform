@@ -50,7 +50,7 @@ public class Profile {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @Pattern(regexp = "^(|(\\+84|84|0)(3|5|7|8|9)[0-9]{8})$", message = "Số điện thoại không hợp lệ")
+    @Pattern(regexp = "^(|(\\+84|84|0)(3|5|7|8|9)[0-9]{8,9})$", message = "Số điện thoại không hợp lệ")
     @Column(nullable = false, length = 15)
     private String phone;
 

@@ -60,7 +60,7 @@ public class Company {
     @Column(unique = true, length = 255)
     private String email;
 
-    @Pattern(regexp = "^(|(\\+84|84|0)(2|3|5|7|8|9)[0-9]{8})$", message = "Số điện thoại không hợp lệ")
+    @Pattern(regexp = "(|(\\+84|84|0)(2|3|5|7|8|9)[0-9]{8,9})$", message = "Số điện thoại không hợp lệ")
     @Column(length = 15)
     private String phone;
 
