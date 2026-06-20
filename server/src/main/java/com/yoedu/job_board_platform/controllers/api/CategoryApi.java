@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Danh mục ngành nghề", description = "Quản lý ngành nghề: danh sách, thêm, sửa, xóa.")
-public interface JobCategoryApi {
+public interface CategoryApi {
 
     @Operation(summary = "Danh sách ngành nghề", description = "Lấy tất cả danh mục ngành nghề (công khai, không yêu cầu xác thực).")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách ngành nghề (id + name)", content = @Content)

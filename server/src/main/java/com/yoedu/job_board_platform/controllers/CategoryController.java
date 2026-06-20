@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
-import com.yoedu.job_board_platform.controllers.api.JobCategoryApi;
+import com.yoedu.job_board_platform.controllers.api.CategoryApi;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.dtos.job.JobCategoryRequest;
 import com.yoedu.job_board_platform.dtos.job.JobCategoryResponse;
 import com.yoedu.job_board_platform.services.JobCategoryService;
@@ -27,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping(ApiPaths.BASE + "/categories")
 @RequiredArgsConstructor
-public class JobCategoryController implements JobCategoryApi {
+public class CategoryController implements CategoryApi {
 
     private final JobCategoryService jobCategoryService;
 
@@ -37,13 +38,13 @@ public class JobCategoryController implements JobCategoryApi {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(AuthorizationConstants.ADMIN)
     public ResponseEntity<JobCategoryResponse> createCategory(@Valid @RequestBody JobCategoryRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(jobCategoryService.createCategory(request));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(AuthorizationConstants.ADMIN)
     public ResponseEntity<JobCategoryResponse> updateCategory(
             @PathVariable Integer id,
             @Valid @RequestBody JobCategoryRequest request) {
@@ -51,7 +52,7 @@ public class JobCategoryController implements JobCategoryApi {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(AuthorizationConstants.ADMIN)
     public ResponseEntity<ApiResponse> deleteCategory(@PathVariable Integer id) {
         jobCategoryService.deleteCategory(id);
         return ResponseEntity.ok(new ApiResponse("Xóa ngành nghề thành công"));
