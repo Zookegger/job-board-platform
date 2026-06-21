@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
@@ -55,6 +56,18 @@ public interface AdminService {
      * @param request lý do tạm ngưng
      */
     void suspendCompany(UUID companyId, CompanySuspensionRequest request);
+
+    /**
+     * Mở tạm ngưng một công ty — khôi phục từ SUSPENDED về APPROVED.
+     *
+     * @param companyId ID công ty cần mở tạm ngưng
+     */
+    void unsuspendCompany(UUID companyId);
+
+    /**
+     * Lấy danh sách tất cả công ty, có thể lọc theo trạng thái.
+     */
+    Page<AdminCompanyListResponse> getAllCompanies(String keyword, String status, Pageable pageable);
 
     /**
      * Lấy danh sách tất cả tin tuyển dụng, có thể lọc theo trạng thái.

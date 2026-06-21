@@ -21,6 +21,7 @@ import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
+import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
@@ -79,6 +80,14 @@ public class AdminController implements AdminApi {
 
     // ================ Companies ================
 
+    @GetMapping("/companies")
+    public ResponseEntity<Page<AdminCompanyListResponse>> getAllCompanies(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        return ResponseEntity.ok(adminService.getAllCompanies(keyword, status, pageable));
+    }
+
     @GetMapping("/companies/pending")
     public ResponseEntity<Page<PendingCompanyResponse>> getPendingCompanies(
             @RequestParam(required = false) String keyword,
@@ -95,7 +104,7 @@ public class AdminController implements AdminApi {
         return ResponseEntity.ok(new ApiResponse("Duyệt công ty thành công"));
     }
 
-    @PostMapping("/companies/{id}/reject")
+    @PatchMapping("/companies/{id}/reject")
     public ResponseEntity<ApiResponse> rejectCompany(
             @PathVariable UUID id,
             @Valid @RequestBody CompanyRejectionRequest request) {
@@ -103,12 +112,18 @@ public class AdminController implements AdminApi {
         return ResponseEntity.ok(new ApiResponse("Từ chối công ty thành công"));
     }
 
-    @PostMapping("/companies/{id}/suspend")
+    @PatchMapping("/companies/{id}/suspend")
     public ResponseEntity<ApiResponse> suspendCompany(
             @PathVariable UUID id,
             @Valid @RequestBody CompanySuspensionRequest request) {
         adminService.suspendCompany(id, request);
         return ResponseEntity.ok(new ApiResponse("Tạm ngưng công ty thành công"));
+    }
+
+    @PatchMapping("/companies/{id}/unsuspend")
+    public ResponseEntity<ApiResponse> unsuspendCompany(@PathVariable UUID id) {
+        adminService.unsuspendCompany(id);
+        return ResponseEntity.ok(new ApiResponse("Mở tạm ngưng công ty thành công"));
     }
 
     // ================ Jobs ================

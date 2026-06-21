@@ -9,6 +9,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 
 import com.yoedu.job_board_platform.common.ApiResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
@@ -91,6 +92,16 @@ public interface AdminApi {
                         @Parameter(description = "true: có email/phone, false: thiếu liên hệ") Boolean hasContact,
                         @ParameterObject Pageable pageable);
 
+        @Operation(summary = "Danh sách tất cả công ty", description = "Lấy danh sách tất cả công ty, hỗ trợ tìm kiếm, lọc theo trạng thái và phân trang.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách công ty (có phân trang)", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
+        })
+        ResponseEntity<Page<AdminCompanyListResponse>> getAllCompanies(
+                        @Parameter(description = "Từ khóa tìm theo tên, email, phone, mã số thuế, địa chỉ, website") String keyword,
+                        @Parameter(description = "Lọc theo trạng thái: PENDING, APPROVED, REJECTED, SUSPENDED") String status,
+                        @ParameterObject Pageable pageable);
+
         @Operation(summary = "Duyệt công ty", description = "Phê duyệt công ty — sau khi duyệt, employer có thể đăng tin tuyển dụng. Hệ thống gửi email thông báo cho employer.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Duyệt công ty thành công — employer nhận được email thông báo", content = @Content),
@@ -118,6 +129,15 @@ public interface AdminApi {
         ResponseEntity<?> suspendCompany(
                         @Parameter(description = "ID công ty cần tạm ngưng", required = true) UUID id,
                         @Valid @RequestBody(description = "Lý do tạm ngưng", required = true) CompanySuspensionRequest request);
+
+        @Operation(summary = "Mở tạm ngưng công ty", description = "Khôi phục công ty từ trạng thái SUSPENDED về APPROVED. Hệ thống gửi thông báo cho employer.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Mở tạm ngưng công ty thành công"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Công ty không ở trạng thái tạm ngưng"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy công ty")
+        })
+        ResponseEntity<ApiResponse> unsuspendCompany(
+                        @Parameter(description = "ID công ty cần mở tạm ngưng", required = true) UUID id);
 
         // ================ Jobs ================
 

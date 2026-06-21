@@ -1,28 +1,39 @@
-import type { AdminPendingCompanyResponse } from "@/types/company";
+import type { AdminCompanyListResponse, AdminPendingCompanyResponse } from "@/types/company";
 import type { AdminPendingJobResponse } from "@/types/job";
 import { toPageableParams, type PageResponse, type PaginationParams } from "@/types/pagination";
 import type { SkillRequest, SkillResponse } from "@/types/skill";
 import ApiError from "@/utils/ApiError";
 import client from "./client";
 
-export interface PendingCompaniesParams {
-	page?: number;
-	size?: number;
-	keyword?: string;
-	hasTaxCode?: boolean;
-	hasContact?: boolean;
-	sortBy?: "createdAt" | "companyName";
-	direction?: "asc" | "desc";
-}
-
-const withoutEmptyParams = (params: PendingCompaniesParams) =>
-	Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined && value !== ""));
-
 const adminApi = {
 	// Companies Review
-	getPendingCompanies: (params: PendingCompaniesParams): Promise<PageResponse<AdminPendingCompanyResponse>> =>
+	getAllCompanies: (
+		params: PaginationParams,
+		keyword?: string,
+		status?: string,
+	): Promise<PageResponse<AdminCompanyListResponse>> =>
 		client
-			.get("/admin/companies/pending", { params: withoutEmptyParams(params) })
+			.get("/admin/companies", { params: { ...params, keyword, status } })
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể tải danh sách công ty.",
+					error.response?.status || 500,
+				);
+			}),
+
+	getPendingCompanies: (
+		params: PaginationParams,
+		keyword?: string,
+		hasTaxCode?: boolean,
+		hasContact?: boolean,
+		sortBy?: "createdAt" | "companyName",
+		direction?: "asc" | "desc",
+	): Promise<PageResponse<AdminPendingCompanyResponse>> =>
+		client
+			.get("/admin/companies/pending", {
+				params: { ...params, keyword, hasTaxCode, hasContact, sortBy, direction },
+			})
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
@@ -33,7 +44,7 @@ const adminApi = {
 
 	approveCompany: (companyId: string) =>
 		client
-			.post(`/admin/companies/${companyId}/approve`)
+			.patch(`/admin/companies/${companyId}/approve`)
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
@@ -44,11 +55,33 @@ const adminApi = {
 
 	rejectCompany: (companyId: string, reason: string) =>
 		client
-			.post(`/admin/companies/${companyId}/reject`, { reason })
+			.patch(`/admin/companies/${companyId}/reject`, { reason })
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
 					error.response?.data?.message || error.message || "Lỗi, Không thể từ chối công ty.",
+					error.response?.status || 500,
+				);
+			}),
+
+	suspendCompany: (companyId: string, reason: string) =>
+		client
+			.patch(`/admin/companies/${companyId}/suspend`, { reason })
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể tạm ngưng công ty.",
+					error.response?.status || 500,
+				);
+			}),
+
+	unsuspendCompany: (companyId: string) =>
+		client
+			.patch(`/admin/companies/${companyId}/unsuspend`)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể mở tạm ngưng công ty.",
 					error.response?.status || 500,
 				);
 			}),

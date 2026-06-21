@@ -16,6 +16,15 @@ public final class CompanySpecification {
     private CompanySpecification() {
     }
 
+    public static Specification<Company> hasStatus(String status) {
+        return (root, query, cb) -> {
+            if (status == null || status.isBlank()) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("status"), CompanyStatus.valueOf(status.toUpperCase(Locale.ROOT)));
+        };
+    }
+
     public static Specification<Company> isPending() {
         return (root, query, cb) ->
                 cb.equal(root.get("status"), CompanyStatus.PENDING);
