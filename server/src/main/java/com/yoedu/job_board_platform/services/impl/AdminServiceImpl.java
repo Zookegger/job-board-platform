@@ -15,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
+import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
-import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
@@ -89,8 +89,18 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<AdminCompanyListResponse> getAllCompanies(String keyword, String status, Pageable pageable) {
+        Specification<Company> spec = Specification
+                .where(CompanySpecification.hasKeyword(keyword))
+                .and(CompanySpecification.hasStatus(status));
+        return companyRepository.findAll(spec, pageable)
+                .map(adminMapper::toAdminCompanyListResponse);
+    }
+
+    @Override
     @Transactional
-    public void approveCompany(UUID companyId, CompanyApprovalRequest request) {
+    public void approveCompany(UUID companyId) {
         Company company = findCompany(companyId);
 
         company.setStatus(CompanyStatus.APPROVED);
@@ -135,6 +145,25 @@ public class AdminServiceImpl implements AdminService {
 
         notificationService.notifyCompanyStatusChange(savedCompany.getId(), "CompanySuspended",
                 "Công ty của bạn đã bị tạm ngưng hoạt động.");
+    }
+
+    @Override
+    @Transactional
+    public void unsuspendCompany(UUID companyId) {
+        Company company = findCompany(companyId);
+
+        if (company.getStatus() != CompanyStatus.SUSPENDED) {
+            throw new BadRequestException("Công ty không ở trạng thái tạm ngưng");
+        }
+
+        company.setStatus(CompanyStatus.APPROVED);
+        company.setApproved(true);
+        company.setSuspensionReason(null);
+
+        companyRepository.save(company);
+
+        notificationService.notifyCompanyStatusChange(company.getId(), "CompanyUnsuspended",
+                "Công ty của bạn đã được mở tạm ngưng và hoạt động trở lại.");
     }
 
     private Company findCompany(UUID companyId) {

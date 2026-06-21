@@ -15,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -57,9 +58,9 @@ public class Company {
     private String logoUrl;
 
     @Column(unique = true, length = 255)
-    // TODO: email + phone được cập nhật qua form trong Employer Dashboard
     private String email;
 
+    @Pattern(regexp = "(|(\\+84|84|0)(2|3|5|7|8|9)[0-9]{8,9})$", message = "Số điện thoại không hợp lệ")
     @Column(length = 15)
     private String phone;
 

@@ -33,6 +33,11 @@ export interface AdminPendingCompanyResponse extends CompanyResponse {
 	roleInCompany: string | null;
 }
 
+export interface AdminCompanyListResponse extends CompanyResponse {
+	rejectionReason: string | null;
+	suspensionReason: string | null;
+}
+
 export const CompanyStatus = {
 	PENDING: "PENDING",
 	APPROVED: "APPROVED",

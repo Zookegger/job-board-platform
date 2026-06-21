@@ -175,6 +175,10 @@ class EmployerJobControllerTest {
                 assertThat(json.get("status").asText()).isEqualTo("DRAFT");
                 assertThat(json.get("slug")).isNotNull();
                 assertThat(json.get("categoryId").asInt()).isEqualTo(savedCategory.getId());
+                assertThat(json.get("skills")).isNotNull();
+                assertThat(json.get("skills")).isNotEmpty();
+                assertThat(json.get("skills").get(0).get("id").asInt()).isEqualTo(savedSkill.getId());
+                assertThat(json.get("skills").get(0).get("name").asText()).isEqualTo("Java");
         }
 
         @Test
@@ -194,6 +198,30 @@ class EmployerJobControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(createJobPayload("Candidate Job")))
                                 .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void employer_createJob_withoutSkills_returnsEmptySkills() throws Exception {
+                Cookie tokenCookie = registerAndLogin("employer-create-no-skills@test.com", "password123");
+
+                var payload = objectMapper.writeValueAsString(Map.ofEntries(
+                        Map.entry("title", "No Skills Job"),
+                        Map.entry("description", "Job without skills"),
+                        Map.entry("categoryId", savedCategory.getId()),
+                        Map.entry("locationTypes", "REMOTE"),
+                        Map.entry("employmentType", "FULL_TIME"),
+                        Map.entry("experienceLevel", "JUNIOR")));
+
+                MvcResult res = mockMvc.perform(post("/api/employer/jobs")
+                                .cookie(tokenCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(payload))
+                                .andExpect(status().isCreated())
+                                .andReturn();
+
+                var json = objectMapper.readTree(res.getResponse().getContentAsString());
+                assertThat(json.get("skills")).isNotNull();
+                assertThat(json.get("skills")).isEmpty();
         }
 
         // -----------------------------------------------------------------
@@ -290,6 +318,9 @@ class EmployerJobControllerTest {
                 assertThat(json.get("title").asText()).isEqualTo("Detail Job");
                 assertThat(json.get("categoryId").asInt()).isEqualTo(savedCategory.getId());
                 assertThat(json.get("status").asText()).isEqualTo("DRAFT");
+                assertThat(json.get("skills")).isNotNull();
+                assertThat(json.get("skills")).isNotEmpty();
+                assertThat(json.get("skills").get(0).get("id").asInt()).isEqualTo(savedSkill.getId());
         }
 
         @Test
@@ -372,6 +403,7 @@ class EmployerJobControllerTest {
                 var json = objectMapper.readTree(updateRes.getResponse().getContentAsString());
                 assertThat(json.get("title").asText()).isEqualTo("Updated Draft Job");
                 assertThat(json.get("status").asText()).isEqualTo("DRAFT");
+                assertThat(json.get("skills")).isNotNull();
         }
 
         @Test
@@ -531,6 +563,41 @@ class EmployerJobControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(updatePayload))
                                 .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void employer_updateJob_withSkills_returnsSkills() throws Exception {
+                Cookie tokenCookie = registerAndLogin("employer-update-skills@test.com", "password123");
+
+                MvcResult createRes = mockMvc.perform(post("/api/employer/jobs")
+                                .cookie(tokenCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(createJobPayload("Skills Update Job")))
+                                .andExpect(status().isCreated())
+                                .andReturn();
+                var createdJson = objectMapper.readTree(createRes.getResponse().getContentAsString());
+                UUID jobId = UUID.fromString(createdJson.get("id").asText());
+
+                var updatePayload = objectMapper.writeValueAsString(Map.ofEntries(
+                        Map.entry("title", "Skills Update Job"),
+                        Map.entry("description", "Updated description"),
+                        Map.entry("categoryId", savedCategory.getId()),
+                        Map.entry("locationTypes", "ONSITE"),
+                        Map.entry("employmentType", "FULL_TIME"),
+                        Map.entry("experienceLevel", "MID"),
+                        Map.entry("skillIds", List.of(savedSkill.getId()))));
+
+                MvcResult updateRes = mockMvc.perform(put("/api/employer/jobs/" + jobId)
+                                .cookie(tokenCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(updatePayload))
+                                .andExpect(status().isOk())
+                                .andReturn();
+
+                var json = objectMapper.readTree(updateRes.getResponse().getContentAsString());
+                assertThat(json.get("skills")).isNotNull();
+                assertThat(json.get("skills")).isNotEmpty();
+                assertThat(json.get("skills").get(0).get("id").asInt()).isEqualTo(savedSkill.getId());
         }
 
         // -----------------------------------------------------------------

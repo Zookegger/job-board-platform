@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import type { PageResponse } from "@/types/pagination";
 import getErrorMessage from "@/utils/getErrorMessage";
-import type { PaginationResponse } from "@/types/pagination";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 
@@ -51,7 +51,7 @@ export interface DataTableProps<T> {
 	emptyState: EmptyStateConfig;
 
 	/** Spring-native: pass the full PageResponse + callbacks */
-	pageResponse?: PaginationResponse<T>;
+	pageResponse?: PageResponse<T>;
 	pageable?: PageableConfig;
 
 	/** Legacy: manual pagination config (kept for backward compat) */

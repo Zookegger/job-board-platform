@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.ApplicationApi;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/applications")
-@PreAuthorize("hasRole('CANDIDATE')")
+@PreAuthorize(AuthorizationConstants.CANDIDATE)
 public class ApplicationController implements ApplicationApi {
 
     @PostMapping
@@ -46,7 +47,7 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @GetMapping("/cv/application/{id}")
-    @PreAuthorize("hasAnyRole('CANDIDATE', 'EMPLOYER')")
+    @PreAuthorize(AuthorizationConstants.CANDIDATE_OR_EMPLOYER)
     public ResponseEntity<?> getApplicationCV(@PathVariable Long id) {
         return ResponseEntity.ok("CV của đơn");
     }

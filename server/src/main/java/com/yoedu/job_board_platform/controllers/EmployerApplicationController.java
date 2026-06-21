@@ -11,10 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.EmployerApplicationApi;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/employer/applications")
-@PreAuthorize("hasRole('EMPLOYER')")
+@PreAuthorize(AuthorizationConstants.EMPLOYER)
 public class EmployerApplicationController implements EmployerApplicationApi {
 
     @GetMapping
