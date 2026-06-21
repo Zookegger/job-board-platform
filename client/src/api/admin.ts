@@ -1,21 +1,9 @@
 import type { AdminPendingCompanyResponse } from "@/types/company";
 import type { AdminPendingJobResponse } from "@/types/job";
-import { toPageableParams, type PaginationParams, type PaginationResponse } from "@/types/pagination";
+import { toPageableParams, type PageResponse, type PaginationParams } from "@/types/pagination";
 import type { SkillRequest, SkillResponse } from "@/types/skill";
 import ApiError from "@/utils/ApiError";
 import client from "./client";
-
-export interface PageResponse<T> {
-	content: T[];
-	totalElements: number;
-	totalPages: number;
-	size: number;
-	number: number;
-	first: boolean;
-	last: boolean;
-	numberOfElements: number;
-	empty: boolean;
-}
 
 export interface PendingCompaniesParams {
 	page?: number;
@@ -102,7 +90,9 @@ const adminApi = {
 	// Skills
 	getAllSkills: (params: PaginationParams, keyword?: string, isActive?: boolean) =>
 		client
-			.get<PaginationResponse<SkillResponse>>("/admin/skills", { params: { ...toPageableParams(params), keyword, isActive } })
+			.get<PageResponse<SkillResponse>>("/admin/skills", {
+				params: { ...toPageableParams(params), keyword, isActive },
+			})
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(

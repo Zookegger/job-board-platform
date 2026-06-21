@@ -1,10 +1,10 @@
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
 } from "@/components/ui/dialog";
 import type { ReactNode } from "react";
 
@@ -21,11 +21,14 @@ export interface BaseDialogProps {
 	children?: ReactNode;
 	/** Optional buttons injected into the bottom right corner */
 	footer?: ReactNode;
+	/** Whether the dialog should be modal (i.e. disable closing on Escape/Click outside) */
+	modal?: boolean;
 }
 
-export function BaseDialog({ isOpen, onClose, title, description, children, footer }: BaseDialogProps) {
+export function BaseDialog({ isOpen, onClose, title, description, children, footer, modal }: BaseDialogProps) {
 	return (
 		<Dialog
+			modal={modal}
 			open={isOpen}
 			// Only fire onClose if the dialog is trying to close itself via native actions (Escape/Click outside)
 			onOpenChange={(open) => {

@@ -50,7 +50,7 @@ export function toPageableParams(params: PaginationParams): SpringPageableParams
  * Cấu trúc dữ liệu phân trang khớp 1:1 với đối tượng org.springframework.data.domain.Page của Java Spring.
  * @template T Kiểu dữ liệu của các phần tử trong danh sách `content`.
  */
-export interface PaginationResponse<T> {
+export interface PageResponse<T> {
 	/** Mảng chứa dữ liệu danh sách của trang hiện tại. */
 	content: T[];
 	/** Tổng số lượng phần tử tính trên tất cả các trang. */
