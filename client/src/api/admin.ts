@@ -44,7 +44,7 @@ const adminApi = {
 
 	rejectCompany: (companyId: string, reason: string) =>
 		client
-			.post(`/admin/companies/${companyId}/reject`, null, { params: { reason } })
+			.post(`/admin/companies/${companyId}/reject`, { reason })
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
@@ -67,7 +67,7 @@ const adminApi = {
 
 	approveJob: (jobId: string) =>
 		client
-			.post(`/admin/jobs/${jobId}/approve`)
+			.patch(`/admin/jobs/${jobId}/approve`)
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
@@ -78,7 +78,7 @@ const adminApi = {
 
 	rejectJob: (jobId: string, reason: string) =>
 		client
-			.post(`/admin/jobs/${jobId}/reject`, { reason })
+			.patch(`/admin/jobs/${jobId}/reject`, { reason })
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(

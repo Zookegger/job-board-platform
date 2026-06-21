@@ -23,7 +23,6 @@ import com.yoedu.job_board_platform.controllers.api.AdminApi;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
-import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.JobRejectRequest;
@@ -90,11 +89,9 @@ public class AdminController implements AdminApi {
                 keyword, hasTaxCode, hasContact, pageable));
     }
 
-    @PostMapping("/companies/{id}/approve")
-    public ResponseEntity<ApiResponse> approveCompany(
-            @PathVariable UUID id,
-            @Valid @RequestBody CompanyApprovalRequest request) {
-        adminService.approveCompany(id, request);
+    @PatchMapping("/companies/{id}/approve")
+    public ResponseEntity<ApiResponse> approveCompany(@PathVariable UUID id) {
+        adminService.approveCompany(id);
         return ResponseEntity.ok(new ApiResponse("Duyệt công ty thành công"));
     }
 

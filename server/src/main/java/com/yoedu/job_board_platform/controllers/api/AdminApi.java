@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
-import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
@@ -98,8 +97,7 @@ public interface AdminApi {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
         })
         ResponseEntity<?> approveCompany(
-                        @Parameter(description = "ID công ty cần duyệt", required = true) UUID id,
-                        @Valid @RequestBody(description = "Lý do phê duyệt", required = true) CompanyApprovalRequest request);
+                        @Parameter(description = "ID công ty cần duyệt", required = true) UUID id);
 
         @Operation(summary = "Từ chối công ty", description = "Từ chối phê duyệt công ty kèm lý do. Hệ thống gửi thông báo kèm lý do từ chối cho employer.")
         @ApiResponses({

@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
-import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
@@ -39,7 +38,7 @@ public interface AdminService {
      * @param companyId ID công ty cần duyệt
      * @param request lý do phê duyệt
      */
-    void approveCompany(UUID companyId, CompanyApprovalRequest request);
+    void approveCompany(UUID companyId);
 
     /**
      * Từ chối một công ty đã đăng ký.

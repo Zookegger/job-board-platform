@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
-import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
@@ -90,7 +89,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public void approveCompany(UUID companyId, CompanyApprovalRequest request) {
+    public void approveCompany(UUID companyId) {
         Company company = findCompany(companyId);
 
         company.setStatus(CompanyStatus.APPROVED);

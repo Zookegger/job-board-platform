@@ -2,11 +2,13 @@ import { BaseDialog } from "@/components/shared/BaseDialog";
 import { DataTable } from "@/components/shared/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useApproveJob, usePendingJobs, useRejectJob } from "@/hooks/useAdminJobs";
 import type { AdminPendingJobResponse } from "@/types/job";
+import { formatDate } from "@/utils/DateUtils";
 import getErrorMessage from "@/utils/getErrorMessage";
+import { formatSalary } from "@/utils/StringUtil";
 import { Briefcase, Building2, CheckCircle2, Eye, MapPin, RefreshCw, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -28,24 +30,11 @@ const EXPERIENCE_LEVEL_LABELS: Record<string, string> = {
 	LEAD: "Lead",
 };
 
-function formatSalary(min: number | null, max: number | null, currency: string) {
-	if (!min && !max) return "Thương lượng";
-	const fmt = (v: number) =>
-		new Intl.NumberFormat("vi-VN", { style: "currency", currency: currency || "VND", maximumFractionDigits: 0 }).format(v);
-	if (min && max) return `${fmt(min)} – ${fmt(max)}`;
-	if (min) return `Từ ${fmt(min)}`;
-	return `Đến ${fmt(max!)}`;
-}
-
-function formatDate(value: string) {
-	return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
-}
-
 export default function AdminJobsPage() {
 	const [page, setPage] = useState(0);
 	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-	const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+	const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 	const [selectedJobToView, setSelectedJobToView] = useState<AdminPendingJobResponse | null>(null);
 
 	const [approveDialog, setApproveDialog] = useState<{
@@ -53,7 +42,7 @@ export default function AdminJobsPage() {
 		job: AdminPendingJobResponse | null;
 	}>({ open: false, job: null });
 
-	const [rejectSheetOpen, setRejectSheetOpen] = useState(false);
+	const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
 	const [selectedJobToReject, setSelectedJobToReject] = useState<AdminPendingJobResponse | null>(null);
 	const [rejectReason, setRejectReason] = useState("");
 
@@ -71,9 +60,9 @@ export default function AdminJobsPage() {
 		setApproveDialog({ open: true, job });
 	};
 
-	const openDetailSheet = (job: AdminPendingJobResponse) => {
+	const openDetailDialog = (job: AdminPendingJobResponse) => {
 		setSelectedJobToView(job);
-		setDetailSheetOpen(true);
+		setDetailDialogOpen(true);
 	};
 
 	const confirmApprove = () => {
@@ -87,10 +76,10 @@ export default function AdminJobsPage() {
 		});
 	};
 
-	const openRejectSheet = (job: AdminPendingJobResponse) => {
+	const openRejectDialog = (job: AdminPendingJobResponse) => {
 		setSelectedJobToReject(job);
 		setRejectReason("");
-		setRejectSheetOpen(true);
+		setRejectDialogOpen(true);
 	};
 
 	const handleReject = () => {
@@ -104,7 +93,7 @@ export default function AdminJobsPage() {
 			{
 				onSuccess: () => {
 					toast.success("Đã từ chối tin tuyển dụng");
-					setRejectSheetOpen(false);
+					setRejectDialogOpen(false);
 				},
 				onError: (err) => toast.error(getErrorMessage(err, "Không thể từ chối tin")),
 			},
@@ -169,7 +158,10 @@ export default function AdminJobsPage() {
 						className: "align-top",
 						render: (job) => (
 							<>
-								<Badge variant='outline' className='text-xs'>
+								<Badge
+									variant='outline'
+									className='text-xs'
+								>
 									{EMPLOYMENT_TYPE_LABELS[job.employmentType] ?? job.employmentType}
 								</Badge>
 								<p className='mt-1 text-xs text-muted-foreground'>
@@ -199,7 +191,7 @@ export default function AdminJobsPage() {
 								<Button
 									variant='outline'
 									size='sm'
-									onClick={() => openDetailSheet(job)}
+									onClick={() => openDetailDialog(job)}
 								>
 									<Eye /> Chi tiết
 								</Button>
@@ -215,7 +207,7 @@ export default function AdminJobsPage() {
 									variant='destructive'
 									size='sm'
 									disabled={actionPending}
-									onClick={() => openRejectSheet(job)}
+									onClick={() => openRejectDialog(job)}
 								>
 									<XCircle /> Từ chối
 								</Button>
@@ -258,42 +250,40 @@ export default function AdminJobsPage() {
 				footer={
 					<>
 						<Button
+							variant='success'
+							onClick={confirmApprove}
+							disabled={approveJob.isPending}
+						>
+							{approveJob.isPending ? "Đang duyệt..." : "Xác nhận duyệt"}
+						</Button>
+						<Button
 							variant='outline'
 							onClick={() => setApproveDialog({ open: false, job: null })}
 							disabled={approveJob.isPending}
 						>
 							Hủy
 						</Button>
-						<Button
-							onClick={confirmApprove}
-							disabled={approveJob.isPending}
-						>
-							{approveJob.isPending ? "Đang duyệt..." : "Xác nhận duyệt"}
-						</Button>
 					</>
 				}
 			/>
 
-			<Sheet
-				open={rejectSheetOpen}
+			<Dialog
+				open={rejectDialogOpen}
 				onOpenChange={(open) => {
 					if (!open) {
 						setSelectedJobToReject(null);
 						setRejectReason("");
 					}
-					setRejectSheetOpen(open);
+					setRejectDialogOpen(open);
 				}}
 			>
-				<SheetContent
-					side='bottom'
-					className='max-w-xl'
-				>
-					<SheetHeader>
-						<SheetTitle>Từ chối tin tuyển dụng</SheetTitle>
+				<DialogContent className='max-w-xl'>
+					<DialogHeader>
+						<DialogTitle>Từ chối tin tuyển dụng</DialogTitle>
 						<p className='text-sm text-muted-foreground'>
 							Nhập lý do từ chối cho tin "{selectedJobToReject?.title ?? ""}".
 						</p>
-					</SheetHeader>
+					</DialogHeader>
 					<div className='space-y-4 px-4'>
 						<label className='block text-sm font-medium text-foreground'>Lý do từ chối</label>
 						<textarea
@@ -304,10 +294,10 @@ export default function AdminJobsPage() {
 							className='w-full rounded-md border border-input bg-background p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/50'
 						/>
 					</div>
-					<SheetFooter>
+					<DialogFooter>
 						<Button
 							variant='outline'
-							onClick={() => setRejectSheetOpen(false)}
+							onClick={() => setRejectDialogOpen(false)}
 							disabled={rejectJob.isPending}
 						>
 							Hủy
@@ -319,36 +309,42 @@ export default function AdminJobsPage() {
 						>
 							{rejectJob.isPending ? "Đang từ chối..." : "Xác nhận từ chối"}
 						</Button>
-					</SheetFooter>
-				</SheetContent>
-			</Sheet>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
-			{/* Job Detail Sheet */}
-			<Sheet
-				open={detailSheetOpen}
+			{/* Job Detail Dialog */}
+			<Dialog
+				open={detailDialogOpen}
 				onOpenChange={(open) => {
 					if (!open) setSelectedJobToView(null);
-					setDetailSheetOpen(open);
+					setDetailDialogOpen(open);
 				}}
 			>
-				<SheetContent side='right' className='w-full sm:max-w-2xl p-0 flex flex-col'>
-					<SheetHeader className='px-6 pt-6 pb-4 border-b'>
-						<SheetTitle className='text-lg'>{selectedJobToView?.title}</SheetTitle>
+				<DialogContent className='w-full sm:max-w-2xl p-0 flex flex-col'>
+					<DialogHeader className='px-6 pt-6 pb-4 border-b'>
+						<DialogTitle className='text-lg'>{selectedJobToView?.title}</DialogTitle>
 						{selectedJobToView?.companyName && (
 							<div className='flex items-center gap-1.5 text-sm text-muted-foreground mt-1'>
 								<Building2 className='size-4' />
 								<span>{selectedJobToView.companyName}</span>
 							</div>
 						)}
-					</SheetHeader>
+					</DialogHeader>
 
-				<div className='flex-1 overflow-y-auto px-6 py-4'>
-					{selectedJobToView && (
+					<div className='flex-1 overflow-y-auto px-6 py-4'>
+						{selectedJobToView && (
 							<div className='space-y-5'>
 								{/* Meta badges */}
 								<div className='flex flex-wrap gap-2'>
-									<Badge variant='outline'>{EMPLOYMENT_TYPE_LABELS[selectedJobToView.employmentType] ?? selectedJobToView.employmentType}</Badge>
-									<Badge variant='outline'>{EXPERIENCE_LEVEL_LABELS[selectedJobToView.experienceLevel] ?? selectedJobToView.experienceLevel}</Badge>
+									<Badge variant='outline'>
+										{EMPLOYMENT_TYPE_LABELS[selectedJobToView.employmentType] ??
+											selectedJobToView.employmentType}
+									</Badge>
+									<Badge variant='outline'>
+										{EXPERIENCE_LEVEL_LABELS[selectedJobToView.experienceLevel] ??
+											selectedJobToView.experienceLevel}
+									</Badge>
 									{selectedJobToView.categoryName && (
 										<Badge variant='secondary'>{selectedJobToView.categoryName}</Badge>
 									)}
@@ -357,26 +353,42 @@ export default function AdminJobsPage() {
 								{/* Location & Salary */}
 								<div className='grid grid-cols-2 gap-4 text-sm'>
 									<div>
-										<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1'>Địa điểm</p>
+										<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1'>
+											Địa điểm
+										</p>
 										<div className='flex items-center gap-1.5'>
 											<MapPin className='size-4 text-muted-foreground' />
 											<span>{selectedJobToView.location ?? "Chưa rõ"}</span>
 										</div>
-										<span className='text-xs text-muted-foreground'>{selectedJobToView.locationTypes}</span>
+										<span className='text-xs text-muted-foreground'>
+											{selectedJobToView.locationTypes}
+										</span>
 									</div>
 									<div>
-										<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1'>Mức lương</p>
-										<span>{formatSalary(selectedJobToView.salaryMin, selectedJobToView.salaryMax, selectedJobToView.currency)}</span>
+										<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1'>
+											Mức lương
+										</p>
+										<span>
+											{formatSalary(
+												selectedJobToView.salaryMin,
+												selectedJobToView.salaryMax,
+												selectedJobToView.currency,
+											)}
+										</span>
 									</div>
 								</div>
 
 								<div className='grid grid-cols-2 gap-4 text-sm'>
 									<div>
-										<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1'>Số lượng tuyển</p>
+										<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1'>
+											Số lượng tuyển
+										</p>
 										<span>{selectedJobToView.numberOfOpenings} người</span>
 									</div>
 									<div>
-										<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1'>Ngày gửi</p>
+										<p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1'>
+											Ngày gửi
+										</p>
 										<span>{formatDate(selectedJobToView.createdAt)}</span>
 									</div>
 								</div>
@@ -386,40 +398,40 @@ export default function AdminJobsPage() {
 								{selectedJobToView.description && (
 									<div>
 										<p className='text-sm font-semibold mb-2'>Mô tả công việc</p>
-										<p className='text-sm text-muted-foreground whitespace-pre-wrap'>{selectedJobToView.description}</p>
+										<p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+											{selectedJobToView.description}
+										</p>
 									</div>
 								)}
 
 								{selectedJobToView.requirements && (
 									<div>
 										<p className='text-sm font-semibold mb-2'>Yêu cầu ứng viên</p>
-										<p className='text-sm text-muted-foreground whitespace-pre-wrap'>{selectedJobToView.requirements}</p>
+										<p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+											{selectedJobToView.requirements}
+										</p>
 									</div>
 								)}
 
 								{selectedJobToView.benefits && (
 									<div>
 										<p className='text-sm font-semibold mb-2'>Quyền lợi</p>
-										<p className='text-sm text-muted-foreground whitespace-pre-wrap'>{selectedJobToView.benefits}</p>
+										<p className='text-sm text-muted-foreground whitespace-pre-wrap'>
+											{selectedJobToView.benefits}
+										</p>
 									</div>
 								)}
 							</div>
 						)}
 					</div>
 
-					<SheetFooter className='px-6 py-4 border-t gap-2'>
-						<Button
-							variant='outline'
-							onClick={() => setDetailSheetOpen(false)}
-						>
-							Đóng
-						</Button>
+					<DialogFooter className='flex flex-row justify-end px-6 py-4 border-t gap-2'>
 						<Button
 							variant='destructive'
 							disabled={actionPending}
 							onClick={() => {
-								setDetailSheetOpen(false);
-								if (selectedJobToView) openRejectSheet(selectedJobToView);
+								setDetailDialogOpen(false);
+								if (selectedJobToView) openRejectDialog(selectedJobToView);
 							}}
 						>
 							<XCircle /> Từ chối
@@ -428,15 +440,15 @@ export default function AdminJobsPage() {
 							variant='success'
 							disabled={actionPending}
 							onClick={() => {
-								setDetailSheetOpen(false);
+								setDetailDialogOpen(false);
 								if (selectedJobToView) handleApprove(selectedJobToView);
 							}}
 						>
 							<CheckCircle2 /> Duyệt
 						</Button>
-					</SheetFooter>
-				</SheetContent>
-			</Sheet>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
