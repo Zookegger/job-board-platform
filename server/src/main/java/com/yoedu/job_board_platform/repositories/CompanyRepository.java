@@ -28,4 +28,6 @@ public interface CompanyRepository extends JpaRepository<Company, UUID>, JpaSpec
     Optional<Company> findByIdAndIsApprovedTrue(UUID id);
 
     Optional<Company> findByIdAndStatusAndIsApprovedTrue(UUID id, CompanyStatus status);
+
+    Optional<Company> findBySlugAndStatusAndIsApprovedTrue(String slug, CompanyStatus status);
 }

@@ -3,11 +3,20 @@ package com.yoedu.job_board_platform.services;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
+import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
+import com.yoedu.job_board_platform.dtos.publics.PublicCompanyJobResponse;
+import com.yoedu.job_board_platform.dtos.publics.PublicCompanyResponse;
+import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.JobCategory;
 
 /**
  * Service quản lý thông tin công ty.
@@ -52,7 +61,18 @@ public interface CompanyService {
      *
      * @return danh sách CompanyResponse
      */
-    List<CompanyResponse> listCompanies();
+    Page<Company> listCompanies(String keyword, JobCategory jobCategory, Pageable pageable);
+
+    PublicCompanyResponse getCompanyPublic(String slug);
+
+    /**
+     * Lấy danh sách tin tuyển dụng đang Active của một công ty, có phân trang.
+     *
+     * @param slug     slug của công ty
+     * @param pageable thông tin phân trang
+     * @return trang kết quả chứa danh sách PublicCompanyJobResponse
+     */
+    Page<PublicCompanyJobResponse> getPublicJobsByCompany(String slug, Pageable pageable);
 
     /**
      * Lấy trạng thái phê duyệt của công ty thuộc employer đang đăng nhập.

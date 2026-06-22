@@ -3,26 +3,25 @@ package com.yoedu.job_board_platform.dtos.publics;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class PublicCompanyJobResponse {
+import io.swagger.v3.oas.annotations.media.Schema;
 
-    private UUID id;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record PublicCompanyJobResponse(
+        @Schema(description = "ID việc làm", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID id,
 
-    private String title;
+        @Schema(description = "Tiêu đề việc làm", example = "Lập trình viên Java")
+        String title,
 
-    private String location;
+        @Schema(description = "Địa điểm làm việc", example = "Hà Nội")
+        String location,
 
-    private String status;
+        @Schema(description = "Trạng thái", example = "ACTIVE")
+        String status,
 
-    private OffsetDateTime createdAt;
+        @Schema(description = "Ngày tạo", example = "2026-06-13T10:30:00+07:00")
+        OffsetDateTime createdAt
+) {
 }

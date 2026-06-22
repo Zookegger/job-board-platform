@@ -3,40 +3,46 @@ package com.yoedu.job_board_platform.dtos.publics;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class PublicCompanyResponse {
+import io.swagger.v3.oas.annotations.media.Schema;
 
-    private UUID id;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record PublicCompanyResponse(
+        @Schema(description = "ID công ty", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID id,
 
-    private String companyName;
+        @Schema(description = "Tên công ty", example = "Yoedu Technology Corporation")
+        String companyName,
 
-    private String slug;
+        @Schema(description = "Slug", example = "yoedu-technology-corporation")
+        String slug,
 
-    private String logoUrl;
+        @Schema(description = "URL logo", example = "https://example.com/logo.png")
+        String logoUrl,
 
-    private String description;
+        @Schema(description = "Mô tả công ty")
+        String description,
 
-    private String website;
+        @Schema(description = "Website", example = "https://company.com")
+        String website,
 
-    private String email;
+        @Schema(description = "Email công ty", example = "contact@yoedu.com")
+        String email,
 
-    private String phone;
+        @Schema(description = "Số điện thoại", example = "02812345678")
+        String phone,
 
-    private String address;
+        @Schema(description = "Địa chỉ", example = "123 Nguyễn Huệ, Quận 1, TP.HCM")
+        String address,
 
-    private String taxCode;
+        @Schema(description = "Mã số thuế", example = "0123456789")
+        String taxCode,
 
-    private OffsetDateTime createdAt;
+        @Schema(description = "Ngày tạo", example = "2026-06-13T10:30:00+07:00")
+        OffsetDateTime createdAt,
 
-    private Long totalOpenJobs;
+        @Schema(description = "Số tin tuyển dụng đang mở", example = "5")
+        Long totalOpenJobs
+) {
 }

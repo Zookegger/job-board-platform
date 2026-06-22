@@ -34,7 +34,7 @@ import AdminSkillPage from "@/features/admin/SkillsPage";
 import AdminUsersPage from "@/features/admin/UsersPage";
 import UnauthorizedPage from "@/features/home/UnauthorizedPage";
 import ProfilePage from "@/features/profile/ProfilePage";
-import PublicCompanyPage from "@/features/public/PublicCompanyPage";
+import PublicCompanyPage from "@/features/public/CompanyDetailPage";
 // eslint-disable-next-line react-refresh/only-export-components
 function RouterInit() {
 	const navigate = useNavigate();
@@ -58,6 +58,7 @@ export const router = createBrowserRouter([
 					{ path: RouterRoutes.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
 					{ path: RouterRoutes.JOBS, element: <JobListPage /> },
 					{ path: RouterRoutes.JOB_DETAIL(":id"), element: <JobDetailPage /> },
+					{ path: RouterRoutes.COMPANY_DETAIL(":slug"), element: <PublicCompanyPage /> },
 					{ path: RouterRoutes.UNAUTHORIZED, element: <UnauthorizedPage /> },
 				],
 			},
@@ -137,11 +138,6 @@ export const router = createBrowserRouter([
 						],
 					},
 				],
-			},
-
-			{
-				path: "/companies/:companyId",
-				element: <PublicCompanyPage />,
 			},
 
 			// 404

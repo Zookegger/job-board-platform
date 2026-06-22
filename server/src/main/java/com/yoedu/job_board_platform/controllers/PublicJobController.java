@@ -2,6 +2,9 @@ package com.yoedu.job_board_platform.controllers;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +16,7 @@ import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.PublicJobApi;
 import com.yoedu.job_board_platform.dtos.category.CategoryResponse;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
+import com.yoedu.job_board_platform.services.PublicCompanyService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PublicJobController implements PublicJobApi {
     private final JobCategoryRepository jobCategoryRepository;
+    private final PublicCompanyService publicCompanyService;
 
     @GetMapping("/jobs")
     public ResponseEntity<?> getJobs(
@@ -50,9 +55,19 @@ public class PublicJobController implements PublicJobApi {
         return ResponseEntity.ok("Filter options");
     }
 
-    @GetMapping("/companies/{id}")
-    public ResponseEntity<?> getCompanyInfo(@PathVariable Long id) {
-        return ResponseEntity.ok("Thông tin công ty");
+    @GetMapping("/companies/{slug}")
+    public ResponseEntity<?> getCompanyInfo(@PathVariable String slug) {
+        return ResponseEntity.ok(publicCompanyService.getCompanyPublicDetail(slug));
+    }
+
+    @GetMapping("/companies/{slug}/jobs")
+    public ResponseEntity<?> getCompanyJobs(
+            @PathVariable String slug,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ResponseEntity.ok(publicCompanyService.getPublicJobsByCompany(slug, pageable));
     }
 
     @GetMapping("/categories")

@@ -10,14 +10,17 @@ import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
+import com.yoedu.job_board_platform.dtos.company.PublicCompanyListResponse;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.User;
 
 @Mapper(componentModel = "spring")
 /**
  * MapStruct mapper cho Company entity.
- * Chuyển đổi CompanyRegisterRequest thành User và Company entity khi đăng ký nhà tuyển dụng.
- * Chuyển đổi Company entity thành CompanyResponse và cập nhật từ CompanyRequest.
+ * Chuyển đổi CompanyRegisterRequest thành User và Company entity khi đăng ký
+ * nhà tuyển dụng.
+ * Chuyển đổi Company entity thành CompanyResponse và cập nhật từ
+ * CompanyRequest.
  */
 public interface CompanyMapper {
 
@@ -42,11 +45,12 @@ public interface CompanyMapper {
     @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "suspensionReason", ignore = true)
     @Mapping(target = "reviewReason", ignore = true)
-    // TODO: phone + email sẽ được cập nhật qua form trong Employer Dashboard (PUT /api/jobs/my-company)
     Company toEntity(CompanyRegisterRequest request);
 
     @Mapping(target = "isApproved", source = "approved")
     CompanyResponse toResponse(Company company);
+
+    PublicCompanyListResponse toPublicListResponse(Company company);
 
     /**
      * Chuyển đổi Company entity thành CompanyStatusResponse cho employer.

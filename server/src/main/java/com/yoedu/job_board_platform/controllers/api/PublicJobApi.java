@@ -69,5 +69,19 @@ public interface PublicJobApi {
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty hoặc chưa được duyệt", content = @Content)
         })
         ResponseEntity<?> getCompanyInfo(
-                        @Parameter(description = "ID của công ty", example = "1", required = true) Long id);
+                        @Parameter(description = "Slug của công ty", example = "yoedu-tech", required = true) String slug);
+
+        @Operation(summary = "Danh sách việc làm công khai của công ty", description = """
+                        Lấy danh sách tin tuyển dụng đang Active của một công ty, phân trang.
+                        Chỉ hiển thị các tin đã được duyệt và đang mở tuyển.
+                        Không yêu cầu xác thực.
+                        """)
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Danh sách việc có phân trang", content = @Content),
+                        @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty hoặc chưa được duyệt", content = @Content)
+        })
+        ResponseEntity<?> getCompanyJobs(
+                        @Parameter(description = "Slug của công ty", example = "yoedu-tech", required = true) String slug,
+                        @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") int page,
+                        @Parameter(description = "Số lượng item trên mỗi trang", example = "6") int size);
 }
