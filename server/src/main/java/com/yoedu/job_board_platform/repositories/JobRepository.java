@@ -13,11 +13,15 @@ import com.yoedu.job_board_platform.models.JobStatus;
 
 @Repository
 public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificationExecutor<Job> {
-    Page<Job> findByCompanyIdAndStatus(UUID CompanyId, JobStatus jobStatus, Pageable pageable);
 
-    Page<Job> findByCompanyId(UUID CompanyId, Pageable pageable);
+    Page<Job> findByCompanyIdAndStatus(UUID companyId, JobStatus jobStatus, Pageable pageable);
+
+    Page<Job> findByCompanyId(UUID companyId, Pageable pageable);
 
     Page<Job> findByStatus(JobStatus status, Pageable pageable);
 
+    long countByCompanyIdAndStatus(UUID companyId, JobStatus status);
+
     boolean existsBySlug(String slug);
+
 }

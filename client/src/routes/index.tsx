@@ -36,7 +36,7 @@ import AdminSkillPage from "@/features/admin/SkillsPage";
 import AdminUsersPage from "@/features/admin/UsersPage";
 import UnauthorizedPage from "@/features/home/UnauthorizedPage";
 import ProfilePage from "@/features/profile/ProfilePage";
-
+import PublicCompanyPage from "@/features/public/PublicCompanyPage";
 // eslint-disable-next-line react-refresh/only-export-components
 function RouterInit() {
 	const navigate = useNavigate();
@@ -141,6 +141,11 @@ export const router = createBrowserRouter([
 						],
 					},
 				],
+			},
+
+			{
+				path: "/companies/:companyId",
+				element: <PublicCompanyPage />,
 			},
 
 			// 404
