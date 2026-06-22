@@ -66,6 +66,9 @@ public class Report {
     @Column(columnDefinition = "text")
     private String details;
 
+    @Column(columnDefinition = "text")
+    private String reviewNotes;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

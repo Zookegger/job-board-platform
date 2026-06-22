@@ -36,6 +36,7 @@ import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
+import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
 import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
@@ -64,6 +65,7 @@ class AuthControllerValidationTest {
     @Autowired CompanyRepository companyRepository;
     @Autowired JobRepository jobRepository;
     @Autowired ProfileRepository profileRepository;
+    @Autowired NotificationRepository notificationRepository;
     @Autowired RefreshTokenService refreshTokenService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -74,6 +76,7 @@ class AuthControllerValidationTest {
         companyEmployerDetailRepository.deleteAll();
         companyRepository.deleteAll();
         refreshTokenRepository.deleteAll();
+        notificationRepository.deleteAll();
         profileRepository.deleteAll();
         userRepository.deleteAll();
     }
