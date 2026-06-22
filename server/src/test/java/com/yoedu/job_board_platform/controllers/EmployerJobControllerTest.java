@@ -36,7 +36,9 @@ import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
+import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
+import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
@@ -69,6 +71,10 @@ class EmployerJobControllerTest {
         @Autowired
         CandidateDetailRepository candidateDetailRepository;
         @Autowired
+        NotificationRepository notificationRepository;
+        @Autowired
+        RefreshTokenRepository refreshTokenRepository;
+        @Autowired
         PasswordEncoder passwordEncoder;
 
         private final ObjectMapper objectMapper = new ObjectMapper();
@@ -85,6 +91,8 @@ class EmployerJobControllerTest {
                 companyEmployerDetailRepository.deleteAll();
                 companyRepository.deleteAll();
                 profileRepository.deleteAll();
+                notificationRepository.deleteAll();
+                refreshTokenRepository.deleteAll();
                 userRepository.deleteAll();
 
                 savedCategory = jobCategoryRepository.save(

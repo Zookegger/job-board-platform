@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yoedu.job_board_platform.TestcontainersConfiguration;
 import com.yoedu.job_board_platform.models.JobCategory;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
+import com.yoedu.job_board_platform.repositories.JobRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -28,11 +29,14 @@ class PublicJobControllerTest {
         MockMvc mockMvc;
         @Autowired
         JobCategoryRepository jobCategoryRepository;
+        @Autowired
+        JobRepository jobRepository;
 
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @BeforeEach
         void cleanup() {
+                jobRepository.deleteAll();
                 jobCategoryRepository.deleteAll();
                 jobCategoryRepository.save(JobCategory.builder().name("IT").build());
         }
