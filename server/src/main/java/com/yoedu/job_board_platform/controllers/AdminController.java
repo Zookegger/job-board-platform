@@ -1,3 +1,4 @@
+
 package com.yoedu.job_board_platform.controllers;
 
 import java.util.UUID;
@@ -20,18 +21,24 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
+import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
-import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.JobRejectRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
+import com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest;
+import com.yoedu.job_board_platform.dtos.report.ReportResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.mappers.SkillMapper;
+import com.yoedu.job_board_platform.models.ReportStatus;
+import com.yoedu.job_board_platform.models.Skill;
 import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.repositories.SkillRepository;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.SkillService;
 
@@ -40,13 +47,14 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize(AuthorizationConstants.ADMIN)
 @RequiredArgsConstructor
 public class AdminController implements AdminApi {
 
     private final AdminService adminService;
     private final SkillService skillService;
     private final SkillMapper skillMapper;
+    private final SkillRepository skillRepository;
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard() {
@@ -79,6 +87,14 @@ public class AdminController implements AdminApi {
 
     // ================ Companies ================
 
+    @GetMapping("/companies")
+    public ResponseEntity<Page<AdminCompanyListResponse>> getAllCompanies(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        return ResponseEntity.ok(adminService.getAllCompanies(keyword, status, pageable));
+    }
+
     @GetMapping("/companies/pending")
     public ResponseEntity<Page<PendingCompanyResponse>> getPendingCompanies(
             @RequestParam(required = false) String keyword,
@@ -89,15 +105,13 @@ public class AdminController implements AdminApi {
                 keyword, hasTaxCode, hasContact, pageable));
     }
 
-    @PostMapping("/companies/{id}/approve")
-    public ResponseEntity<ApiResponse> approveCompany(
-            @PathVariable UUID id,
-            @Valid @RequestBody CompanyApprovalRequest request) {
-        adminService.approveCompany(id, request);
+    @PatchMapping("/companies/{id}/approve")
+    public ResponseEntity<ApiResponse> approveCompany(@PathVariable UUID id) {
+        adminService.approveCompany(id);
         return ResponseEntity.ok(new ApiResponse("Duyệt công ty thành công"));
     }
 
-    @PostMapping("/companies/{id}/reject")
+    @PatchMapping("/companies/{id}/reject")
     public ResponseEntity<ApiResponse> rejectCompany(
             @PathVariable UUID id,
             @Valid @RequestBody CompanyRejectionRequest request) {
@@ -105,12 +119,18 @@ public class AdminController implements AdminApi {
         return ResponseEntity.ok(new ApiResponse("Từ chối công ty thành công"));
     }
 
-    @PostMapping("/companies/{id}/suspend")
+    @PatchMapping("/companies/{id}/suspend")
     public ResponseEntity<ApiResponse> suspendCompany(
             @PathVariable UUID id,
             @Valid @RequestBody CompanySuspensionRequest request) {
         adminService.suspendCompany(id, request);
         return ResponseEntity.ok(new ApiResponse("Tạm ngưng công ty thành công"));
+    }
+
+    @PatchMapping("/companies/{id}/unsuspend")
+    public ResponseEntity<ApiResponse> unsuspendCompany(@PathVariable UUID id) {
+        adminService.unsuspendCompany(id);
+        return ResponseEntity.ok(new ApiResponse("Mở tạm ngưng công ty thành công"));
     }
 
     // ================ Jobs ================
@@ -146,26 +166,40 @@ public class AdminController implements AdminApi {
         return ResponseEntity.ok(new ApiResponse("Xóa tin thành công"));
     }
 
-    // ================ Categories ================
+    // ================ Reports ================
 
-    @GetMapping("/categories")
-    public ResponseEntity<?> getCategories() {
-        return ResponseEntity.ok("Danh sách ngành");
+    @GetMapping("/reports")
+    public ResponseEntity<Page<ReportResponse>> getReports(
+            @RequestParam(required = false) ReportStatus status,
+            Pageable pageable) {
+        return ResponseEntity.ok(adminService.getReports(status, pageable));
     }
 
-    @PostMapping("/categories")
-    public ResponseEntity<?> createCategory() {
-        return ResponseEntity.ok("Tạo ngành thành công");
+    @PatchMapping("/reports/{id}/review")
+    public ResponseEntity<ApiResponse> reviewReport(
+            @PathVariable UUID id,
+            @RequestBody(required = false) AdminReportActionRequest request) {
+        String reviewNotes = request != null ? request.reviewNotes() : null;
+        adminService.reviewReport(id, reviewNotes);
+        return ResponseEntity.ok(new ApiResponse("Duyệt báo cáo thành công"));
     }
 
-    @PutMapping("/categories/{id}")
-    public ResponseEntity<?> updateCategory(@PathVariable Long id) {
-        return ResponseEntity.ok("Cập nhật ngành thành công");
+    @PatchMapping("/reports/{id}/dismiss")
+    public ResponseEntity<ApiResponse> dismissReport(
+            @PathVariable UUID id,
+            @RequestBody(required = false) AdminReportActionRequest request) {
+        String reviewNotes = request != null ? request.reviewNotes() : null;
+        adminService.dismissReport(id, reviewNotes);
+        return ResponseEntity.ok(new ApiResponse("Gỡ bỏ báo cáo thành công"));
     }
 
-    @DeleteMapping("/categories/{id}")
-    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
-        return ResponseEntity.ok("Xóa ngành thành công");
+    @PatchMapping("/reports/{id}/resolve")
+    public ResponseEntity<ApiResponse> resolveReport(
+            @PathVariable UUID id,
+            @RequestBody(required = false) AdminReportActionRequest request) {
+        String reviewNotes = request != null ? request.reviewNotes() : null;
+        adminService.resolveReport(id, reviewNotes);
+        return ResponseEntity.ok(new ApiResponse("Giải quyết báo cáo thành công"));
     }
 
     // ================ Skills ================
@@ -178,19 +212,28 @@ public class AdminController implements AdminApi {
 
     @PostMapping("/skills")
     public ResponseEntity<AdminSkillResponse> createSkill(@Valid @RequestBody SkillRequest request) {
-        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.createSkill(request)));
+        var response = skillService.createSkill(request);
+        Skill skill = skillRepository.findById(response.getId())
+                .orElseThrow(() -> new RuntimeException("Skill not found after creation"));
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skill));
     }
 
     @PutMapping("/skills/{id}")
     public ResponseEntity<AdminSkillResponse> updateSkill(
             @PathVariable Integer id,
             @Valid @RequestBody SkillRequest request) {
-        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.updateSkill(id, request)));
+        var response = skillService.updateSkill(id, request);
+        Skill skill = skillRepository.findById(response.getId())
+                .orElseThrow(() -> new RuntimeException("Skill not found after update"));
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skill));
     }
 
     @PatchMapping("/skills/{id}/toggle-status")
     public ResponseEntity<AdminSkillResponse> toggleSkillStatus(@PathVariable Integer id) {
-        return ResponseEntity.ok(skillMapper.toAdminResponse(skillService.toggleSkillActive(id)));
+        var response = skillService.toggleSkillActive(id);
+        Skill skill = skillRepository.findById(response.getId())
+                .orElseThrow(() -> new RuntimeException("Skill not found after toggle"));
+        return ResponseEntity.ok(skillMapper.toAdminResponse(skill));
     }
 
     @DeleteMapping("/skills/{id}")

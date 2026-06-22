@@ -1,18 +1,17 @@
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { Briefcase, Building2, ClipboardCheck, LayoutDashboard, Menu, PlusCircle, Settings, Users } from "lucide-react";
+import RouterRoutes from "@/utils/RouterRoutes";
+import { Briefcase, Building2, LayoutDashboard, Menu, Settings, Users } from "lucide-react";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
-	{ to: "/employer/dashboard", label: "Bảng điều khiển", icon: LayoutDashboard },
-	{ to: "/employer/jobs", label: "Việc làm của tôi", icon: Briefcase },
-	{ to: "/employer/jobs/new", label: "Đăng tin tuyển dụng", icon: PlusCircle },
-	{ to: "/employer/applications", label: "Đơn ứng tuyển", icon: Users },
-	{ to: "/employer/company", label: "Công ty", icon: Building2 },
-	{ to: "/employer/company/status", label: "Trạng thái duyệt", icon: ClipboardCheck },
-	{ to: "/employer/settings", label: "Cài đặt", icon: Settings },
+	{ to: RouterRoutes.EMPLOYER_DASHBOARD, label: "Bảng điều khiển", icon: LayoutDashboard },
+	{ to: RouterRoutes.EMPLOYER_JOBS, label: "Việc làm của tôi", icon: Briefcase },
+	{ to: RouterRoutes.EMPLOYER_APPLICATIONS, label: "Đơn ứng tuyển", icon: Users },
+	{ to: RouterRoutes.EMPLOYER_COMPANY, label: "Công ty", icon: Building2 },
+	{ to: RouterRoutes.EMPLOYER_SETTINGS, label: "Cài đặt", icon: Settings },
 ];
 
 export default function EmployerLayout() {

@@ -1,5 +1,7 @@
 package com.yoedu.job_board_platform.controllers;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,10 +11,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.PublicJobApi;
+import com.yoedu.job_board_platform.dtos.category.CategoryResponse;
+import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/public")
+@RequiredArgsConstructor
 public class PublicJobController implements PublicJobApi {
+    private final JobCategoryRepository jobCategoryRepository;
 
     @GetMapping("/jobs")
     public ResponseEntity<?> getJobs(
@@ -42,13 +50,18 @@ public class PublicJobController implements PublicJobApi {
         return ResponseEntity.ok("Filter options");
     }
 
-    @GetMapping("/categories")
-    public ResponseEntity<?> getCategories() {
-        return ResponseEntity.ok("Danh sách ngành");
-    }
-
     @GetMapping("/companies/{id}")
     public ResponseEntity<?> getCompanyInfo(@PathVariable Long id) {
         return ResponseEntity.ok("Thông tin công ty");
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryResponse>> getCategories() {
+        return ResponseEntity.ok(
+                jobCategoryRepository.findAll()
+                        .stream()
+                        .map(cat -> new CategoryResponse(cat.getId(), cat.getName()))
+                        .toList()
+        );
     }
 }

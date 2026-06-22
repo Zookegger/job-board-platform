@@ -30,6 +30,7 @@ import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
 import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
+import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
 import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.SkillRepository;
@@ -71,6 +72,9 @@ class SkillControllerTest {
     JobSkillRepository jobSkillRepository;
 
     @Autowired
+    NotificationRepository notificationRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -87,6 +91,7 @@ class SkillControllerTest {
         jobSkillRepository.deleteAll();
         skillRepository.deleteAll();
         profileRepository.deleteAll();
+        notificationRepository.deleteAll();
         userRepository.deleteAll();
 
         activeSkill = skillRepository.save(

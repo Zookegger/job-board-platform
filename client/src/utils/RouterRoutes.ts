@@ -22,7 +22,6 @@ const RouterRoutes = {
 	EMPLOYER_JOB_DETAIL: (id: string) => `/employer/jobs/${id}`,
 	EMPLOYER_APPLICATIONS: "/employer/applications",
 	EMPLOYER_COMPANY: "/employer/company",
-	EMPLOYER_COMPANY_STATUS: "/employer/company/status",
 	EMPLOYER_SETTINGS: "/employer/settings",
 
 	// Admin
