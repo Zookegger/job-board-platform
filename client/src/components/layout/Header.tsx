@@ -34,6 +34,13 @@ function MobileNav({ isAuthenticated, user, logout }: { isAuthenticated: boolean
 				>
 					Việc làm
 				</Button>
+				<Button
+					onClick={() => navigate(RouterRoutes.COMPANIES)}
+					variant='ghost'
+					className='justify-start text-sm font-medium text-muted-foreground hover:text-foreground'
+				>
+					Công ty
+				</Button>
 			</div>
 			<div className='border-t pt-4'>
 				{!isAuthenticated ? (
@@ -145,6 +152,13 @@ export function Header() {
 					>
 						Việc làm
 					</Button>
+					<Button
+						onClick={() => navigate(RouterRoutes.COMPANIES)}
+						variant='ghost'
+						className='hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground'
+					>
+						Công ty
+					</Button>
 				</div>
 
 				<div className='flex items-center gap-3'>
@@ -167,7 +181,10 @@ export function Header() {
 						) : (
 							<DropdownMenu>
 								<DropdownMenuTrigger className='flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground'>
-									<UserAvatar fullName={user?.fullName ?? ""} avatarUrl={user?.avatarUrl} />
+									<UserAvatar
+										fullName={user?.fullName ?? ""}
+										avatarUrl={user?.avatarUrl}
+									/>
 									{user?.fullName}
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align='end'>
@@ -181,18 +198,34 @@ export function Header() {
 						)}
 					</div>
 
-					<Sheet open={open} onOpenChange={setOpen}>
-						<SheetTrigger asChild className='lg:hidden'>
-							<Button variant='ghost' size='icon'>
+					<Sheet
+						open={open}
+						onOpenChange={setOpen}
+					>
+						<SheetTrigger
+							asChild
+							className='lg:hidden'
+						>
+							<Button
+								variant='ghost'
+								size='icon'
+							>
 								{open ? <X className='h-5 w-5' /> : <Menu className='h-5 w-5' />}
 							</Button>
 						</SheetTrigger>
-						<SheetContent side='right' className='w-70 sm:w-[320px]'>
-							<MobileNav isAuthenticated={!!isAuthenticated} user={user} logout={logout} />
+						<SheetContent
+							side='right'
+							className='w-70 sm:w-[320px]'
+						>
+							<MobileNav
+								isAuthenticated={!!isAuthenticated}
+								user={user}
+								logout={logout}
+							/>
 						</SheetContent>
 					</Sheet>
 				</div>
 			</nav>
-        </header>
+		</header>
 	);
 }

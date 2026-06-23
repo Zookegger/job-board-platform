@@ -41,7 +41,7 @@ import type { CategoryResponse, JobRequest, JobResponse, JobStatus, SkillRespons
 import { EMPLOYMENT_TYPE_LABELS, EXPERIENCE_LEVEL_LABELS, JOB_STATUS_LABELS, LOCATION_TYPES_LABELS } from "@/types/job";
 import { formatDate } from "@/utils/DateUtils";
 import getErrorMessage from "@/utils/getErrorMessage";
-import { formatSalaryDisplay } from "@/utils/StringUtil";
+import { formatSalary, formatSalaryDisplay } from "@/utils/StringUtil";
 
 // ── Constants & helpers ──────────────────────────────────────────────────
 
@@ -92,19 +92,6 @@ function toRequest(data: JobFormData): JobRequest {
 		salaryMax: data.salaryMax ?? null,
 		skillIds: !data.skillIds ? null : data.skillIds.length > 0 ? data.skillIds : null,
 	};
-}
-
-function formatSalary(min: number | null, max: number | null, currency: string): string {
-	if (!min && !max) return "Thương lượng";
-	const fmt = (v: number) =>
-		new Intl.NumberFormat("vi-VN", {
-			style: "currency",
-			currency: currency || "VND",
-			maximumFractionDigits: 0,
-		}).format(v);
-	if (min && max) return `${fmt(min)} – ${fmt(max)}`;
-	if (min) return `Từ ${fmt(min)}`;
-	return `Đến ${fmt(max!)}`;
 }
 
 // ── CurrencyInput ────────────────────────────────────────────────────────

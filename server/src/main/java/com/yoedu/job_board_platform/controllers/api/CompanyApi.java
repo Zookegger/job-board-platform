@@ -1,18 +1,18 @@
 package com.yoedu.job_board_platform.controllers.api;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
-import com.yoedu.job_board_platform.dtos.company.PublicCompanyListResponse;
+import com.yoedu.job_board_platform.dtos.company.PublicCompanyResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -53,6 +53,15 @@ public interface CompanyApi {
         @ApiResponse(responseCode = "200", description = "Danh sách công ty", content = @Content)
         ResponseEntity<List<CompanyResponse>> listCompanies();
 
+        @Operation(summary = "Danh sách công ty", description = "Lấy danh sách công ty có hỗ trợ tìm kiếm theo từ khóa, lọc theo ngành nghề và phân trang.")
+        @ApiResponse(responseCode = "200", description = "Danh sách công ty", content = @Content)
+        ResponseEntity<Page<PublicCompanyResponse>> listCompaniesPage(
+                        @Parameter(description = "Từ khóa tìm kiếm theo tên công ty", required = false, example = "Tech") String keyword,
+
+                        @Parameter(description = "Danh sách ID ngành nghề để lọc công ty theo lĩnh vực hoạt động", required = false, example = "1,2,3") Set<Integer> jobCategoryIds,
+
+                        @Parameter(description = "Thông tin phân trang và sắp xếp (page, size, sort). Ví dụ: page=0&size=10&sort=createdAt,desc", required = false, example = "page=0&size=10&sort=createdAt,desc") Pageable pageable);
+
         @Operation(summary = "Trạng thái phê duyệt công ty", description = "Lấy trạng thái phê duyệt hiện tại của công ty mà employer đang quản lý. Yêu cầu role EMPLOYER.")
         @ApiResponses({
                         @ApiResponse(responseCode = "200", description = "Trạng thái phê duyệt công ty", content = @Content),
@@ -70,11 +79,4 @@ public interface CompanyApi {
                         @ApiResponse(responseCode = "404", description = "Chưa có thông tin công ty", content = @Content)
         })
         ResponseEntity<List<ApprovalLogResponse>> getApprovalHistory();
-
-        @Operation(summary = "Danh sách công ty (công khai)", description = "Lấy danh sách công ty đã được duyệt, phân trang, có tìm kiếm theo tên.")
-        @GetMapping("/companies")
-        ResponseEntity<Page<PublicCompanyListResponse>> getCompanies(
-                        @RequestParam(required = false) String keyword,
-                        @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(defaultValue = "12") int size);
 }

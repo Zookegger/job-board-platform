@@ -1,55 +1,8 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
-import type { PublicCompanyJob } from "@/api/publicCompany";
+import { JobCard } from "@/components/shared/JobCard";
 import { usePublicCompany, usePublicCompanyJobs } from "@/hooks/usePublicCompany";
-import { formatDate } from "@/utils/DateUtils";
-
-const STATUS_MAP: Record<string, string> = {
-	ACTIVE: "Đang tuyển",
-	EXPIRED: "Đã hết hạn",
-	PENDING_APPROVAL: "Chờ duyệt",
-	DRAFT: "Bản nháp",
-	REJECTED: "Bị từ chối",
-};
-
-function JobStatusBadge({ status }: { status?: string }) {
-	const label = STATUS_MAP[status || ""] || status || "Không rõ";
-	return (
-		<span className="inline-block rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-			{label}
-		</span>
-	);
-}
-
-function JobCard({ job }: { job: PublicCompanyJob }) {
-	return (
-		<div className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-4 transition hover:border-blue-500 hover:shadow-md">
-			<div className="min-w-0">
-				<h3 className="truncate text-base font-semibold text-gray-900">{job.title}</h3>
-				<div className="mt-2 flex flex-wrap gap-2">
-					{job.location && (
-						<span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-							{job.location}
-						</span>
-					)}
-					<JobStatusBadge status={job.status} />
-					{job.createdAt && (
-						<span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600">
-							Đăng ngày {formatDate(job.createdAt, { dateStyle: "short" })}
-						</span>
-					)}
-				</div>
-			</div>
-			<Link
-				to={`/jobs/${job.id}`}
-				className="shrink-0 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-			>
-				Xem chi tiết
-			</Link>
-		</div>
-	);
-}
 
 export default function CompanyDetailPage() {
 	const { slug } = useParams<{ slug: string }>();
@@ -88,20 +41,25 @@ export default function CompanyDetailPage() {
 							{company.logoUrl ? (
 								<img
 									src={company.logoUrl}
-									alt={company.companyName}
+									alt={company.name}
 									className='h-full w-full object-cover'
 								/>
 							) : (
-								<span>{company.companyName.charAt(0).toUpperCase()}</span>
+								<span>{company.name.charAt(0).toUpperCase()}</span>
 							)}
 						</div>
 						<div>
-							<h1 className='mb-2 text-3xl font-bold'>{company.companyName}</h1>
+							<h1 className='mb-2 text-3xl font-bold'>{company.name}</h1>
 							<p className='mb-3 text-gray-200'>{company.address || "Chưa cập nhật địa chỉ"}</p>
 							<div className='flex flex-wrap gap-2.5'>
 								<span className='rounded-full bg-white/18 px-3 py-1.5 text-sm'>
 									{company.totalOpenJobs} việc đang tuyển
 								</span>
+								{company.categories && company.categories.length > 0 && (
+									<span className='rounded-full bg-white/18 px-3 py-1.5 text-sm'>
+										{company.categories.map((c) => c.name).join(", ")}
+									</span>
+								)}
 								{company.website && (
 									<span className='rounded-full bg-white/18 px-3 py-1.5 text-sm'>Có website</span>
 								)}

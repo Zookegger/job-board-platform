@@ -1,6 +1,7 @@
 package com.yoedu.job_board_platform.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -74,11 +75,13 @@ public class AuthController implements AuthApi {
 	}
 
 	@GetMapping("/me")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<UserResponse> me() {
 		return ResponseEntity.ok(userMapper.toResponse(authService.getCurrentUser()));
 	}
 
 	@PostMapping("/logout")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<Void> logout(HttpServletRequest req, HttpServletResponse res) {
 		String refreshToken = cookieUtil.extract(req, CookieName.REFRESH_TOKEN);
 		if (refreshToken != null) {
