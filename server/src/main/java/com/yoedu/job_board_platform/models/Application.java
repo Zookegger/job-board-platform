@@ -54,6 +54,9 @@ public class Application {
     @Column(name = "cover_letter", columnDefinition = "text")
     private String coverLetter;
 
+    @Column(name = "resume_url", columnDefinition = "text")
+    private String resumeUrl;
+
     @Column(name = "applied_at", nullable = false)
     private OffsetDateTime appliedAt;
 }

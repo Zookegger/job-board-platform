@@ -1,11 +1,12 @@
 import type { ApplicationRequest, ApplicationResponse } from "@/types/application";
 import ApiError from "@/utils/ApiError";
+import ApiRoutes from "@/utils/ApiRoutes";
 import client from "./client";
 
 const applicationApi = {
 	submit: (request: ApplicationRequest): Promise<ApplicationResponse> =>
 		client
-			.post("/applications", request)
+			.post(ApiRoutes.APPLICATIONS, request)
 			.then((res) => res.data)
 			.catch((error) => {
 				throw new ApiError(

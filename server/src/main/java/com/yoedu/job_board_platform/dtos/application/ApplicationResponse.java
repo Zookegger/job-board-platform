@@ -14,6 +14,7 @@ public record ApplicationResponse(
         @Schema(description = "Tên công ty") String companyName,
         @Schema(description = "Trạng thái đơn") ApplicationStatus status,
         @Schema(description = "Thư ứng tuyển") String coverLetter,
+        @Schema(description = "URL/đường dẫn CV đính kèm khi nộp đơn") String resumeUrl,
         @Schema(description = "Ngày nộp đơn") OffsetDateTime appliedAt
 ) {
 }

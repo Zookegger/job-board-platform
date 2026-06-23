@@ -12,5 +12,6 @@ export interface ApplicationResponse {
 	companyName: string;
 	status: ApplicationStatus;
 	coverLetter: string | null;
+	resumeUrl: string | null;
 	appliedAt: string;
 }

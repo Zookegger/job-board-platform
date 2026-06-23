@@ -26,9 +26,11 @@ import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
+import com.yoedu.job_board_platform.models.Resume;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
+import com.yoedu.job_board_platform.repositories.ResumeRepository;
 import com.yoedu.job_board_platform.services.impl.ApplicationServiceImpl;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 
@@ -42,6 +44,9 @@ class ApplicationServiceImplTest {
     private JobRepository jobRepository;
 
     @Mock
+    private ResumeRepository resumeRepository;
+
+    @Mock
     private SecurityUtil securityUtil;
 
     @InjectMocks
@@ -53,6 +58,7 @@ class ApplicationServiceImplTest {
     private User candidateUser;
     private Job activeJob;
     private Company company;
+    private Resume candidateResume;
 
     @BeforeEach
     void setUp() {
@@ -82,6 +88,14 @@ class ApplicationServiceImplTest {
                 .status(JobStatus.ACTIVE)
                 .company(company)
                 .build();
+
+        candidateResume = Resume.builder()
+                .id(UUID.randomUUID())
+                .title("CV của tôi")
+                .originalFileName("cv.pdf")
+                .filePath("uploads/resumes/cv.pdf")
+                .fileSize(102400)
+                .build();
     }
 
     // ----------------------------------------------------------------
@@ -94,14 +108,15 @@ class ApplicationServiceImplTest {
         when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
         when(jobRepository.findById(jobId)).thenReturn(Optional.of(activeJob));
         when(applicationRepository.existsByCandidateIdAndJobId(candidateId, jobId)).thenReturn(false);
+        when(resumeRepository.findByCandidateDetailProfileId(candidateId)).thenReturn(Optional.of(candidateResume));
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application a = inv.getArgument(0);
-            // Giả lập DB gán ID
             return Application.builder()
                     .id(UUID.randomUUID())
                     .candidate(a.getCandidate())
                     .job(a.getJob())
                     .coverLetter(a.getCoverLetter())
+                    .resumeUrl(a.getResumeUrl())
                     .status(ApplicationStatus.PENDING)
                     .appliedAt(a.getAppliedAt())
                     .build();
@@ -115,6 +130,7 @@ class ApplicationServiceImplTest {
         assertThat(response.companyName()).isEqualTo("Tech Corp");
         assertThat(response.status()).isEqualTo(ApplicationStatus.PENDING);
         assertThat(response.coverLetter()).isEqualTo("Kính gửi nhà tuyển dụng...");
+        assertThat(response.resumeUrl()).isEqualTo("uploads/resumes/cv.pdf");
         verify(applicationRepository).save(any(Application.class));
     }
 
@@ -128,6 +144,7 @@ class ApplicationServiceImplTest {
         when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
         when(jobRepository.findById(jobId)).thenReturn(Optional.of(activeJob));
         when(applicationRepository.existsByCandidateIdAndJobId(candidateId, jobId)).thenReturn(false);
+        when(resumeRepository.findByCandidateDetailProfileId(candidateId)).thenReturn(Optional.of(candidateResume));
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application a = inv.getArgument(0);
             return Application.builder()
@@ -135,6 +152,7 @@ class ApplicationServiceImplTest {
                     .candidate(a.getCandidate())
                     .job(a.getJob())
                     .coverLetter(null)
+                    .resumeUrl(a.getResumeUrl())
                     .status(ApplicationStatus.PENDING)
                     .appliedAt(a.getAppliedAt())
                     .build();
@@ -143,6 +161,7 @@ class ApplicationServiceImplTest {
         ApplicationResponse response = applicationService.submitApplication(request);
 
         assertThat(response.coverLetter()).isNull();
+        assertThat(response.resumeUrl()).isEqualTo("uploads/resumes/cv.pdf");
         verify(applicationRepository).save(any(Application.class));
     }
 
@@ -229,7 +248,26 @@ class ApplicationServiceImplTest {
     }
 
     // ----------------------------------------------------------------
-    // US-28 TC-07: User không có profile → ResourceNotFoundException
+    // US-28 TC-07: Ứng viên chưa upload CV → BadRequestException
+    // ----------------------------------------------------------------
+    @Test
+    void submitApplication_noResume_throwsBadRequest() {
+        ApplicationRequest request = new ApplicationRequest(jobId, null);
+
+        when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
+        when(jobRepository.findById(jobId)).thenReturn(Optional.of(activeJob));
+        when(applicationRepository.existsByCandidateIdAndJobId(candidateId, jobId)).thenReturn(false);
+        when(resumeRepository.findByCandidateDetailProfileId(candidateId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> applicationService.submitApplication(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("chưa upload CV");
+
+        verify(applicationRepository, never()).save(any());
+    }
+
+    // ----------------------------------------------------------------
+    // US-28 TC-08: User không có profile → ResourceNotFoundException
     // ----------------------------------------------------------------
     @Test
     void submitApplication_noProfile_throwsNotFound() {

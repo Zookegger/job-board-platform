@@ -1,5 +1,7 @@
 package com.yoedu.job_board_platform.controllers;
 
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,23 +44,23 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getApplicationDetail(@PathVariable Long id) {
+    public ResponseEntity<?> getApplicationDetail(@PathVariable UUID id) {
         return ResponseEntity.ok("Chi tiết đơn");
     }
 
     @GetMapping("/{id}/timeline")
-    public ResponseEntity<?> getApplicationTimeline(@PathVariable Long id) {
+    public ResponseEntity<?> getApplicationTimeline(@PathVariable UUID id) {
         return ResponseEntity.ok("Timeline đơn ứng tuyển");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> withdrawApplication(@PathVariable Long id) {
+    public ResponseEntity<?> withdrawApplication(@PathVariable UUID id) {
         return ResponseEntity.ok("Rút hồ sơ thành công");
     }
 
     @GetMapping("/cv/application/{id}")
     @PreAuthorize(AuthorizationConstants.CANDIDATE_OR_EMPLOYER)
-    public ResponseEntity<?> getApplicationCV(@PathVariable Long id) {
+    public ResponseEntity<?> getApplicationCV(@PathVariable UUID id) {
         return ResponseEntity.ok("CV của đơn");
     }
 }
