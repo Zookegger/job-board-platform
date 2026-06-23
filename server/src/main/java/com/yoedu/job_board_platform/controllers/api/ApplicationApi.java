@@ -2,6 +2,8 @@ package com.yoedu.job_board_platform.controllers.api;
 
 import org.springframework.http.ResponseEntity;
 
+import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,7 +25,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ CANDIDATE)", content = @Content),
             @ApiResponse(responseCode = "404", description = "Không tìm thấy công việc", content = @Content)
     })
-    ResponseEntity<?> submitApplication();
+    ResponseEntity<?> submitApplication(ApplicationRequest request);
 
     @Operation(summary = "Danh sách đơn đã nộp", description = """
             Lấy danh sách tất cả đơn ứng tuyển của ứng viên hiện tại.

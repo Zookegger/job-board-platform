@@ -24,12 +24,15 @@ import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 import com.yoedu.job_board_platform.mappers.AdminMapper;
 import com.yoedu.job_board_platform.mappers.JobMapper;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyApprovalLog;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Notification;
 import com.yoedu.job_board_platform.models.NotificationStatus;
+import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.repositories.CompanyApprovalLogRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
@@ -38,6 +41,7 @@ import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.NotificationService;
 import com.yoedu.job_board_platform.specifications.CompanySpecification;
 import com.yoedu.job_board_platform.specifications.JobSpecification;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,12 +50,14 @@ import lombok.RequiredArgsConstructor;
 public class AdminServiceImpl implements AdminService {
 
     private final CompanyRepository companyRepository;
+    private final CompanyApprovalLogRepository companyApprovalLogRepository;
     private final CompanyEmployerDetailRepository employerDetailRepository;
     private final JobRepository jobRepository;
     private final NotificationRepository notificationRepository;
     private final AdminMapper adminMapper;
     private final JobMapper jobMapper;
     private final NotificationService notificationService;
+    private final SecurityUtil securityUtil;
 
     @Override
     @Transactional(readOnly = true)
@@ -102,6 +108,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public void approveCompany(UUID companyId) {
         Company company = findCompany(companyId);
+        CompanyStatus oldStatus = company.getStatus();
 
         company.setStatus(CompanyStatus.APPROVED);
         company.setApproved(true);
@@ -109,6 +116,7 @@ public class AdminServiceImpl implements AdminService {
         company.setApprovedAt(OffsetDateTime.now());
 
         Company savedCompany = companyRepository.save(company);
+        saveApprovalLog(savedCompany, oldStatus, CompanyStatus.APPROVED, null);
 
         notificationService.notifyCompanyStatusChange(savedCompany.getId(), "CompanyApproved",
                 "Công ty của bạn đã được phê duyệt và hiển thị trên nền tảng.");
@@ -118,6 +126,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public void rejectCompany(UUID companyId, CompanyRejectionRequest request) {
         Company company = findCompany(companyId);
+        CompanyStatus oldStatus = company.getStatus();
 
         company.setStatus(CompanyStatus.REJECTED);
         company.setApproved(false);
@@ -125,6 +134,7 @@ public class AdminServiceImpl implements AdminService {
         company.setRejectionReason(request.reason().trim());
 
         Company savedCompany = companyRepository.save(company);
+        saveApprovalLog(savedCompany, oldStatus, CompanyStatus.REJECTED, request.reason().trim());
 
         notificationService.notifyCompanyStatusChange(savedCompany.getId(), "CompanyRejected",
                 "Công ty của bạn đã bị từ chối.");
@@ -134,6 +144,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public void suspendCompany(UUID companyId, CompanySuspensionRequest request) {
         Company company = findCompany(companyId);
+        CompanyStatus oldStatus = company.getStatus();
 
         company.setStatus(CompanyStatus.SUSPENDED);
         company.setApproved(false);
@@ -142,6 +153,7 @@ public class AdminServiceImpl implements AdminService {
         company.setSuspensionReason(request.reason().trim());
 
         Company savedCompany = companyRepository.save(company);
+        saveApprovalLog(savedCompany, oldStatus, CompanyStatus.SUSPENDED, request.reason().trim());
 
         notificationService.notifyCompanyStatusChange(savedCompany.getId(), "CompanySuspended",
                 "Công ty của bạn đã bị tạm ngưng hoạt động.");
@@ -160,7 +172,8 @@ public class AdminServiceImpl implements AdminService {
         company.setApproved(true);
         company.setSuspensionReason(null);
 
-        companyRepository.save(company);
+        Company savedCompany = companyRepository.save(company);
+        saveApprovalLog(savedCompany, CompanyStatus.SUSPENDED, CompanyStatus.APPROVED, null);
 
         notificationService.notifyCompanyStatusChange(company.getId(), "CompanyUnsuspended",
                 "Công ty của bạn đã được mở tạm ngưng và hoạt động trở lại.");
@@ -169,6 +182,18 @@ public class AdminServiceImpl implements AdminService {
     private Company findCompany(UUID companyId) {
         return companyRepository.findById(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay cong ty"));
+    }
+
+    private void saveApprovalLog(Company company, CompanyStatus oldStatus, CompanyStatus newStatus, String note) {
+        User actor = securityUtil.getCurrentUser();
+        CompanyApprovalLog log = CompanyApprovalLog.builder()
+                .company(company)
+                .actor(actor)
+                .oldStatus(oldStatus)
+                .newStatus(newStatus)
+                .note(note)
+                .build();
+        companyApprovalLogRepository.save(log);
     }
 
     @Override

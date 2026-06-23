@@ -9,4 +9,5 @@ import com.yoedu.job_board_platform.models.Application;
 
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application, UUID> {
+    boolean existsByCandidateIdAndJobId(UUID candidateId, UUID jobId);
 }

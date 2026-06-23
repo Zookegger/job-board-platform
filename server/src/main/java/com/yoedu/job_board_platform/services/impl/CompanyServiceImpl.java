@@ -15,11 +15,13 @@ import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
 import com.yoedu.job_board_platform.mappers.CompanyMapper;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyApprovalLog;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyReviewReason;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.repositories.CompanyApprovalLogRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
@@ -37,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CompanyServiceImpl implements CompanyService {
     private final CompanyRepository companyRepository;
+    private final CompanyApprovalLogRepository companyApprovalLogRepository;
     private final CompanyMapper companyMapper;
     private final UserRepository userRepository;
     private final JobRepository jobRepository;
@@ -83,10 +86,10 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public List<ApprovalLogResponse> getHistoryByEmployerId(UUID userId) {
-        // Validate employer & company exist; lịch sử chưa được lưu — trả về rỗng.
-        // Có thể mở rộng sau khi thêm bảng approval_logs.
-        getCompanyEntityForEmployer(userId);
-        return List.of();
+        Company company = getCompanyEntityForEmployer(userId);
+        List<CompanyApprovalLog> logs = companyApprovalLogRepository
+                .findByCompanyIdOrderByCreatedAtDesc(company.getId());
+        return logs.stream().map(companyMapper::toApprovalLogResponse).toList();
     }
 
     @Override
