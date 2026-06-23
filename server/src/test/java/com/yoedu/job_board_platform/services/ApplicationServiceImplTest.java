@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
+import com.yoedu.job_board_platform.common.exceptions.ConflictException;
+import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
@@ -97,7 +99,7 @@ class ApplicationServiceImplTest {
 
         when(securityUtil.getCurrentUser()).thenReturn(user);
         when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
-        when(applicationRepository.existsByCandidateIdAndJobId(profile.getId(), job.getId())).thenReturn(false);
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(false);
         when(resumeRepository.findByCandidateDetailProfileId(profile.getId())).thenReturn(Optional.of(resume));
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application a = inv.getArgument(0);
@@ -124,7 +126,7 @@ class ApplicationServiceImplTest {
 
         when(securityUtil.getCurrentUser()).thenReturn(user);
         when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
-        when(applicationRepository.existsByCandidateIdAndJobId(profile.getId(), job.getId())).thenReturn(false);
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(false);
         when(resumeRepository.findByCandidateDetailProfileId(profile.getId())).thenReturn(Optional.of(resume));
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application a = inv.getArgument(0);
@@ -170,7 +172,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_05_submitApplication_throwsBadRequest_whenAlreadyApplied() {
+    void TC_05_submitApplication_throwsConflict_whenAlreadyApplied() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         Job job = buildActiveJob();
@@ -178,10 +180,10 @@ class ApplicationServiceImplTest {
 
         when(securityUtil.getCurrentUser()).thenReturn(user);
         when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
-        when(applicationRepository.existsByCandidateIdAndJobId(profile.getId(), job.getId())).thenReturn(true);
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(true);
 
         assertThatThrownBy(() -> applicationService.submitApplication(request))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("đã nộp đơn");
 
         verify(applicationRepository, never()).save(any());
@@ -196,7 +198,7 @@ class ApplicationServiceImplTest {
 
         when(securityUtil.getCurrentUser()).thenReturn(user);
         when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
-        when(applicationRepository.existsByCandidateIdAndJobId(profile.getId(), job.getId())).thenReturn(false);
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(false);
         when(resumeRepository.findByCandidateDetailProfileId(profile.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> applicationService.submitApplication(request))
@@ -230,7 +232,7 @@ class ApplicationServiceImplTest {
         UUID jobId = UUID.randomUUID();
 
         when(securityUtil.getCurrentUser()).thenReturn(user);
-        when(applicationRepository.existsByCandidateIdAndJobId(profile.getId(), jobId)).thenReturn(true);
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), jobId, ApplicationStatus.WITHDRAWN)).thenReturn(true);
 
         boolean result = applicationService.checkApplied(jobId);
 
@@ -244,7 +246,7 @@ class ApplicationServiceImplTest {
         UUID jobId = UUID.randomUUID();
 
         when(securityUtil.getCurrentUser()).thenReturn(user);
-        when(applicationRepository.existsByCandidateIdAndJobId(profile.getId(), jobId)).thenReturn(false);
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), jobId, ApplicationStatus.WITHDRAWN)).thenReturn(false);
 
         boolean result = applicationService.checkApplied(jobId);
 
@@ -261,6 +263,74 @@ class ApplicationServiceImplTest {
         boolean result = applicationService.checkApplied(jobId);
 
         assertThat(result).isFalse();
-        verify(applicationRepository, never()).existsByCandidateIdAndJobId(any(), any());
+        verify(applicationRepository, never()).existsByCandidateIdAndJobIdAndStatusNot(any(), any(), any());
+    }
+
+    // ─── withdrawApplication ───────────────────────────────────────────────
+
+    @Test
+    void TC_11_withdrawApplication_success_whenPending() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID appId = UUID.randomUUID();
+
+        Application application = Application.builder()
+                .id(appId)
+                .candidate(profile)
+                .status(ApplicationStatus.PENDING)
+                .build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+        when(applicationRepository.save(any(Application.class))).thenReturn(application);
+
+        applicationService.withdrawApplication(appId);
+
+        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.WITHDRAWN);
+        verify(applicationRepository).save(application);
+    }
+
+    @Test
+    void TC_12_withdrawApplication_throwsBadRequest_whenNotPending() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID appId = UUID.randomUUID();
+
+        Application application = Application.builder()
+                .id(appId)
+                .candidate(profile)
+                .status(ApplicationStatus.REVIEWING)
+                .build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationService.withdrawApplication(appId))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("chờ duyệt");
+
+        verify(applicationRepository, never()).save(any());
+    }
+
+    @Test
+    void TC_13_withdrawApplication_throwsForbidden_whenNotOwner() {
+        Profile owner = buildProfile();
+        Profile other = buildProfile();
+        User user = buildUser(other);
+        UUID appId = UUID.randomUUID();
+
+        Application application = Application.builder()
+                .id(appId)
+                .candidate(owner)
+                .status(ApplicationStatus.PENDING)
+                .build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationService.withdrawApplication(appId))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(applicationRepository, never()).save(any());
     }
 }

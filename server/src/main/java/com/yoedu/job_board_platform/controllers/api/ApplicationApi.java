@@ -78,7 +78,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn ứng tuyển", content = @Content)
     })
     ResponseEntity<?> withdrawApplication(
-            @Parameter(description = "ID của đơn ứng tuyển cần rút", example = "1", required = true) Long id);
+            @Parameter(description = "UUID của đơn ứng tuyển cần rút", required = true) UUID id);
 
     @Operation(summary = "Xem CV gắn với đơn", description = """
             Xem hoặc tải CV (PDF) mà ứng viên đã đính kèm khi nộp đơn.

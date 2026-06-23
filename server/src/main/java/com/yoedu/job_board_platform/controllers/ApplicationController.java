@@ -55,7 +55,8 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> withdrawApplication(@PathVariable Long id) {
+    public ResponseEntity<?> withdrawApplication(@PathVariable UUID id) {
+        applicationService.withdrawApplication(id);
         return ResponseEntity.ok("Rút hồ sơ thành công");
     }
 

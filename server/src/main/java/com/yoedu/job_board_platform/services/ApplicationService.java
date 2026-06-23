@@ -28,7 +28,15 @@ public interface ApplicationService {
      * Kiểm tra ứng viên hiện tại đã nộp đơn vào một job chưa.
      *
      * @param jobId UUID của tin tuyển dụng
-     * @return true nếu đã nộp đơn, false nếu chưa
+     * @return true nếu đã nộp đơn (chưa rút), false nếu chưa
      */
     boolean checkApplied(UUID jobId);
+
+    /**
+     * Rút đơn ứng tuyển. Chỉ được rút khi đơn ở trạng thái PENDING.
+     * Sau khi rút, ứng viên có thể nộp lại.
+     *
+     * @param id UUID của đơn ứng tuyển
+     */
+    void withdrawApplication(UUID id);
 }

@@ -7,10 +7,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
+import com.yoedu.job_board_platform.common.exceptions.ConflictException;
+import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
 import com.yoedu.job_board_platform.models.Application;
+import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
@@ -50,8 +53,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BadRequestException("Tin tuyển dụng không còn nhận hồ sơ");
         }
 
-        if (applicationRepository.existsByCandidateIdAndJobId(profile.getId(), job.getId())) {
-            throw new BadRequestException("Bạn đã nộp đơn ứng tuyển cho tin này rồi");
+        if (applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)) {
+            throw new ConflictException("Bạn đã nộp đơn ứng tuyển cho tin này rồi");
         }
 
         Resume resume = resumeRepository.findByCandidateDetailProfileId(profile.getId())
@@ -86,6 +89,30 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (profile == null) {
             return false;
         }
-        return applicationRepository.existsByCandidateIdAndJobId(profile.getId(), jobId);
+        return applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), jobId, ApplicationStatus.WITHDRAWN);
+    }
+
+    @Override
+    @Transactional
+    public void withdrawApplication(UUID id) {
+        User user = securityUtil.getCurrentUser();
+        Profile profile = user.getProfile();
+        if (profile == null) {
+            throw new ResourceNotFoundException("Không tìm thấy hồ sơ ứng viên");
+        }
+
+        Application application = applicationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn ứng tuyển"));
+
+        if (!application.getCandidate().getId().equals(profile.getId())) {
+            throw new ForbiddenException("Bạn không có quyền rút đơn này");
+        }
+
+        if (application.getStatus() != ApplicationStatus.PENDING) {
+            throw new BadRequestException("Chỉ có thể rút đơn khi đang ở trạng thái chờ duyệt");
+        }
+
+        application.setStatus(ApplicationStatus.WITHDRAWN);
+        applicationRepository.save(application);
     }
 }
