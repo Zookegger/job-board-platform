@@ -5,6 +5,8 @@ const RouterRoutes = {
 	FORGOT_PASSWORD: "/forgot-password",
 	JOBS: "/jobs",
 	JOB_DETAIL: (id: string) => `/jobs/${id}`,
+	COMPANIES: "/companies",
+	COMPANY_DETAIL: (slug: string) => `/companies/${slug}`,
 
 	PROFILE: "/profile",
 	UNAUTHORIZED: "/unauthorized",
