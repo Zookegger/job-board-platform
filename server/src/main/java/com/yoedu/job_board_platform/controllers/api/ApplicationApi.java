@@ -1,6 +1,10 @@
 package com.yoedu.job_board_platform.controllers.api;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
+
+import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +27,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ CANDIDATE)", content = @Content),
             @ApiResponse(responseCode = "404", description = "Không tìm thấy công việc", content = @Content)
     })
-    ResponseEntity<?> submitApplication();
+    ResponseEntity<?> submitApplication(ApplicationRequest request);
 
     @Operation(summary = "Danh sách đơn đã nộp", description = """
             Lấy danh sách tất cả đơn ứng tuyển của ứng viên hiện tại.
@@ -45,7 +49,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn ứng tuyển", content = @Content)
     })
     ResponseEntity<?> getApplicationDetail(
-            @Parameter(description = "ID của đơn ứng tuyển", example = "1", required = true) Long id);
+            @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
     @Operation(summary = "Lịch sử trạng thái đơn", description = """
             Xem timeline thay đổi trạng thái của đơn ứng tuyển.
@@ -59,7 +63,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn ứng tuyển", content = @Content)
     })
     ResponseEntity<?> getApplicationTimeline(
-            @Parameter(description = "ID của đơn ứng tuyển", example = "1", required = true) Long id);
+            @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
     @Operation(summary = "Rút đơn ứng tuyển", description = """
             Rút/hủy đơn ứng tuyển của mình.
@@ -73,7 +77,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn ứng tuyển", content = @Content)
     })
     ResponseEntity<?> withdrawApplication(
-            @Parameter(description = "ID của đơn ứng tuyển cần rút", example = "1", required = true) Long id);
+            @Parameter(description = "ID của đơn ứng tuyển cần rút", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
     @Operation(summary = "Xem CV gắn với đơn", description = """
             Xem hoặc tải CV (PDF) mà ứng viên đã đính kèm khi nộp đơn.
@@ -85,5 +89,5 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn hoặc CV", content = @Content)
     })
     ResponseEntity<?> getApplicationCV(
-            @Parameter(description = "ID của đơn ứng tuyển", example = "1", required = true) Long id);
+            @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 }

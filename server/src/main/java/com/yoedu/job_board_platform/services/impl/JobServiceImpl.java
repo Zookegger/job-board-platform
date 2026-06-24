@@ -209,4 +209,28 @@ public class JobServiceImpl implements JobService {
         job.setStatus(JobStatus.PENDING_APPROVAL);
         jobRepository.save(job);
     }
+
+    @Override
+    public Page<JobListResponse> getActiveJobs(int page, int size) {
+        int safeSize = size > 0 ? Math.min(size, 100) : DEFAULT_PAGE_SIZE;
+        Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return jobRepository.findByStatus(JobStatus.ACTIVE, pageable).map(jobMapper::toSummary);
+    }
+
+    @Override
+    public JobResponse getActiveJobDetail(UUID jobId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tin tuyển dụng"));
+
+        if (job.getStatus() != JobStatus.ACTIVE) {
+            throw new NotFoundException("Không tìm thấy tin tuyển dụng");
+        }
+
+        JobResponse response = jobMapper.toResponse(job);
+        List<SkillResponse> skills = jobSkillService.getSkillsByJobId(job.getId());
+        if (!skills.isEmpty()) {
+            response = response.withSkills(skills);
+        }
+        return response;
+    }
 }

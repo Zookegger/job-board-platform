@@ -91,4 +91,22 @@ public interface JobService {
      * @throws BadRequestException nếu tin không ở trạng thái DRAFT
      */
     void submitForReview(UUID jobId, UUID employerId);
+
+    /**
+     * Lấy danh sách tin tuyển dụng đang ACTIVE (công khai).
+     *
+     * @param page số trang (bắt đầu từ 0)
+     * @param size số phần tử mỗi trang
+     * @return trang dữ liệu JobListResponse
+     */
+    Page<JobListResponse> getActiveJobs(int page, int size);
+
+    /**
+     * Lấy chi tiết một tin tuyển dụng ACTIVE (công khai).
+     *
+     * @param jobId UUID của tin tuyển dụng
+     * @return JobResponse thông tin chi tiết
+     * @throws NotFoundException nếu tin không tồn tại hoặc không ở trạng thái ACTIVE
+     */
+    JobResponse getActiveJobDetail(UUID jobId);
 }

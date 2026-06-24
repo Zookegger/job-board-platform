@@ -9,6 +9,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
+import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
@@ -16,6 +17,7 @@ import com.yoedu.job_board_platform.dtos.company.PublicCompanyListResponse;
 import com.yoedu.job_board_platform.dtos.company.PublicCompanyResponse;
 import com.yoedu.job_board_platform.dtos.job.JobCategoryResponse;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyApprovalLog;
 import com.yoedu.job_board_platform.models.User;
 
 @Mapper(componentModel = "spring")
@@ -117,4 +119,7 @@ public interface CompanyMapper {
     @Mapping(target = "reviewReason", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(CompanyRequest request, @MappingTarget Company company);
+
+    @Mapping(target = "actorId", source = "actor.id")
+    ApprovalLogResponse toApprovalLogResponse(CompanyApprovalLog log);
 }

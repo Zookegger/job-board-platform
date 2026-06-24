@@ -77,7 +77,7 @@ function toFormData(job: JobResponse): JobFormData {
 		locationTypes: job.locationTypes,
 		employmentType: job.employmentType,
 		experienceLevel: job.experienceLevel,
-		skillIds: job.skills.map((s) => s.id),
+		skillIds: job.skills?.map((s) => s.id) ?? [],
 	};
 }
 
@@ -317,11 +317,11 @@ function ViewMode({ job, actionPending, onEdit, onSubmit, onUnpublish, onDelete,
 						<p className='whitespace-pre-wrap text-sm text-muted-foreground'>{job.benefits}</p>
 					</div>
 				)}
-				{job.skills.length > 0 && (
+				{(job.skills?.length ?? 0) > 0 && (
 					<div>
 						<p className='mb-2 text-sm font-semibold'>Kỹ năng yêu cầu</p>
 						<div className='flex flex-wrap gap-1.5'>
-							{job.skills.map((skill) => (
+							{job.skills?.map((skill) => (
 								<Badge
 									key={skill.id}
 									variant='secondary'
