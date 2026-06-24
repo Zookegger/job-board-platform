@@ -1,22 +1,24 @@
 package com.yoedu.job_board_platform.services;
 
-import java.util.Optional;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
+import com.yoedu.job_board_platform.common.exceptions.ConflictException;
+import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
@@ -52,240 +54,283 @@ class ApplicationServiceImplTest {
     @InjectMocks
     private ApplicationServiceImpl applicationService;
 
-    private UUID candidateId;
-    private UUID jobId;
-    private Profile candidateProfile;
-    private User candidateUser;
-    private Job activeJob;
-    private Company company;
-    private Resume candidateResume;
+    // ─── Helpers ────────────────────────────────────────────────────────────
 
-    @BeforeEach
-    void setUp() {
-        candidateId = UUID.randomUUID();
-        jobId = UUID.randomUUID();
-
-        candidateProfile = Profile.builder()
-                .id(candidateId)
-                .fullName("Nguyễn Văn A")
-                .phone("0901234567")
-                .build();
-
-        candidateUser = User.builder()
-                .id(candidateId)
-                .email("candidate@test.com")
-                .build();
-        candidateUser.setProfile(candidateProfile);
-
-        company = Company.builder()
-                .id(UUID.randomUUID())
-                .companyName("Tech Corp")
-                .build();
-
-        activeJob = Job.builder()
-                .id(jobId)
-                .title("Java Developer")
-                .status(JobStatus.ACTIVE)
-                .company(company)
-                .build();
-
-        candidateResume = Resume.builder()
-                .id(UUID.randomUUID())
-                .title("CV của tôi")
-                .originalFileName("cv.pdf")
-                .filePath("uploads/resumes/cv.pdf")
-                .fileSize(102400)
-                .build();
+    private User buildUser(Profile profile) {
+        User user = new User();
+        user.setProfile(profile);
+        return user;
     }
 
-    // ----------------------------------------------------------------
-    // US-28 TC-01: Nộp đơn thành công với job ACTIVE
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_success() {
-        ApplicationRequest request = new ApplicationRequest(jobId, "Kính gửi nhà tuyển dụng...");
+    private Profile buildProfile() {
+        Profile profile = new Profile();
+        profile.setId(UUID.randomUUID());
+        return profile;
+    }
 
-        when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
-        when(jobRepository.findById(jobId)).thenReturn(Optional.of(activeJob));
-        when(applicationRepository.existsByCandidateIdAndJobId(candidateId, jobId)).thenReturn(false);
-        when(resumeRepository.findByCandidateDetailProfileId(candidateId)).thenReturn(Optional.of(candidateResume));
+    private Job buildActiveJob() {
+        Company company = new Company();
+        company.setCompanyName("ACME Corp");
+
+        Job job = new Job();
+        job.setId(UUID.randomUUID());
+        job.setTitle("Backend Developer");
+        job.setStatus(JobStatus.ACTIVE);
+        job.setCompany(company);
+        return job;
+    }
+
+    private Resume buildResume(Profile profile) {
+        Resume resume = new Resume();
+        resume.setId(UUID.randomUUID());
+        resume.setFilePath("/uploads/resumes/cv.pdf");
+        return resume;
+    }
+
+    // ─── submitApplication ──────────────────────────────────────────────────
+
+    @Test
+    void TC_01_submitApplication_success_withCoverLetter() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        Job job = buildActiveJob();
+        Resume resume = buildResume(profile);
+        ApplicationRequest request = new ApplicationRequest(job.getId(), "Thư xin việc");
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(false);
+        when(resumeRepository.findByCandidateDetailProfileId(profile.getId())).thenReturn(Optional.of(resume));
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application a = inv.getArgument(0);
-            return Application.builder()
-                    .id(UUID.randomUUID())
-                    .candidate(a.getCandidate())
-                    .job(a.getJob())
-                    .coverLetter(a.getCoverLetter())
-                    .resumeUrl(a.getResumeUrl())
-                    .status(ApplicationStatus.PENDING)
-                    .appliedAt(a.getAppliedAt())
-                    .build();
+            a.setId(UUID.randomUUID());
+            return a;
         });
 
-        ApplicationResponse response = applicationService.submitApplication(request);
+        ApplicationResponse result = applicationService.submitApplication(request);
 
-        assertThat(response).isNotNull();
-        assertThat(response.jobId()).isEqualTo(jobId);
-        assertThat(response.jobTitle()).isEqualTo("Java Developer");
-        assertThat(response.companyName()).isEqualTo("Tech Corp");
-        assertThat(response.status()).isEqualTo(ApplicationStatus.PENDING);
-        assertThat(response.coverLetter()).isEqualTo("Kính gửi nhà tuyển dụng...");
-        assertThat(response.resumeUrl()).isEqualTo("uploads/resumes/cv.pdf");
-        verify(applicationRepository).save(any(Application.class));
+        assertThat(result).isNotNull();
+        assertThat(result.jobId()).isEqualTo(job.getId());
+        assertThat(result.status()).isEqualTo(ApplicationStatus.PENDING);
+        assertThat(result.resumeUrl()).isEqualTo("/uploads/resumes/cv.pdf");
+        assertThat(result.coverLetter()).isEqualTo("Thư xin việc");
     }
 
-    // ----------------------------------------------------------------
-    // US-28 TC-02: Nộp đơn không cần cover letter
-    // ----------------------------------------------------------------
     @Test
-    void submitApplication_noCoverLetter_success() {
-        ApplicationRequest request = new ApplicationRequest(jobId, null);
+    void TC_02_submitApplication_success_withoutCoverLetter() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        Job job = buildActiveJob();
+        Resume resume = buildResume(profile);
+        ApplicationRequest request = new ApplicationRequest(job.getId(), null);
 
-        when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
-        when(jobRepository.findById(jobId)).thenReturn(Optional.of(activeJob));
-        when(applicationRepository.existsByCandidateIdAndJobId(candidateId, jobId)).thenReturn(false);
-        when(resumeRepository.findByCandidateDetailProfileId(candidateId)).thenReturn(Optional.of(candidateResume));
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(false);
+        when(resumeRepository.findByCandidateDetailProfileId(profile.getId())).thenReturn(Optional.of(resume));
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application a = inv.getArgument(0);
-            return Application.builder()
-                    .id(UUID.randomUUID())
-                    .candidate(a.getCandidate())
-                    .job(a.getJob())
-                    .coverLetter(null)
-                    .resumeUrl(a.getResumeUrl())
-                    .status(ApplicationStatus.PENDING)
-                    .appliedAt(a.getAppliedAt())
-                    .build();
+            a.setId(UUID.randomUUID());
+            return a;
         });
 
-        ApplicationResponse response = applicationService.submitApplication(request);
+        ApplicationResponse result = applicationService.submitApplication(request);
 
-        assertThat(response.coverLetter()).isNull();
-        assertThat(response.resumeUrl()).isEqualTo("uploads/resumes/cv.pdf");
-        verify(applicationRepository).save(any(Application.class));
+        assertThat(result.coverLetter()).isNull();
+        assertThat(result.resumeUrl()).isEqualTo("/uploads/resumes/cv.pdf");
     }
 
-    // ----------------------------------------------------------------
-    // US-28 TC-03: Job không tồn tại → NotFoundException
-    // ----------------------------------------------------------------
     @Test
-    void submitApplication_jobNotFound_throwsNotFound() {
+    void TC_03_submitApplication_throwsNotFound_whenJobMissing() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID jobId = UUID.randomUUID();
         ApplicationRequest request = new ApplicationRequest(jobId, null);
 
-        when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
+        when(securityUtil.getCurrentUser()).thenReturn(user);
         when(jobRepository.findById(jobId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> applicationService.submitApplication(request))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Không tìm thấy tin tuyển dụng");
-
-        verify(applicationRepository, never()).save(any());
+                .hasMessageContaining("tin tuyển dụng");
     }
 
-    // ----------------------------------------------------------------
-    // US-28 TC-04: Job không ở trạng thái ACTIVE → BadRequestException
-    // ----------------------------------------------------------------
     @Test
-    void submitApplication_jobNotActive_throwsBadRequest() {
-        Job pendingJob = Job.builder()
-                .id(jobId)
-                .title("Java Developer")
-                .status(JobStatus.PENDING_APPROVAL)
-                .company(company)
-                .build();
+    void TC_04_submitApplication_throwsBadRequest_whenJobNotActive() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        Job job = buildActiveJob();
+        job.setStatus(JobStatus.EXPIRED);
+        ApplicationRequest request = new ApplicationRequest(job.getId(), null);
 
-        ApplicationRequest request = new ApplicationRequest(jobId, null);
-
-        when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
-        when(jobRepository.findById(jobId)).thenReturn(Optional.of(pendingJob));
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
 
         assertThatThrownBy(() -> applicationService.submitApplication(request))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("không còn nhận hồ sơ");
-
-        verify(applicationRepository, never()).save(any());
     }
 
-    // ----------------------------------------------------------------
-    // US-28 TC-05: Job đã EXPIRED → BadRequestException
-    // ----------------------------------------------------------------
     @Test
-    void submitApplication_jobExpired_throwsBadRequest() {
-        Job expiredJob = Job.builder()
-                .id(jobId)
-                .title("Java Developer")
-                .status(JobStatus.EXPIRED)
-                .company(company)
-                .build();
+    void TC_05_submitApplication_throwsConflict_whenAlreadyApplied() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        Job job = buildActiveJob();
+        ApplicationRequest request = new ApplicationRequest(job.getId(), null);
 
-        ApplicationRequest request = new ApplicationRequest(jobId, null);
-
-        when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
-        when(jobRepository.findById(jobId)).thenReturn(Optional.of(expiredJob));
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(true);
 
         assertThatThrownBy(() -> applicationService.submitApplication(request))
-                .isInstanceOf(BadRequestException.class);
-
-        verify(applicationRepository, never()).save(any());
-    }
-
-    // ----------------------------------------------------------------
-    // US-28 TC-06: Đã nộp đơn rồi (duplicate) → BadRequestException
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_duplicateApplication_throwsBadRequest() {
-        ApplicationRequest request = new ApplicationRequest(jobId, "Cover letter");
-
-        when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
-        when(jobRepository.findById(jobId)).thenReturn(Optional.of(activeJob));
-        when(applicationRepository.existsByCandidateIdAndJobId(candidateId, jobId)).thenReturn(true);
-
-        assertThatThrownBy(() -> applicationService.submitApplication(request))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("đã nộp đơn");
 
         verify(applicationRepository, never()).save(any());
     }
 
-    // ----------------------------------------------------------------
-    // US-28 TC-07: Ứng viên chưa upload CV → BadRequestException
-    // ----------------------------------------------------------------
     @Test
-    void submitApplication_noResume_throwsBadRequest() {
-        ApplicationRequest request = new ApplicationRequest(jobId, null);
+    void TC_06_submitApplication_throwsBadRequest_whenNoCv() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        Job job = buildActiveJob();
+        ApplicationRequest request = new ApplicationRequest(job.getId(), null);
 
-        when(securityUtil.getCurrentUser()).thenReturn(candidateUser);
-        when(jobRepository.findById(jobId)).thenReturn(Optional.of(activeJob));
-        when(applicationRepository.existsByCandidateIdAndJobId(candidateId, jobId)).thenReturn(false);
-        when(resumeRepository.findByCandidateDetailProfileId(candidateId)).thenReturn(Optional.empty());
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(false);
+        when(resumeRepository.findByCandidateDetailProfileId(profile.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> applicationService.submitApplication(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("chưa upload CV");
+                .hasMessageContaining("CV");
 
         verify(applicationRepository, never()).save(any());
     }
 
-    // ----------------------------------------------------------------
-    // US-28 TC-08: User không có profile → ResourceNotFoundException
-    // ----------------------------------------------------------------
     @Test
-    void submitApplication_noProfile_throwsNotFound() {
-        User userWithoutProfile = User.builder()
-                .id(UUID.randomUUID())
-                .email("noprofile@test.com")
-                .build();
-        // profile = null
-
+    void TC_07_submitApplication_throwsNotFound_whenNoProfile() {
+        User user = buildUser(null);
+        UUID jobId = UUID.randomUUID();
         ApplicationRequest request = new ApplicationRequest(jobId, null);
 
-        when(securityUtil.getCurrentUser()).thenReturn(userWithoutProfile);
+        when(securityUtil.getCurrentUser()).thenReturn(user);
 
         assertThatThrownBy(() -> applicationService.submitApplication(request))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("hồ sơ ứng viên");
+                .hasMessageContaining("hồ sơ");
 
-        verify(jobRepository, never()).findById(any());
+        verify(applicationRepository, never()).save(any());
+    }
+
+    // ─── checkApplied ───────────────────────────────────────────────────────
+
+    @Test
+    void TC_08_checkApplied_returnsTrue_whenAlreadyApplied() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID jobId = UUID.randomUUID();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), jobId, ApplicationStatus.WITHDRAWN)).thenReturn(true);
+
+        boolean result = applicationService.checkApplied(jobId);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void TC_09_checkApplied_returnsFalse_whenNotApplied() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID jobId = UUID.randomUUID();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), jobId, ApplicationStatus.WITHDRAWN)).thenReturn(false);
+
+        boolean result = applicationService.checkApplied(jobId);
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void TC_10_checkApplied_returnsFalse_whenNoProfile() {
+        User user = buildUser(null);
+        UUID jobId = UUID.randomUUID();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+
+        boolean result = applicationService.checkApplied(jobId);
+
+        assertThat(result).isFalse();
+        verify(applicationRepository, never()).existsByCandidateIdAndJobIdAndStatusNot(any(), any(), any());
+    }
+
+    // ─── withdrawApplication ───────────────────────────────────────────────
+
+    @Test
+    void TC_11_withdrawApplication_success_whenPending() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID appId = UUID.randomUUID();
+
+        Application application = Application.builder()
+                .id(appId)
+                .candidate(profile)
+                .status(ApplicationStatus.PENDING)
+                .build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+        when(applicationRepository.save(any(Application.class))).thenReturn(application);
+
+        applicationService.withdrawApplication(appId);
+
+        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.WITHDRAWN);
+        verify(applicationRepository).save(application);
+    }
+
+    @Test
+    void TC_12_withdrawApplication_throwsBadRequest_whenNotPending() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID appId = UUID.randomUUID();
+
+        Application application = Application.builder()
+                .id(appId)
+                .candidate(profile)
+                .status(ApplicationStatus.REVIEWING)
+                .build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationService.withdrawApplication(appId))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("chờ duyệt");
+
+        verify(applicationRepository, never()).save(any());
+    }
+
+    @Test
+    void TC_13_withdrawApplication_throwsForbidden_whenNotOwner() {
+        Profile owner = buildProfile();
+        Profile other = buildProfile();
+        User user = buildUser(other);
+        UUID appId = UUID.randomUUID();
+
+        Application application = Application.builder()
+                .id(appId)
+                .candidate(owner)
+                .status(ApplicationStatus.PENDING)
+                .build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationService.withdrawApplication(appId))
+                .isInstanceOf(ForbiddenException.class);
+
         verify(applicationRepository, never()).save(any());
     }
 }

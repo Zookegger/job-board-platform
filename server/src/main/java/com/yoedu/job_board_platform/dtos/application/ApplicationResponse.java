@@ -7,14 +7,30 @@ import com.yoedu.job_board_platform.models.ApplicationStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "Thông tin đơn ứng tuyển")
 public record ApplicationResponse(
-        @Schema(description = "ID đơn ứng tuyển") UUID id,
-        @Schema(description = "ID tin tuyển dụng") UUID jobId,
-        @Schema(description = "Tiêu đề tin tuyển dụng") String jobTitle,
-        @Schema(description = "Tên công ty") String companyName,
-        @Schema(description = "Trạng thái đơn") ApplicationStatus status,
-        @Schema(description = "Thư ứng tuyển") String coverLetter,
-        @Schema(description = "URL/đường dẫn CV đính kèm khi nộp đơn") String resumeUrl,
-        @Schema(description = "Ngày nộp đơn") OffsetDateTime appliedAt
-) {
+
+        @Schema(description = "UUID của đơn ứng tuyển")
+        UUID id,
+
+        @Schema(description = "UUID của tin tuyển dụng")
+        UUID jobId,
+
+        @Schema(description = "Tên công việc")
+        String jobTitle,
+
+        @Schema(description = "Tên công ty")
+        String companyName,
+
+        @Schema(description = "Trạng thái đơn")
+        ApplicationStatus status,
+
+        @Schema(description = "Thư xin việc")
+        String coverLetter,
+
+        @Schema(description = "URL của CV đính kèm lúc nộp")
+        String resumeUrl,
+
+        @Schema(description = "Thời điểm nộp đơn")
+        OffsetDateTime appliedAt) {
 }

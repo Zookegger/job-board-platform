@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Ứng tuyển & Timeline", description = "Nộp đơn, xem danh sách, chi tiết, lịch sử trạng thái, rút đơn. Yêu cầu role CANDIDATE.")
 public interface ApplicationApi {
@@ -27,7 +28,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ CANDIDATE)", content = @Content),
             @ApiResponse(responseCode = "404", description = "Không tìm thấy công việc", content = @Content)
     })
-    ResponseEntity<?> submitApplication(ApplicationRequest request);
+    ResponseEntity<?> submitApplication(@Parameter(description = "Thông tin đơn ứng tuyển", required = true) @Valid ApplicationRequest request);
 
     @Operation(summary = "Danh sách đơn đã nộp", description = """
             Lấy danh sách tất cả đơn ứng tuyển của ứng viên hiện tại.
@@ -90,4 +91,16 @@ public interface ApplicationApi {
     })
     ResponseEntity<?> getApplicationCV(
             @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
+
+    @Operation(summary = "Lấy thông tin đơn ứng tuyển theo job", description = """
+            Kiểm tra ứng viên hiện tại đã nộp đơn chưa và trả về applicationId nếu có.
+            Trả về { \"applied\": true/false, \"applicationId\": \"uuid\" }.
+            Dùng để hiển thị nút \"Đã ứng tuyển\" và \"Rút đơn\" trên trang chi tiết việc làm.
+            """)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "{ \"applied\": true, \"applicationId\": \"...\" }", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ CANDIDATE)", content = @Content)
+    })
+    ResponseEntity<?> getApplicationByJob(
+            @Parameter(description = "UUID của tin tuyển dụng", required = true) UUID jobId);
 }

@@ -1,5 +1,7 @@
 package com.yoedu.job_board_platform.services;
 
+import java.util.UUID;
+
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
@@ -21,4 +23,28 @@ public interface ApplicationService {
      * @throws BadRequestException nếu job không ACTIVE hoặc đã nộp đơn rồi
      */
     ApplicationResponse submitApplication(ApplicationRequest request);
+
+    /**
+     * Kiểm tra ứng viên hiện tại đã nộp đơn vào một job chưa.
+     *
+     * @param jobId UUID của tin tuyển dụng
+     * @return true nếu đã nộp đơn (chưa rút), false nếu chưa
+     */
+    boolean checkApplied(UUID jobId);
+
+    /**
+     * Rút đơn ứng tuyển. Chỉ được rút khi đơn ở trạng thái PENDING.
+     * Sau khi rút, ứng viên có thể nộp lại.
+     *
+     * @param id UUID của đơn ứng tuyển
+     */
+    void withdrawApplication(UUID id);
+
+    /**
+     * Lấy UUID của đơn ứng tuyển theo jobId (nếu có).
+     *
+     * @param jobId UUID của tin tuyển dụng
+     * @return UUID của đơn, hoặc null nếu chưa nộp
+     */
+    UUID getApplicationIdByJob(UUID jobId);
 }

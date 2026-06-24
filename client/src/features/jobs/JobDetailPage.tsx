@@ -8,14 +8,19 @@ import {
 	Users,
 	ChevronLeft,
 	DollarSign,
+	CheckCircle2,
+	Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ApplyDialog } from "./components/ApplyDialog";
+import { UserRole } from "@/types/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { usePublicJobDetail } from "@/hooks/usePublicJobs";
+import { useApplicationByJob, useWithdrawApplication } from "@/hooks/useApplications";
+import { ApplyDialog } from "./components/ApplyDialog";
 import {
 	EMPLOYMENT_TYPE_LABELS,
 	EXPERIENCE_LEVEL_LABELS,
@@ -42,11 +47,13 @@ function formatDate(dateStr: string | null | undefined) {
 export function JobDetailPage() {
 	const { id } = useParams<{ id: string }>();
 	const { user } = useAuth();
+	const isCandidate = user?.role === UserRole.CANDIDATE;
+	const { data: applicationData, isLoading: checkLoading } = useApplicationByJob(isCandidate ? id : undefined);
+	const hasApplied = applicationData?.applied ?? false;
+	const applicationId = applicationData?.applicationId ?? null;
 	const [applyOpen, setApplyOpen] = useState(false);
 
 	const { data: job, isLoading, isError } = usePublicJobDetail(id ?? "");
-
-	const isCandidate = user?.role === "CANDIDATE";
 
 	if (isLoading) {
 		return (
@@ -143,11 +150,28 @@ export function JobDetailPage() {
 				)}
 
 				{isCandidate && (
-					<Button onClick={() => setApplyOpen(true)} size="lg">
-						<Briefcase className="mr-2 h-4 w-4" />
-						Ứng tuyển ngay
-					</Button>
-				)}
+				<div className="flex items-center gap-3">
+					{checkLoading ? (
+						<Button disabled size="lg">
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							Đang kiểm tra...
+						</Button>
+					) : hasApplied ? (
+						<>
+							<Button disabled variant="secondary" size="lg" className="gap-2 cursor-not-allowed">
+								<CheckCircle2 className="h-4 w-4 text-green-600" />
+								Đã ứng tuyển
+							</Button>
+							<WithdrawButton applicationId={applicationId} jobId={id!} />
+						</>
+					) : (
+						<Button onClick={() => setApplyOpen(true)} size="lg">
+							<Briefcase className="mr-2 h-4 w-4" />
+							Ứng tuyển ngay
+						</Button>
+					)}
+				</div>
+			)}
 
 				<Separator />
 
@@ -195,3 +219,27 @@ export function JobDetailPage() {
 	);
 }
 
+/** Nút rút đơn — chỉ dùng nội bộ trong trang này */
+function WithdrawButton({ applicationId, jobId }: { applicationId: string | null; jobId: string }) {
+	const withdrawMutation = useWithdrawApplication();
+
+	const handleWithdraw = () => {
+		if (!applicationId) {
+			toast.error("Không tìm thấy đơn ứng tuyển.", { position: "bottom-right" });
+			return;
+		}
+		if (!confirm("Bạn có chắc muốn rút đơn ứng tuyển này không?")) return;
+		withdrawMutation.mutate({ id: applicationId, jobId });
+	};
+
+	return (
+		<Button
+			variant="outline"
+			size="sm"
+			onClick={handleWithdraw}
+			disabled={withdrawMutation.isPending}
+		>
+			{withdrawMutation.isPending ? "Đang rút..." : "Rút đơn"}
+		</Button>
+	);
+}

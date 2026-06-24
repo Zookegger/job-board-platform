@@ -10,6 +10,7 @@ const ApiRoutes = {
     APPLICATION_DETAIL: (id: string) => `/applications/${id}`,
     APPLICATION_TIMELINE: (id: string) => `/applications/${id}/timeline`,
     APPLICATION_CV: (id: string) => `/applications/cv/application/${id}`,
+    APPLICATION_BY_JOB: (jobId: string) => `/applications/by-job/${jobId}`,
 };
 
 export default ApiRoutes;

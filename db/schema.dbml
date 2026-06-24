@@ -50,6 +50,7 @@ enum application_status {
   INTERVIEW   // Đang trong quá trình phỏng vấn
   HIRED       // Được tuyển dụng
   REJECTED    // Bị từ chối
+  WITHDRAWN   // Ứng viên đã rút đơn, có thể nộp lại
 }
 
 enum notification_type {
@@ -202,7 +203,7 @@ Table applications {
   job_id uuid [not null]
   status application_status [not null, default: application_status.PENDING]
   cover_letter text
-  resume_url text [note: "Đường dẫn file CV tại thời điểm nộp đơn (snapshot từ resumes.file_path)"]
+  resume_url text [note: "Snapshot URL của CV lúc nộp đơn"]
   applied_at timestamptz [not null, default: 'now()']
   indexes {
     (candidate_id, job_id) [unique, note: "Mỗi ứng viên chỉ nộp 1 lần"]

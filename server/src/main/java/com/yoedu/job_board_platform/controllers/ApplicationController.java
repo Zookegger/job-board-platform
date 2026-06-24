@@ -1,5 +1,6 @@
 package com.yoedu.job_board_platform.controllers;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -55,6 +56,7 @@ public class ApplicationController implements ApplicationApi {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> withdrawApplication(@PathVariable UUID id) {
+        applicationService.withdrawApplication(id);
         return ResponseEntity.ok("Rút hồ sơ thành công");
     }
 
@@ -62,6 +64,16 @@ public class ApplicationController implements ApplicationApi {
     @PreAuthorize(AuthorizationConstants.CANDIDATE_OR_EMPLOYER)
     public ResponseEntity<?> getApplicationCV(@PathVariable UUID id) {
         return ResponseEntity.ok("CV của đơn");
+    }
+
+    @GetMapping("/by-job/{jobId}")
+    public ResponseEntity<?> getApplicationByJob(@PathVariable UUID jobId) {
+        boolean applied = applicationService.checkApplied(jobId);
+        UUID applicationId = applicationService.getApplicationIdByJob(jobId);
+        return ResponseEntity.ok(Map.of(
+                "applied", applied,
+                "applicationId", applicationId
+        ));
     }
 }
 

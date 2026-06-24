@@ -14,6 +14,28 @@ const applicationApi = {
 					error.response?.status || 500,
 				);
 			}),
+
+	getByJob: (jobId: string): Promise<{ applied: boolean; applicationId?: string }> =>
+		client
+			.get(ApiRoutes.APPLICATION_BY_JOB(jobId))
+			.then((res) => res.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Đã có lỗi xảy ra.",
+					error.response?.status || 500,
+				);
+			}),
+
+	withdraw: (id: string): Promise<void> =>
+		client
+			.delete(ApiRoutes.APPLICATION_DETAIL(id))
+			.then(() => undefined)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Rút đơn thất bại.",
+					error.response?.status || 500,
+				);
+			}),
 };
 
 export default applicationApi;
