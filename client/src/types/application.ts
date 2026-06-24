@@ -18,3 +18,19 @@ export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
 	HIRED: "Đã tuyển",
 	REJECTED: "Từ chối",
 };
+
+export interface ApplicationRequest {
+	jobId: string;
+	coverLetter?: string;
+}
+
+export interface ApplicationResponse {
+	id: string;
+	jobId: string;
+	jobTitle: string;
+	companyName: string;
+	status: ApplicationStatus;
+	coverLetter: string | null;
+	resumeUrl: string | null;
+	appliedAt: string;
+}

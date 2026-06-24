@@ -16,7 +16,6 @@ import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
-import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.dtos.skill.UpdateCandidateSkillsRequest;
 import com.yoedu.job_board_platform.mappers.SkillMapper;
 import com.yoedu.job_board_platform.models.CandidateSkill;

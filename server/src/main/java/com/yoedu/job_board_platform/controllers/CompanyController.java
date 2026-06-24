@@ -1,8 +1,11 @@
 package com.yoedu.job_board_platform.controllers;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +20,9 @@ import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
+import com.yoedu.job_board_platform.dtos.company.PublicCompanyResponse;
+import com.yoedu.job_board_platform.mappers.CompanyMapper;
+import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.CompanyService;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
@@ -34,6 +40,7 @@ import lombok.RequiredArgsConstructor;
  */
 public class CompanyController implements CompanyApi {
     private final CompanyService companyService;
+    private final CompanyMapper companyMapper;
     private final SecurityUtil securityUtil;
 
     @Override
@@ -89,7 +96,7 @@ public class CompanyController implements CompanyApi {
      * @return danh sách CompanyResponse
      */
     public ResponseEntity<List<CompanyResponse>> listCompanies() {
-        return ResponseEntity.ok(companyService.listCompanies());
+        return ResponseEntity.ok(companyMapper.toResponseList(companyService.listCompanies()));
     }
 
     @Override
@@ -118,5 +125,16 @@ public class CompanyController implements CompanyApi {
     public ResponseEntity<List<ApprovalLogResponse>> getApprovalHistory() {
         UUID employerId = securityUtil.getCurrentUserId();
         return ResponseEntity.ok(companyService.getHistoryByEmployerId(employerId));
+    }
+
+    @Override
+    @GetMapping("/search")
+    public ResponseEntity<Page<PublicCompanyResponse>> listCompaniesPage(String keyword,
+            Set<Integer> jobCategoryIds,
+            Pageable pageable) {
+
+        var companies = companyService.listCompaniesPage(keyword, CompanyStatus.APPROVED.toString(), jobCategoryIds, pageable);
+
+        return ResponseEntity.ok(companies.map(companyMapper::toPublicResponse));
     }
 }

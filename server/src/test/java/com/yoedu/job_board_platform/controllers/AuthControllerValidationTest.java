@@ -36,6 +36,7 @@ import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
+import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
 import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
@@ -64,6 +65,7 @@ class AuthControllerValidationTest {
     @Autowired CompanyRepository companyRepository;
     @Autowired JobRepository jobRepository;
     @Autowired ProfileRepository profileRepository;
+    @Autowired NotificationRepository notificationRepository;
     @Autowired RefreshTokenService refreshTokenService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -74,6 +76,7 @@ class AuthControllerValidationTest {
         companyEmployerDetailRepository.deleteAll();
         companyRepository.deleteAll();
         refreshTokenRepository.deleteAll();
+        notificationRepository.deleteAll();
         profileRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -348,7 +351,7 @@ class AuthControllerValidationTest {
             User user = savedUser("expired@example.com");
 
             RefreshToken expired = RefreshToken.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().minusDays(1))
                     .isRevoked(false)
@@ -366,7 +369,7 @@ class AuthControllerValidationTest {
             User user = savedUser("revoked@example.com");
 
             RefreshToken revoked = RefreshToken.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7))
                     .isRevoked(true)
@@ -586,7 +589,7 @@ class AuthControllerValidationTest {
             userRepository.save(user);
 
             RefreshToken rt = RefreshToken.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7))
                     .isRevoked(false)
@@ -637,7 +640,7 @@ class AuthControllerValidationTest {
             userRepository.save(user);
 
             RefreshToken revokedToken = RefreshToken.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7))
                     .isRevoked(true)
@@ -661,7 +664,7 @@ class AuthControllerValidationTest {
             userRepository.save(user);
 
             RefreshToken token = RefreshToken.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7))
                     .isRevoked(false)
@@ -688,7 +691,7 @@ class AuthControllerValidationTest {
             userRepository.save(user);
 
             RefreshToken token = RefreshToken.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7))
                     .isRevoked(false)
@@ -723,7 +726,7 @@ class AuthControllerValidationTest {
             userRepository.save(user);
 
             RefreshToken token = RefreshToken.builder()
-                    .userId(user.getId())
+                    .user(user)
                     .tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7))
                     .isRevoked(false)
@@ -794,15 +797,15 @@ class AuthControllerValidationTest {
             userRepository.save(user);
 
             RefreshToken t1 = RefreshToken.builder()
-                    .userId(user.getId()).tokenString(UUID.randomUUID().toString())
+                    .user(user).tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7)).isRevoked(false)
                     .createdAt(OffsetDateTime.now()).build();
             RefreshToken t2 = RefreshToken.builder()
-                    .userId(user.getId()).tokenString(UUID.randomUUID().toString())
+                    .user(user).tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7)).isRevoked(false)
                     .createdAt(OffsetDateTime.now()).build();
             RefreshToken t3 = RefreshToken.builder()
-                    .userId(user.getId()).tokenString(UUID.randomUUID().toString())
+                    .user(user).tokenString(UUID.randomUUID().toString())
                     .expiresAt(OffsetDateTime.now().plusDays(7)).isRevoked(false)
                     .createdAt(OffsetDateTime.now()).build();
             refreshTokenRepository.saveAll(List.of(t1, t2, t3));

@@ -1,3 +1,4 @@
+import type { PageResponse } from "@/types/pagination";
 import type {
 	CandidateSkillResponse,
 	SkillResponse,
@@ -8,7 +9,7 @@ import client from "./client";
 
 const skillApi = {
 	/** Lấy toàn bộ danh sách kỹ năng có sẵn. */
-	getAllSkills: (): Promise<SkillResponse[]> =>
+	getAllSkills: (): Promise<PageResponse<SkillResponse>> =>
 		client
 			.get("/skills")
 			.then((r) => r.data)

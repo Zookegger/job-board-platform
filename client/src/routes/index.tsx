@@ -20,8 +20,6 @@ import CandidateSettingsPage from "@/features/candidate/SettingsPage";
 
 import EmployerApplicationsPage from "@/features/employer/ApplicationsPage";
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
-import EmployerCompanyStatusPage from "@/features/employer/CompanyStatusPage";
-import EmployerCreateJobPage from "@/features/employer/CreateJobPage";
 import EmployerDashboardPage from "@/features/employer/DashboardPage";
 import EmployerJobDetailPage from "@/features/employer/JobDetailPage";
 import EmployerJobsPage from "@/features/employer/JobsPage";
@@ -36,7 +34,8 @@ import AdminSkillPage from "@/features/admin/SkillsPage";
 import AdminUsersPage from "@/features/admin/UsersPage";
 import UnauthorizedPage from "@/features/home/UnauthorizedPage";
 import ProfilePage from "@/features/profile/ProfilePage";
-import PublicCompanyPage from "@/features/public/PublicCompanyPage";
+import PublicCompanyPage from "@/features/public/CompanyDetailPage";
+import CompanyListPage from "@/features/public/CompanyListPage";
 // eslint-disable-next-line react-refresh/only-export-components
 function RouterInit() {
 	const navigate = useNavigate();
@@ -60,6 +59,8 @@ export const router = createBrowserRouter([
 					{ path: RouterRoutes.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
 					{ path: RouterRoutes.JOBS, element: <JobListPage /> },
 					{ path: RouterRoutes.JOB_DETAIL(":id"), element: <JobDetailPage /> },
+					{ path: RouterRoutes.COMPANIES, element: <CompanyListPage /> },
+					{ path: RouterRoutes.COMPANY_DETAIL(":slug"), element: <PublicCompanyPage /> },
 					{ path: RouterRoutes.UNAUTHORIZED, element: <UnauthorizedPage /> },
 				],
 			},
@@ -105,11 +106,9 @@ export const router = createBrowserRouter([
 							},
 							{ path: RouterRoutes.EMPLOYER_DASHBOARD, element: <EmployerDashboardPage /> },
 							{ path: RouterRoutes.EMPLOYER_JOBS, element: <EmployerJobsPage /> },
-							{ path: RouterRoutes.EMPLOYER_CREATE_JOB, element: <EmployerCreateJobPage /> },
 							{ path: RouterRoutes.EMPLOYER_JOB_DETAIL(":id"), element: <EmployerJobDetailPage /> },
 							{ path: RouterRoutes.EMPLOYER_APPLICATIONS, element: <EmployerApplicationsPage /> },
 							{ path: RouterRoutes.EMPLOYER_COMPANY, element: <EmployerCompanyPage /> },
-							{ path: RouterRoutes.EMPLOYER_COMPANY_STATUS, element: <EmployerCompanyStatusPage /> },
 							{ path: RouterRoutes.EMPLOYER_SETTINGS, element: <EmployerSettingsPage /> },
 						],
 					},

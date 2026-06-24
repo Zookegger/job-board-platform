@@ -19,6 +19,8 @@ public interface SkillMapper {
      * Trường {@code id} được bỏ qua (sẽ do DB tự sinh).
      */
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     Skill toEntity(SkillRequest request);
 
     /**
@@ -37,6 +39,8 @@ public interface SkillMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "active", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(SkillRequest request, @MappingTarget Skill skill);
 }

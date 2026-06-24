@@ -9,11 +9,11 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 
 import com.yoedu.job_board_platform.common.ApiResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
-import com.yoedu.job_board_platform.dtos.admin.CompanyApprovalRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
-import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
@@ -25,13 +25,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Pageable;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
-@Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng/ngành nghề, kiểm duyệt. Yêu cầu role ADMIN.")
+@Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng, kiểm duyệt. Yêu cầu role ADMIN.")
 public interface AdminApi {
 
         @Operation(summary = "Dashboard tổng quan", description = """
@@ -90,7 +87,17 @@ public interface AdminApi {
                         @Parameter(description = "Từ khóa tìm theo tên, email, phone, mã số thuế, địa chỉ, website") String keyword,
                         @Parameter(description = "true: có mã số thuế, false: thiếu mã số thuế") Boolean hasTaxCode,
                         @Parameter(description = "true: có email/phone, false: thiếu liên hệ") Boolean hasContact,
-                        @ParameterObject Pageable pageable);
+                        @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable);
+
+        @Operation(summary = "Danh sách tất cả công ty", description = "Lấy danh sách tất cả công ty, hỗ trợ tìm kiếm, lọc theo trạng thái và phân trang.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách công ty (có phân trang)", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
+        })
+        ResponseEntity<Page<AdminCompanyListResponse>> getAllCompanies(
+                        @Parameter(description = "Từ khóa tìm theo tên, email, phone, mã số thuế, địa chỉ, website") String keyword,
+                        @Parameter(description = "Lọc theo trạng thái: PENDING, APPROVED, REJECTED, SUSPENDED") String status,
+                        @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable);
 
         @Operation(summary = "Duyệt công ty", description = "Phê duyệt công ty — sau khi duyệt, employer có thể đăng tin tuyển dụng. Hệ thống gửi email thông báo cho employer.")
         @ApiResponses({
@@ -98,8 +105,7 @@ public interface AdminApi {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy công ty", content = @Content)
         })
         ResponseEntity<?> approveCompany(
-                        @Parameter(description = "ID công ty cần duyệt", required = true) UUID id,
-                        @Valid @RequestBody(description = "Lý do phê duyệt", required = true) CompanyApprovalRequest request);
+                        @Parameter(description = "ID công ty cần duyệt", required = true) UUID id);
 
         @Operation(summary = "Từ chối công ty", description = "Từ chối phê duyệt công ty kèm lý do. Hệ thống gửi thông báo kèm lý do từ chối cho employer.")
         @ApiResponses({
@@ -121,6 +127,15 @@ public interface AdminApi {
                         @Parameter(description = "ID công ty cần tạm ngưng", required = true) UUID id,
                         @Valid @RequestBody(description = "Lý do tạm ngưng", required = true) CompanySuspensionRequest request);
 
+        @Operation(summary = "Mở tạm ngưng công ty", description = "Khôi phục công ty từ trạng thái SUSPENDED về APPROVED. Hệ thống gửi thông báo cho employer.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Mở tạm ngưng công ty thành công"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Công ty không ở trạng thái tạm ngưng"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy công ty")
+        })
+        ResponseEntity<ApiResponse> unsuspendCompany(
+                        @Parameter(description = "ID công ty cần mở tạm ngưng", required = true) UUID id);
+
         // ================ Jobs ================
 
         @Operation(summary = "Danh sách tất cả tin tuyển dụng", description = """
@@ -133,7 +148,7 @@ public interface AdminApi {
         })
         ResponseEntity<Page<AdminJobListResponse>> getAllJobs(
                         @Parameter(description = "Lọc theo trạng thái: DRAFT, PENDING_APPROVAL, ACTIVE, EXPIRED, REJECTED", example = "PENDING_APPROVAL") String status,
-                        @ParameterObject Pageable pageable);
+                        @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable);
 
         @Operation(summary = "Danh sách tin tuyển dụng chờ duyệt", description = "Lấy danh sách tin tuyển dụng với trạng thái PENDING_APPROVAL.")
         @ApiResponses({
@@ -174,36 +189,49 @@ public interface AdminApi {
                         @Parameter(description = "ID của tin tuyển dụng cần xóa", required = true) UUID id,
                         @Parameter(description = "Lý do xóa", example = "Nội dung vi phạm chính sách") String reason);
 
-        @Operation(summary = "Danh sách ngành nghề", description = "Lấy danh sách tất cả ngành nghề đang có trong hệ thống.")
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách ngành nghề", content = @Content)
-        ResponseEntity<?> getCategories();
+        // ================ Reports ================
 
-        @Operation(summary = "Thêm ngành nghề mới", description = "Tạo một ngành nghề mới (ví dụ: Công nghệ thông tin, Kế toán, Xây dựng...). Tên ngành phải chưa tồn tại.")
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Tạo ngành nghề mới thành công", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Tên ngành đã tồn tại hoặc dữ liệu không hợp lệ", content = @Content)
-        })
-        ResponseEntity<?> createCategory();
-
-        @Operation(summary = "Cập nhật ngành nghề", description = "Chỉnh sửa thông tin ngành nghề (tên, mô tả).")
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cập nhật ngành nghề thành công", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy ngành nghề", content = @Content)
-        })
-        ResponseEntity<?> updateCategory(
-                        @Parameter(description = "ID của ngành nghề cần sửa", example = "1", required = true) Long id);
-
-        @Operation(summary = "Xóa ngành nghề", description = """
-                        Xóa ngành nghề khỏi hệ thống.
-                        Chỉ xóa được nếu không có công việc nào đang thuộc ngành này.
+        @Operation(summary = "Danh sách báo cáo vi phạm", description = """
+                        Lấy danh sách tất cả báo cáo vi phạm trên hệ thống.
+                        Có thể lọc theo trạng thái. Dùng cho màn hình quản lý báo cáo của admin.
                         """)
         @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Xóa ngành nghề thành công", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Không thể xóa — ngành đang có công việc liên kết", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy ngành nghề", content = @Content)
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách báo cáo (có phân trang)", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
         })
-        ResponseEntity<?> deleteCategory(
-                        @Parameter(description = "ID của ngành nghề cần xóa", example = "1", required = true) Long id);
+        ResponseEntity<Page<com.yoedu.job_board_platform.dtos.report.ReportResponse>> getReports(
+                        @Parameter(description = "Lọc theo trạng thái: PENDING, REVIEWED, DISMISSED, RESOLVED", example = "PENDING") com.yoedu.job_board_platform.models.ReportStatus status,
+                        @ParameterObject Pageable pageable);
+
+        @Operation(summary = "Xem xét báo cáo", description = "Xem xét báo cáo — chuyển trạng thái từ PENDING sang REVIEWED.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Xem xét báo cáo thành công", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Báo cáo không ở trạng thái PENDING", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy báo cáo", content = @Content)
+        })
+        ResponseEntity<ApiResponse> reviewReport(
+                        @Parameter(description = "ID báo cáo cần xem xét", required = true) UUID id,
+                        @RequestBody(description = "Ghi chú xử lý (tuỳ chọn)", required = false) com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest request);
+
+        @Operation(summary = "Bác bỏ báo cáo", description = "Bác bỏ báo cáo — chuyển trạng thái từ PENDING/REVIEWED sang DISMISSED.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bác bỏ báo cáo thành công", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Báo cáo đã được xử lý, không thể bác bỏ", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy báo cáo", content = @Content)
+        })
+        ResponseEntity<ApiResponse> dismissReport(
+                        @Parameter(description = "ID báo cáo cần bác bỏ", required = true) UUID id,
+                        @RequestBody(description = "Ghi chú xử lý (tuỳ chọn)", required = false) com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest request);
+
+        @Operation(summary = "Giải quyết báo cáo", description = "Giải quyết báo cáo — chuyển trạng thái từ REVIEWED sang RESOLVED.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Giải quyết báo cáo thành công", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Báo cáo phải ở trạng thái REVIEWED trước khi giải quyết", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy báo cáo", content = @Content)
+        })
+        ResponseEntity<ApiResponse> resolveReport(
+                        @Parameter(description = "ID báo cáo cần giải quyết", required = true) UUID id,
+                        @RequestBody(description = "Ghi chú xử lý (tuỳ chọn)", required = false) com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest request);
 
         // ================ Skills ================
 

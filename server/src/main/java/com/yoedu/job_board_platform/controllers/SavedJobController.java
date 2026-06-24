@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.SavedJobApi;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/saved-jobs")
-@PreAuthorize("hasRole('CANDIDATE')")
+@PreAuthorize(AuthorizationConstants.CANDIDATE)
 public class SavedJobController implements SavedJobApi {
 
     @GetMapping

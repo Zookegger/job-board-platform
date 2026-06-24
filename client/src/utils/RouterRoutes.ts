@@ -5,6 +5,8 @@ const RouterRoutes = {
 	FORGOT_PASSWORD: "/forgot-password",
 	JOBS: "/jobs",
 	JOB_DETAIL: (id: string) => `/jobs/${id}`,
+	COMPANIES: "/companies",
+	COMPANY_DETAIL: (slug: string) => `/companies/${slug}`,
 
 	PROFILE: "/profile",
 	UNAUTHORIZED: "/unauthorized",
@@ -22,7 +24,6 @@ const RouterRoutes = {
 	EMPLOYER_JOB_DETAIL: (id: string) => `/employer/jobs/${id}`,
 	EMPLOYER_APPLICATIONS: "/employer/applications",
 	EMPLOYER_COMPANY: "/employer/company",
-	EMPLOYER_COMPANY_STATUS: "/employer/company/status",
 	EMPLOYER_SETTINGS: "/employer/settings",
 
 	// Admin

@@ -11,9 +11,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,14 +43,21 @@ public class Report {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "job_id", columnDefinition = "uuid")
-    private UUID jobId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_id", nullable = true)
+    private Job job;
 
-    @Column(name = "company_id", columnDefinition = "uuid")
-    private UUID companyId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", nullable = true)
+    private Company company;
 
-    @Column(name = "reported_by", columnDefinition = "uuid")
-    private UUID reportedBy;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "reported_by", nullable = false)
+    private User reportedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewed_by", nullable = true)
+    private User reviewedBy;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -56,13 +66,13 @@ public class Report {
     @Column(columnDefinition = "text")
     private String details;
 
+    @Column(columnDefinition = "text")
+    private String reviewNotes;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private ReportStatus status = ReportStatus.PENDING;
-
-    @Column(name = "reviewed_by", columnDefinition = "uuid")
-    private UUID reviewedBy;
 
     @Column(name = "reviewed_at")
     private OffsetDateTime reviewedAt;

@@ -1,24 +1,42 @@
 package com.yoedu.job_board_platform.specifications;
 
 import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.data.jpa.domain.Specification;
 
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyStatus;
+import com.yoedu.job_board_platform.models.Job;
+import com.yoedu.job_board_platform.models.JobStatus;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public final class CompanySpecification {
 
-    private CompanySpecification() {
+    public static Specification<Company> hasStatus(String status) {
+        return (root, query, cb) -> {
+            if (status == null || status.isBlank()) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("status"), CompanyStatus.valueOf(status.toUpperCase(Locale.ROOT)));
+        };
     }
 
     public static Specification<Company> isPending() {
-        return (root, query, cb) ->
-                cb.equal(root.get("status"), CompanyStatus.PENDING);
+        return (root, query, cb) -> cb.equal(root.get("status"), CompanyStatus.PENDING);
+    }
+
+    public static Specification<Company> isApproved() {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), CompanyStatus.APPROVED),
+                cb.isTrue(root.get("isApproved")));
     }
 
     public static Specification<Company> hasKeyword(String keyword) {
@@ -37,8 +55,7 @@ public final class CompanySpecification {
                     like(cb, root, "phone", pattern),
                     like(cb, root, "taxCode", pattern),
                     like(cb, root, "address", pattern),
-                    like(cb, root, "website", pattern)
-            );
+                    like(cb, root, "website", pattern));
         };
     }
 
@@ -51,6 +68,24 @@ public final class CompanySpecification {
             return hasTaxCode
                     ? hasValue(cb, root, "taxCode")
                     : missingValue(cb, root, "taxCode");
+        };
+    }
+
+    public static Specification<Company> hasCategoryId(Set<Integer> categoryIds) {
+        return (root, query, cb) -> {
+            if (categoryIds == null || categoryIds.isEmpty()) {
+                return cb.conjunction();
+            }
+
+            Subquery<UUID> subquery = query.subquery(UUID.class);
+            Root<Job> jobRoot = subquery.from(Job.class);
+
+            subquery.select(jobRoot.get("company").get("id"))
+                    .where(cb.and(
+                            jobRoot.get("category").get("id").in(categoryIds),
+                            cb.equal(jobRoot.get("status"), JobStatus.ACTIVE)));
+
+            return root.get("id").in(subquery);
         };
     }
 
@@ -67,8 +102,7 @@ public final class CompanySpecification {
                     ? cb.or(hasEmail, hasPhone)
                     : cb.and(
                             missingValue(cb, root, "email"),
-                            missingValue(cb, root, "phone")
-                    );
+                            missingValue(cb, root, "phone"));
         };
     }
 
@@ -76,31 +110,26 @@ public final class CompanySpecification {
             CriteriaBuilder cb,
             Root<Company> root,
             String field,
-            String pattern
-    ) {
+            String pattern) {
         return cb.like(cb.lower(root.<String>get(field)), pattern);
     }
 
     private static Predicate hasValue(
             CriteriaBuilder cb,
             Root<Company> root,
-            String field
-    ) {
+            String field) {
         return cb.and(
                 cb.isNotNull(root.get(field)),
-                cb.notEqual(cb.trim(root.<String>get(field)), "")
-        );
+                cb.notEqual(cb.trim(root.<String>get(field)), ""));
     }
 
     private static Predicate missingValue(
             CriteriaBuilder cb,
             Root<Company> root,
-            String field
-    ) {
+            String field) {
         return cb.or(
                 cb.isNull(root.get(field)),
-                cb.equal(cb.trim(root.<String>get(field)), "")
-        );
+                cb.equal(cb.trim(root.<String>get(field)), ""));
     }
 
     private static String normalizeKeyword(String keyword) {

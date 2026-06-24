@@ -13,6 +13,7 @@ export function useAllSkills() {
 		queryKey: SKILL_KEYS.all,
 		queryFn: () => skillApi.getAllSkills(),
 		staleTime: 10 * 60 * 1000,
+		select: (data) => data.content,
 	});
 }
 

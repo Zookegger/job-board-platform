@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.EmployerJobApi;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.dtos.job.JobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobRequest;
 import com.yoedu.job_board_platform.dtos.job.JobResponse;
@@ -31,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/employer/jobs")
-@PreAuthorize("hasRole('EMPLOYER')")
+@PreAuthorize(AuthorizationConstants.EMPLOYER)
 @RequiredArgsConstructor
 public class EmployerJobController implements EmployerJobApi {
 
