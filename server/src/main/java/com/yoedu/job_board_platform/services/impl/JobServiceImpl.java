@@ -113,9 +113,11 @@ public class JobServiceImpl implements JobService {
         }
 
         JobResponse response = jobMapper.toResponse(savedJob);
-        if (request.skillIds() != null && !request.skillIds().isEmpty()) {
-            response = response.withSkills(jobSkillService.getSkillsByJobId(savedJob.getId()));
-        }
+        response = response.withSkills(
+                request.skillIds() != null && !request.skillIds().isEmpty()
+                        ? jobSkillService.getSkillsByJobId(savedJob.getId())
+                        : List.of()
+        );
 
         return response;
     }
@@ -146,11 +148,13 @@ public class JobServiceImpl implements JobService {
         jobSkillService.syncJobSkills(job.getId(), incomingSkillIds);
 
         JobResponse response = jobMapper.toResponse(job);
-        if (request.skillIds() != null && !request.skillIds().isEmpty()) {
-            response = response.withSkills(jobSkillService.getSkillsByJobId(job.getId()));
-        }
+        response = response.withSkills(
+                request.skillIds() != null && !request.skillIds().isEmpty()
+                        ? jobSkillService.getSkillsByJobId(job.getId())
+                        : List.of()
+        );
 
-        return jobMapper.toResponse(job);
+        return response;
     }
 
     @Override

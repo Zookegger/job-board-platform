@@ -29,7 +29,9 @@ import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
+import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
+import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
 import jakarta.servlet.http.Cookie;
@@ -56,7 +58,13 @@ class EmployerCompanyStatusControllerTest {
     CompanyEmployerDetailRepository employerDetailRepository;
 
     @Autowired
+    NotificationRepository notificationRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    RefreshTokenRepository refreshTokenRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -65,6 +73,8 @@ class EmployerCompanyStatusControllerTest {
         employerDetailRepository.deleteAll();
         companyRepository.deleteAll();
         profileRepository.deleteAll();
+        notificationRepository.deleteAll();
+        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 

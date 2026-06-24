@@ -177,6 +177,51 @@ const adminApi = {
 					error.response?.status || 500,
 				);
 			}),
+
+	getReports: (params: PaginationParams, status?: string) =>
+		client
+			.get("/admin/reports", { params: { ...params, status } })
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể tải danh sách báo cáo.",
+					error.response?.status || 500,
+				);
+			}),
+
+	// Reports Actions
+	reviewReport: (id: string, data?: { reviewNotes?: string }) =>
+		client
+			.patch(`/admin/reports/${id}/review`, data)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể duyệt báo cáo.",
+					error.response?.status || 500,
+				);
+			}),
+
+	dismissReport: (id: string, data?: { reviewNotes?: string }) =>
+		client
+			.patch(`/admin/reports/${id}/dismiss`, data)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể bác bỏ báo cáo.",
+					error.response?.status || 500,
+				);
+			}),
+
+	resolveReport: (id: string, data?: { reviewNotes?: string }) =>
+		client
+			.patch(`/admin/reports/${id}/resolve`, data)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể giải quyết báo cáo.",
+					error.response?.status || 500,
+				);
+			}),
 };
 
 export default adminApi;

@@ -28,7 +28,6 @@ import com.yoedu.job_board_platform.common.exceptions.ConflictException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
-import com.yoedu.job_board_platform.services.impl.SkillServiceImpl;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.dtos.skill.UpdateCandidateSkillsRequest;
 import com.yoedu.job_board_platform.mappers.SkillMapper;
@@ -38,6 +37,7 @@ import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
 import com.yoedu.job_board_platform.repositories.SkillRepository;
+import com.yoedu.job_board_platform.services.impl.SkillServiceImpl;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 
 @ExtendWith(MockitoExtension.class)

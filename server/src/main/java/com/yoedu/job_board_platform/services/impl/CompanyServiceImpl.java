@@ -1,8 +1,12 @@
 package com.yoedu.job_board_platform.services.impl;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
@@ -13,12 +17,18 @@ import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
 import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
+import com.yoedu.job_board_platform.dtos.company.PublicCompanyResponse;
+import com.yoedu.job_board_platform.dtos.job.JobCategoryResponse;
 import com.yoedu.job_board_platform.mappers.CompanyMapper;
+import com.yoedu.job_board_platform.mappers.JobCategoryMapper;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyApprovalLog;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyReviewReason;
+import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.Job;
+import com.yoedu.job_board_platform.models.JobCategory;
+import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CompanyApprovalLogRepository;
@@ -26,6 +36,7 @@ import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.services.CompanyService;
+import com.yoedu.job_board_platform.specifications.CompanySpecification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,15 +52,42 @@ public class CompanyServiceImpl implements CompanyService {
     private final CompanyRepository companyRepository;
     private final CompanyApprovalLogRepository companyApprovalLogRepository;
     private final CompanyMapper companyMapper;
+    private final JobCategoryMapper jobCategoryMapper;
     private final UserRepository userRepository;
     private final JobRepository jobRepository;
 
-    @Override
     /**
-     * Cập nhật thông tin công ty.
-     * Kiểm tra quyền EMPLOYER, cập nhật các trường không null,
-     * và đưa công ty về trạng thái chờ duyệt nếu companyName hoặc taxCode thay đổi.
+     * Kiểm tra xem giá trị mới có khác giá trị cũ hay không.
+     * Trả về false nếu giá trị mới là null (không có thay đổi).
+     *
+     * @param newValue giá trị mới (có thể null)
+     * @param oldValue giá trị cũ
+     * @return true nếu newValue khác null và khác oldValue
      */
+    private boolean hasChanged(String newValue, String oldValue) {
+        return newValue != null && !newValue.equals(oldValue);
+    }
+
+    /**
+     * Tìm Company entity cho employer theo userId.
+     * Ném NotFoundException nếu user không tồn tại,
+     * BadRequestException nếu không phải EMPLOYER,
+     * ResourceNotFoundException nếu chưa có thông tin công ty.
+     */
+    private Company getCompanyEntityForEmployer(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
+        if (!user.getRole().equals(UserRole.EMPLOYER)) {
+            throw new BadRequestException("Người dùng không phải nhà tuyển dụng");
+        }
+        CompanyEmployerDetail detail = user.getProfile().getEmployerDetail();
+        if (detail == null) {
+            throw new ResourceNotFoundException("Không tìm thấy thông tin công ty cho tài khoản này");
+        }
+        return detail.getCompany();
+    }
+
+    @Override
     public CompanyResponse update(UUID userId, CompanyRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
@@ -101,38 +139,41 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public List<CompanyResponse> listCompanies() {
-        return companyRepository.findAll().stream().map(companyMapper::toResponse).toList();
+    public Page<Company> listCompaniesPage(String keyword, String status, Set<Integer> jobCategoryIds, Pageable pageable) {
+        Specification<Company> spec = Specification
+                .where(CompanySpecification.isApproved())
+                .and(CompanySpecification.hasKeyword(keyword))
+                .and(CompanySpecification.hasCategoryId(jobCategoryIds))
+                .and(CompanySpecification.hasStatus(status));
+        return companyRepository.findAll(spec, pageable);
     }
 
-    /**
-     * Kiểm tra xem giá trị mới có khác giá trị cũ hay không.
-     * Trả về false nếu giá trị mới là null (không có thay đổi).
-     *
-     * @param newValue giá trị mới (có thể null)
-     * @param oldValue giá trị cũ
-     * @return true nếu newValue khác null và khác oldValue
-     */
-    private boolean hasChanged(String newValue, String oldValue) {
-        return newValue != null && !newValue.equals(oldValue);
+    public List<Company> listCompanies() {
+        return companyRepository.findAll();
     }
 
-    /**
-     * Tìm Company entity cho employer theo userId.
-     * Ném NotFoundException nếu user không tồn tại,
-     * BadRequestException nếu không phải EMPLOYER,
-     * ResourceNotFoundException nếu chưa có thông tin công ty.
-     */
-    private Company getCompanyEntityForEmployer(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
-        if (!user.getRole().equals(UserRole.EMPLOYER)) {
-            throw new BadRequestException("Người dùng không phải nhà tuyển dụng");
-        }
-        CompanyEmployerDetail detail = user.getProfile().getEmployerDetail();
-        if (detail == null) {
-            throw new ResourceNotFoundException("Không tìm thấy thông tin công ty cho tài khoản này");
-        }
-        return detail.getCompany();
+    @Override
+    public Company getCompanyBySlug(String slug) {
+        return companyRepository.findBySlug(slug).orElseThrow(() -> new NotFoundException("Không tìm thấy công ty"));
+    }
+
+    @Override
+    public PublicCompanyResponse getPublicCompanyDetail(String slug) {
+        Company company = getApprovedCompanyBySlug(slug);
+        long totalOpenJobs = jobRepository.countByCompanyIdAndStatus(company.getId(), JobStatus.ACTIVE);
+        List<JobCategoryResponse> categories = jobCategoryMapper.toResponseList(
+                jobRepository.findDistinctCategoriesByCompanyIdAndStatus(company.getId(), JobStatus.ACTIVE));
+        return companyMapper.toPublicResponse(company, totalOpenJobs, categories);
+    }
+
+    @Override
+    public Page<Job> getPublicJobsByCompany(String slug, Pageable pageable) {
+        Company company = getApprovedCompanyBySlug(slug);
+        return jobRepository.findByCompanyIdAndStatus(company.getId(), JobStatus.ACTIVE, pageable);
+    }
+
+    @Override
+    public Company getApprovedCompanyBySlug(String slug) {
+        return companyRepository.findBySlugAndStatusAndIsApprovedTrue(slug, CompanyStatus.APPROVED).orElseThrow(() -> new NotFoundException("Không tìm thấy công ty"));
     }
 }

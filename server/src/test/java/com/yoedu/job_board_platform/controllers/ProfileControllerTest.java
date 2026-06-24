@@ -28,7 +28,9 @@ import com.yoedu.job_board_platform.TestcontainersConfiguration;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
+import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ProfileRepository;
+import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
 import com.yoedu.job_board_platform.repositories.ResumeRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 
@@ -46,6 +48,8 @@ class ProfileControllerTest {
     @Autowired CompanyRepository companyRepository;
     @Autowired JobRepository jobRepository;
     @Autowired ResumeRepository resumeRepository;
+    @Autowired NotificationRepository notificationRepository;
+    @Autowired RefreshTokenRepository refreshTokenRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -56,6 +60,8 @@ class ProfileControllerTest {
         companyRepository.deleteAll();
         resumeRepository.deleteAll();
         profileRepository.deleteAll();
+        notificationRepository.deleteAll();
+        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 

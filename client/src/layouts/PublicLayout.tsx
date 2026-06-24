@@ -1,7 +1,7 @@
-import { Outlet } from 'react-router-dom'
-import { Header } from '../components/layout/Header'
-import { Footer } from '../components/layout/Footer'
 import { Toaster } from '@/components/ui/sonner'
+import { Outlet } from 'react-router-dom'
+import { Footer } from '../components/layout/Footer'
+import { Header } from '../components/layout/Header'
 
 export function PublicLayout() {
   return (
@@ -11,7 +11,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="top-center" />
     </div>
   )
 }
