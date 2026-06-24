@@ -50,7 +50,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn ứng tuyển", content = @Content)
     })
     ResponseEntity<?> getApplicationDetail(
-            @Parameter(description = "ID của đơn ứng tuyển", example = "1", required = true) Long id);
+            @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
     @Operation(summary = "Lịch sử trạng thái đơn", description = """
             Xem timeline thay đổi trạng thái của đơn ứng tuyển.
@@ -64,7 +64,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn ứng tuyển", content = @Content)
     })
     ResponseEntity<?> getApplicationTimeline(
-            @Parameter(description = "ID của đơn ứng tuyển", example = "1", required = true) Long id);
+            @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
     @Operation(summary = "Rút đơn ứng tuyển", description = """
             Rút/hủy đơn ứng tuyển của mình.
@@ -78,7 +78,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn ứng tuyển", content = @Content)
     })
     ResponseEntity<?> withdrawApplication(
-            @Parameter(description = "UUID của đơn ứng tuyển cần rút", required = true) UUID id);
+            @Parameter(description = "ID của đơn ứng tuyển cần rút", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
     @Operation(summary = "Xem CV gắn với đơn", description = """
             Xem hoặc tải CV (PDF) mà ứng viên đã đính kèm khi nộp đơn.
@@ -90,7 +90,7 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn hoặc CV", content = @Content)
     })
     ResponseEntity<?> getApplicationCV(
-            @Parameter(description = "ID của đơn ứng tuyển", example = "1", required = true) Long id);
+            @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
     @Operation(summary = "Kiểm tra đã ứng tuyển chưa", description = """
             Kiểm tra xem ứng viên hiện tại đã nộp đơn vào tin tuyển dụng này chưa.

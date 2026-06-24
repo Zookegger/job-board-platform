@@ -45,12 +45,12 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getApplicationDetail(@PathVariable Long id) {
+    public ResponseEntity<?> getApplicationDetail(@PathVariable UUID id) {
         return ResponseEntity.ok("Chi tiết đơn");
     }
 
     @GetMapping("/{id}/timeline")
-    public ResponseEntity<?> getApplicationTimeline(@PathVariable Long id) {
+    public ResponseEntity<?> getApplicationTimeline(@PathVariable UUID id) {
         return ResponseEntity.ok("Timeline đơn ứng tuyển");
     }
 
@@ -62,7 +62,7 @@ public class ApplicationController implements ApplicationApi {
 
     @GetMapping("/cv/application/{id}")
     @PreAuthorize(AuthorizationConstants.CANDIDATE_OR_EMPLOYER)
-    public ResponseEntity<?> getApplicationCV(@PathVariable Long id) {
+    public ResponseEntity<?> getApplicationCV(@PathVariable UUID id) {
         return ResponseEntity.ok("CV của đơn");
     }
 
@@ -72,3 +72,4 @@ public class ApplicationController implements ApplicationApi {
         return ResponseEntity.ok(Map.of("applied", applied));
     }
 }
+

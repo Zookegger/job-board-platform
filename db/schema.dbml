@@ -220,6 +220,17 @@ Table application_status_logs {
   note text
 }
 
+// Lịch sử phê duyệt công ty (admin approve/reject/suspend/unsuspend)
+Table company_approval_logs {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  company_id uuid [not null]
+  actor_id uuid [not null, note: "Admin thực hiện hành động"]
+  old_status company_status [not null]
+  new_status company_status [not null]
+  note text [note: "Lý do từ chối hoặc tạm ngưng, NULL nếu không có"]
+  created_at timestamptz [not null, default: `now()`]
+}
+
 // Notification
 /**
  * Bảng ánh xạ giữa notification_type và entity_id:
@@ -314,6 +325,9 @@ Ref: applications.job_id > jobs.id [delete: cascade]
 
 Ref: application_status_logs.application_id > applications.id [delete: cascade]
 Ref: application_status_logs.changed_by > users.id [delete: restrict]
+
+Ref: company_approval_logs.company_id > companies.id [delete: cascade]
+Ref: company_approval_logs.actor_id > users.id [delete: restrict]
 
 Ref: notifications.user_id > users.id [delete: cascade]
 
