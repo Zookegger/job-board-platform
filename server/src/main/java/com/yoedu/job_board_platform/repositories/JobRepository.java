@@ -29,10 +29,12 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
     long countByCompanyIdAndStatus(UUID companyId, JobStatus status);
 
     @Query("SELECT DISTINCT j.category FROM Job j WHERE j.company.id = :companyId AND j.status = :status")
-    List<JobCategory> findDistinctCategoriesByCompanyIdAndStatus(@Param("companyId") UUID companyId, @Param("status") JobStatus status);
+    List<JobCategory> findDistinctCategoriesByCompanyIdAndStatus(@Param("companyId") UUID companyId,
+            @Param("status") JobStatus status);
 
     @Query("SELECT j.company.id, j.category FROM Job j WHERE j.company.id IN :companyIds AND j.status = :status GROUP BY j.company.id, j.category")
-    List<Object[]> findDistinctCategoriesByCompanyIdsAndStatus(@Param("companyIds") List<UUID> companyIds, @Param("status") JobStatus status);
+    List<Object[]> findDistinctCategoriesByCompanyIdsAndStatus(@Param("companyIds") List<UUID> companyIds,
+            @Param("status") JobStatus status);
 
     boolean existsBySlug(String slug);
 
