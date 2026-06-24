@@ -39,4 +39,12 @@ public interface ApplicationService {
      * @param id UUID của đơn ứng tuyển
      */
     void withdrawApplication(UUID id);
+
+    /**
+     * Lấy UUID của đơn ứng tuyển theo jobId (nếu có).
+     *
+     * @param jobId UUID của tin tuyển dụng
+     * @return UUID của đơn, hoặc null nếu chưa nộp
+     */
+    UUID getApplicationIdByJob(UUID jobId);
 }

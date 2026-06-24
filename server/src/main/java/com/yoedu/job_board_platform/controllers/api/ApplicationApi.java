@@ -92,15 +92,15 @@ public interface ApplicationApi {
     ResponseEntity<?> getApplicationCV(
             @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
-    @Operation(summary = "Kiểm tra đã ứng tuyển chưa", description = """
-            Kiểm tra xem ứng viên hiện tại đã nộp đơn vào tin tuyển dụng này chưa.
-            Trả về { \"applied\": true/false }.
-            Dùng để hiển thị nút \"Đã ứng tuyển\" trên trang chi tiết việc làm.
+    @Operation(summary = "Lấy thông tin đơn ứng tuyển theo job", description = """
+            Kiểm tra ứng viên hiện tại đã nộp đơn chưa và trả về applicationId nếu có.
+            Trả về { \"applied\": true/false, \"applicationId\": \"uuid\" }.
+            Dùng để hiển thị nút \"Đã ứng tuyển\" và \"Rút đơn\" trên trang chi tiết việc làm.
             """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "{ \"applied\": true } hoặc { \"applied\": false }", content = @Content),
+            @ApiResponse(responseCode = "200", description = "{ \"applied\": true, \"applicationId\": \"...\" }", content = @Content),
             @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ CANDIDATE)", content = @Content)
     })
-    ResponseEntity<?> checkApplied(
+    ResponseEntity<?> getApplicationByJob(
             @Parameter(description = "UUID của tin tuyển dụng", required = true) UUID jobId);
 }

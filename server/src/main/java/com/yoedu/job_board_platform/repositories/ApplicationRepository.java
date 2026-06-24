@@ -1,5 +1,6 @@
 package com.yoedu.job_board_platform.repositories;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +15,6 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     boolean existsByCandidateIdAndJobId(UUID candidateId, UUID jobId);
 
     boolean existsByCandidateIdAndJobIdAndStatusNot(UUID candidateId, UUID jobId, ApplicationStatus status);
+
+    Optional<Application> findByCandidateIdAndJobId(UUID candidateId, UUID jobId);
 }

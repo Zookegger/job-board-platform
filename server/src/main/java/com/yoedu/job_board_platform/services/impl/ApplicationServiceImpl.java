@@ -93,6 +93,16 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public UUID getApplicationIdByJob(UUID jobId) {
+        User user = securityUtil.getCurrentUser();
+        Profile profile = user.getProfile();
+        if (profile == null) return null;
+        return applicationRepository.findByCandidateIdAndJobId(profile.getId(), jobId)
+                .map(Application::getId)
+                .orElse(null);
+    }
+
+    @Override
     @Transactional
     public void withdrawApplication(UUID id) {
         User user = securityUtil.getCurrentUser();

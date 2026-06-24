@@ -15,9 +15,9 @@ const applicationApi = {
 				);
 			}),
 
-	checkApplied: (jobId: string): Promise<{ applied: boolean }> =>
+	getByJob: (jobId: string): Promise<{ applied: boolean; applicationId?: string }> =>
 		client
-			.get(ApiRoutes.APPLICATION_CHECK(jobId))
+			.get(ApiRoutes.APPLICATION_BY_JOB(jobId))
 			.then((res) => res.data)
 			.catch((error) => {
 				throw new ApiError(

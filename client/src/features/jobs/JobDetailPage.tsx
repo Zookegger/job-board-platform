@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserRole } from "@/types/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { usePublicJobDetail } from "@/hooks/usePublicJobs";
-import { useHasApplied, useWithdrawApplication } from "@/hooks/useApplications";
+import { useApplicationByJob, useWithdrawApplication } from "@/hooks/useApplications";
 import { ApplyDialog } from "./components/ApplyDialog";
 import {
 	EMPLOYMENT_TYPE_LABELS,
@@ -48,8 +48,9 @@ export function JobDetailPage() {
 	const { id } = useParams<{ id: string }>();
 	const { user } = useAuth();
 	const isCandidate = user?.role === UserRole.CANDIDATE;
-	const { data: hasAppliedData, isLoading: checkLoading } = useHasApplied(isCandidate ? id : undefined);
-	const hasApplied = hasAppliedData?.applied ?? false;
+	const { data: applicationData, isLoading: checkLoading } = useApplicationByJob(isCandidate ? id : undefined);
+	const hasApplied = applicationData?.applied ?? false;
+	const applicationId = applicationData?.applicationId ?? null;
 	const [applyOpen, setApplyOpen] = useState(false);
 
 	const { data: job, isLoading, isError } = usePublicJobDetail(id ?? "");
@@ -161,7 +162,7 @@ export function JobDetailPage() {
 								<CheckCircle2 className="h-4 w-4 text-green-600" />
 								Đã ứng tuyển
 							</Button>
-							<WithdrawButton jobId={id!} />
+							<WithdrawButton applicationId={applicationId} jobId={id!} />
 						</>
 					) : (
 						<Button onClick={() => setApplyOpen(true)} size="lg">
@@ -219,15 +220,16 @@ export function JobDetailPage() {
 }
 
 /** Nút rút đơn — chỉ dùng nội bộ trong trang này */
-function WithdrawButton({ jobId }: { jobId: string }) {
+function WithdrawButton({ applicationId, jobId }: { applicationId: string | null; jobId: string }) {
 	const withdrawMutation = useWithdrawApplication();
 
 	const handleWithdraw = () => {
+		if (!applicationId) {
+			toast.error("Không tìm thấy đơn ứng tuyển.", { position: "bottom-right" });
+			return;
+		}
 		if (!confirm("Bạn có chắc muốn rút đơn ứng tuyển này không?")) return;
-		// applicationId không có sẵn ở đây vì JobDetailPage chỉ có jobId
-		// Trong thực tế cần fetch application detail để lấy id
-		// Tạm thời disabled — logic đầy đủ khi có API getMyApplicationByJobId
-		toast.info("Chức năng rút đơn đang được phát triển.", { position: "bottom-right" });
+		withdrawMutation.mutate({ id: applicationId, jobId });
 	};
 
 	return (

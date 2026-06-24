@@ -9,17 +9,16 @@ export function useSubmitApplication() {
 	return useMutation({
 		mutationFn: (request: ApplicationRequest) => applicationApi.submit(request),
 		onSuccess: (_data, variables) => {
-			// Invalidate check query so the "Đã ứng tuyển" state updates immediately
-			queryClient.invalidateQueries({ queryKey: ["applications", "check", variables.jobId] });
+			queryClient.invalidateQueries({ queryKey: ["applications", "by-job", variables.jobId] });
 		},
 	});
 }
 
-export function useHasApplied(jobId: string | undefined) {
+export function useApplicationByJob(jobId: string | undefined) {
 	const { user } = useAuth();
 	return useQuery({
-		queryKey: ["applications", "check", jobId],
-		queryFn: () => applicationApi.checkApplied(jobId!),
+		queryKey: ["applications", "by-job", jobId],
+		queryFn: () => applicationApi.getByJob(jobId!),
 		enabled: !!jobId && user?.role === UserRole.CANDIDATE,
 	});
 }
@@ -30,7 +29,7 @@ export function useWithdrawApplication() {
 		mutationFn: ({ id, jobId }: { id: string; jobId: string }) =>
 			applicationApi.withdraw(id).then(() => jobId),
 		onSuccess: (jobId) => {
-			queryClient.invalidateQueries({ queryKey: ["applications", "check", jobId] });
+			queryClient.invalidateQueries({ queryKey: ["applications", "by-job", jobId] });
 		},
 	});
 }

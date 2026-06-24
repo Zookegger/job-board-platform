@@ -66,10 +66,14 @@ public class ApplicationController implements ApplicationApi {
         return ResponseEntity.ok("CV của đơn");
     }
 
-    @GetMapping("/check/{jobId}")
-    public ResponseEntity<?> checkApplied(@PathVariable UUID jobId) {
+    @GetMapping("/by-job/{jobId}")
+    public ResponseEntity<?> getApplicationByJob(@PathVariable UUID jobId) {
         boolean applied = applicationService.checkApplied(jobId);
-        return ResponseEntity.ok(Map.of("applied", applied));
+        UUID applicationId = applicationService.getApplicationIdByJob(jobId);
+        return ResponseEntity.ok(Map.of(
+                "applied", applied,
+                "applicationId", applicationId
+        ));
     }
 }
 
