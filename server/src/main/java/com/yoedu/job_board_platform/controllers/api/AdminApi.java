@@ -10,10 +10,10 @@ import org.springframework.http.ResponseEntity;
 
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
-import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
@@ -25,11 +25,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.validation.Valid;
-
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Pageable;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng, kiểm duyệt. Yêu cầu role ADMIN.")
 public interface AdminApi {
@@ -191,6 +188,50 @@ public interface AdminApi {
         ResponseEntity<ApiResponse> deleteJob(
                         @Parameter(description = "ID của tin tuyển dụng cần xóa", required = true) UUID id,
                         @Parameter(description = "Lý do xóa", example = "Nội dung vi phạm chính sách") String reason);
+
+        // ================ Reports ================
+
+        @Operation(summary = "Danh sách báo cáo vi phạm", description = """
+                        Lấy danh sách tất cả báo cáo vi phạm trên hệ thống.
+                        Có thể lọc theo trạng thái. Dùng cho màn hình quản lý báo cáo của admin.
+                        """)
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách báo cáo (có phân trang)", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
+        })
+        ResponseEntity<Page<com.yoedu.job_board_platform.dtos.report.ReportResponse>> getReports(
+                        @Parameter(description = "Lọc theo trạng thái: PENDING, REVIEWED, DISMISSED, RESOLVED", example = "PENDING") com.yoedu.job_board_platform.models.ReportStatus status,
+                        @ParameterObject Pageable pageable);
+
+        @Operation(summary = "Xem xét báo cáo", description = "Xem xét báo cáo — chuyển trạng thái từ PENDING sang REVIEWED.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Xem xét báo cáo thành công", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Báo cáo không ở trạng thái PENDING", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy báo cáo", content = @Content)
+        })
+        ResponseEntity<ApiResponse> reviewReport(
+                        @Parameter(description = "ID báo cáo cần xem xét", required = true) UUID id,
+                        @RequestBody(description = "Ghi chú xử lý (tuỳ chọn)", required = false) com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest request);
+
+        @Operation(summary = "Bác bỏ báo cáo", description = "Bác bỏ báo cáo — chuyển trạng thái từ PENDING/REVIEWED sang DISMISSED.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bác bỏ báo cáo thành công", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Báo cáo đã được xử lý, không thể bác bỏ", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy báo cáo", content = @Content)
+        })
+        ResponseEntity<ApiResponse> dismissReport(
+                        @Parameter(description = "ID báo cáo cần bác bỏ", required = true) UUID id,
+                        @RequestBody(description = "Ghi chú xử lý (tuỳ chọn)", required = false) com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest request);
+
+        @Operation(summary = "Giải quyết báo cáo", description = "Giải quyết báo cáo — chuyển trạng thái từ REVIEWED sang RESOLVED.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Giải quyết báo cáo thành công", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Báo cáo phải ở trạng thái REVIEWED trước khi giải quyết", content = @Content),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy báo cáo", content = @Content)
+        })
+        ResponseEntity<ApiResponse> resolveReport(
+                        @Parameter(description = "ID báo cáo cần giải quyết", required = true) UUID id,
+                        @RequestBody(description = "Ghi chú xử lý (tuỳ chọn)", required = false) com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest request);
 
         // ================ Skills ================
 

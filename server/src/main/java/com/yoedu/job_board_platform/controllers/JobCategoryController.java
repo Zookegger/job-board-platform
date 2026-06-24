@@ -17,9 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.CategoryApi;
-import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.dtos.job.JobCategoryRequest;
 import com.yoedu.job_board_platform.dtos.job.JobCategoryResponse;
+import com.yoedu.job_board_platform.mappers.JobCategoryMapper;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.JobCategoryService;
 
 import jakarta.validation.Valid;
@@ -28,19 +29,21 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping(ApiPaths.BASE + "/categories")
 @RequiredArgsConstructor
-public class CategoryController implements CategoryApi {
+public class JobCategoryController implements CategoryApi {
 
     private final JobCategoryService jobCategoryService;
+    private final JobCategoryMapper jobCategoryMapper;
 
     @GetMapping
     public ResponseEntity<List<JobCategoryResponse>> getCategories() {
-        return ResponseEntity.ok(jobCategoryService.getAllCategories());
+        return ResponseEntity.ok(jobCategoryMapper.toResponseList(jobCategoryService.getAllCategories()));
     }
 
     @PostMapping
     @PreAuthorize(AuthorizationConstants.ADMIN)
     public ResponseEntity<JobCategoryResponse> createCategory(@Valid @RequestBody JobCategoryRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(jobCategoryService.createCategory(request));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(jobCategoryMapper.toResponse(jobCategoryService.createCategory(request)));
     }
 
     @PutMapping("/{id}")
@@ -48,7 +51,8 @@ public class CategoryController implements CategoryApi {
     public ResponseEntity<JobCategoryResponse> updateCategory(
             @PathVariable Integer id,
             @Valid @RequestBody JobCategoryRequest request) {
-        return ResponseEntity.ok(jobCategoryService.updateCategory(id, request));
+
+        return ResponseEntity.ok(jobCategoryMapper.toResponse(jobCategoryService.updateCategory(id, request)));
     }
 
     @DeleteMapping("/{id}")

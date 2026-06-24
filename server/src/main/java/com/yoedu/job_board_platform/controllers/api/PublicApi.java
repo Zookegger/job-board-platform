@@ -1,5 +1,6 @@
 package com.yoedu.job_board_platform.controllers.api;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,7 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Trang tìm việc (Public)", description = "Danh sách việc, tìm kiếm, lọc - không cần đăng nhập")
-public interface PublicJobApi {
+public interface PublicApi {
 
         @Operation(summary = "Danh sách việc làm công khai", description = """
                         Lấy danh sách việc làm đang Active (công khai) với phân trang và sắp xếp.
@@ -68,6 +69,19 @@ public interface PublicJobApi {
                         @ApiResponse(responseCode = "200", description = "Thông tin công khai của công ty", content = @Content),
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty hoặc chưa được duyệt", content = @Content)
         })
-        ResponseEntity<?> getCompanyInfo(
-                        @Parameter(description = "ID của công ty", example = "1", required = true) Long id);
+        ResponseEntity<?> findCompanyBySlug(
+                        @Parameter(description = "Slug của công ty", example = "yoedu-tech", required = true) String slug);
+
+        @Operation(summary = "Danh sách việc làm công khai của công ty", description = """
+                        Lấy danh sách tin tuyển dụng đang Active của một công ty, phân trang.
+                        Chỉ hiển thị các tin đã được duyệt và đang mở tuyển.
+                        Không yêu cầu xác thực.
+                        """)
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Danh sách việc có phân trang", content = @Content),
+                        @ApiResponse(responseCode = "404", description = "Không tìm thấy công ty hoặc chưa được duyệt", content = @Content)
+        })
+        ResponseEntity<?> getCompanyJobs(
+                        @Parameter(description = "Slug của công ty", example = "yoedu-tech", required = true) String slug,
+                        @Parameter(description = "Thông tin phân trang và sắp xếp (page, size, sort). Ví dụ: page=0&size=10&sort=createdAt,desc", required = false, example = "page=0&size=10&sort=createdAt,desc") Pageable pageable);
 }

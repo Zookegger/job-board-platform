@@ -29,6 +29,7 @@ public interface JobMapper {
 
     @Mapping(target = "companyId", source = "company.id")
     @Mapping(target = "companyName", source = "company.companyName")
+    @Mapping(target = "companySlug", source = "company.slug")
     @Mapping(target = "categoryId", source = "category.id")
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "skills", ignore = true)
