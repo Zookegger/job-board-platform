@@ -2,6 +2,8 @@ package com.yoedu.job_board_platform.controllers.api;
 
 import org.springframework.http.ResponseEntity;
 
+import com.yoedu.job_board_platform.models.ApplicationStatus;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,8 +37,9 @@ public interface ApplicationApi {
             @ApiResponse(responseCode = "403", description = "Không có quyền truy cập", content = @Content)
     })
     ResponseEntity<?> getApplications(
-            @Parameter(description = "Lọc theo trạng thái: PENDING, REVIEWING, INTERVIEW, HIRED, REJECTED", example = "PENDING") String status,
-            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") int page);
+            @Parameter(description = "Lọc theo trạng thái: PENDING, REVIEWING, INTERVIEW, HIRED, REJECTED", example = "PENDING") ApplicationStatus status,
+            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") int page,
+            @Parameter(description = "Số lượng mỗi trang", example = "20") int size);
 
     @Operation(summary = "Chi tiết đơn ứng tuyển", description = "Xem chi tiết đơn ứng tuyển của mình: thông tin job đã ứng tuyển, cover letter, trạng thái hiện tại, ngày nộp.")
     @ApiResponses({
