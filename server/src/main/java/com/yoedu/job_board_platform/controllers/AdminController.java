@@ -59,15 +59,8 @@ public class AdminController implements AdminApi {
 
     @GetMapping("/dashboard/stats")
     public ResponseEntity<AdminDashboardStatsResponse> getDashboardStats() {
-    AdminDashboardStatsResponse response = new AdminDashboardStatsResponse(
-            0,
-            0,
-            0,
-            0
-    );
-
-    return ResponseEntity.ok(response);
-}
+        return ResponseEntity.ok(adminService.getDashboardStats());
+    }
 
     // ================ Users ================
 

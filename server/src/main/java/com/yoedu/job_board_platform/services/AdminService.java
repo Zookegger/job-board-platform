@@ -13,8 +13,10 @@ import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
 import com.yoedu.job_board_platform.models.ReportStatus;
+import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 
 public interface AdminService {
+    AdminDashboardStatsResponse getDashboardStats(); //hiển thị dashboard
 
     /**
      * Lấy danh sách công ty đang chờ duyệt.

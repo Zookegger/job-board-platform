@@ -48,6 +48,9 @@ import com.yoedu.job_board_platform.services.NotificationService;
 import com.yoedu.job_board_platform.specifications.CompanySpecification;
 import com.yoedu.job_board_platform.specifications.JobSpecification;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
+import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
+import com.yoedu.job_board_platform.repositories.ApplicationRepository;
+import com.yoedu.job_board_platform.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -66,7 +69,9 @@ public class AdminServiceImpl implements AdminService {
     private final ReportMapper reportMapper;
     private final NotificationService notificationService;
     private final SecurityUtil securityUtil;
-
+    private final UserRepository userRepository;
+    private final ApplicationRepository applicationRepository;
+    
     @Override
     @Transactional(readOnly = true)
     public Page<PendingCompanyResponse> getPendingCompanies(
@@ -357,5 +362,16 @@ public class AdminServiceImpl implements AdminService {
                 logoUrl,
                 categoryName,
                 job.getCreatedAt());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminDashboardStatsResponse getDashboardStats() {
+    return new AdminDashboardStatsResponse(
+            userRepository.count(),
+            companyRepository.count(),
+            jobRepository.count(),
+            applicationRepository.count()
+    );
     }
 }

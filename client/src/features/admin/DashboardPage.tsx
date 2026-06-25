@@ -1,4 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAdminDashboardStats } from "@/hooks/useAdminDashboard";
 import { Briefcase, Building2, FileText, Users } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -8,33 +10,6 @@ type MetricCardItem = {
 	description: string;
 	icon: ComponentType<{ className?: string }>;
 };
-
-const dashboardMetrics: MetricCardItem[] = [
-	{
-		label: "Tổng người dùng",
-		value: 0,
-		description: "Tất cả tài khoản trên hệ thống",
-		icon: Users,
-	},
-	{
-		label: "Tổng công ty",
-		value: 0,
-		description: "Công ty đã đăng ký trên nền tảng",
-		icon: Building2,
-	},
-	{
-		label: "Tổng tin tuyển dụng",
-		value: 0,
-		description: "Tất cả tin tuyển dụng trong hệ thống",
-		icon: Briefcase,
-	},
-	{
-		label: "Tổng hồ sơ ứng tuyển",
-		value: 0,
-		description: "Tổng số lượt ứng tuyển của ứng viên",
-		icon: FileText,
-	},
-];
 
 function formatNumber(value: number) {
 	return new Intl.NumberFormat("vi-VN").format(value);
@@ -68,7 +43,52 @@ function MetricCard({ metric }: { metric: MetricCardItem }) {
 	);
 }
 
+function MetricCardSkeleton() {
+	return (
+		<Card className='shadow-sm'>
+			<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+				<Skeleton className='h-4 w-32' />
+				<Skeleton className='size-10 rounded-lg' />
+			</CardHeader>
+
+			<CardContent>
+				<Skeleton className='h-9 w-16' />
+				<Skeleton className='mt-3 h-4 w-48' />
+			</CardContent>
+		</Card>
+	);
+}
+
 export default function AdminDashboardPage() {
+	const { data: stats, isLoading, isError } = useAdminDashboardStats();
+
+	const dashboardMetrics: MetricCardItem[] = [
+		{
+			label: "Tổng người dùng",
+			value: stats?.totalUsers ?? 0,
+			description: "Tất cả tài khoản trên hệ thống",
+			icon: Users,
+		},
+		{
+			label: "Tổng công ty",
+			value: stats?.totalCompanies ?? 0,
+			description: "Công ty đã đăng ký trên nền tảng",
+			icon: Building2,
+		},
+		{
+			label: "Tổng tin tuyển dụng",
+			value: stats?.totalJobs ?? 0,
+			description: "Tất cả tin tuyển dụng trong hệ thống",
+			icon: Briefcase,
+		},
+		{
+			label: "Tổng hồ sơ ứng tuyển",
+			value: stats?.totalApplications ?? 0,
+			description: "Tổng số lượt ứng tuyển của ứng viên",
+			icon: FileText,
+		},
+	];
+
 	return (
 		<div className='space-y-6'>
 			<div>
@@ -81,14 +101,26 @@ export default function AdminDashboardPage() {
 				</p>
 			</div>
 
-			<div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-				{dashboardMetrics.map((metric) => (
-					<MetricCard
-						key={metric.label}
-						metric={metric}
-					/>
-				))}
-			</div>
+			{isError ? (
+				<Card className='border-destructive/40 bg-destructive/5'>
+					<CardContent className='py-6 text-sm text-destructive'>
+						Không thể tải dữ liệu thống kê dashboard. Vui lòng thử lại sau.
+					</CardContent>
+				</Card>
+			) : (
+				<div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+					{isLoading
+						? Array.from({ length: 4 }).map((_, index) => (
+								<MetricCardSkeleton key={index} />
+							))
+						: dashboardMetrics.map((metric) => (
+								<MetricCard
+									key={metric.label}
+									metric={metric}
+								/>
+							))}
+				</div>
+			)}
 		</div>
 	);
 }
