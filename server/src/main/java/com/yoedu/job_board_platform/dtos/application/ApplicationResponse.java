@@ -10,27 +10,19 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Thông tin đơn ứng tuyển")
 public record ApplicationResponse(
 
-        @Schema(description = "UUID của đơn ứng tuyển")
-        UUID id,
+                @Schema(description = "UUID của đơn ứng tuyển") UUID id,
 
-        @Schema(description = "UUID của tin tuyển dụng")
-        UUID jobId,
+                @Schema(description = "UUID của tin tuyển dụng") UUID jobId,
 
-        @Schema(description = "Tên công việc")
-        String jobTitle,
+                @Schema(description = "Tên công việc") String jobTitle,
 
-        @Schema(description = "Tên công ty")
-        String companyName,
+                @Schema(description = "Tên công ty") String companyName,
 
-        @Schema(description = "Trạng thái đơn")
-        ApplicationStatus status,
+                @Schema(description = "Trạng thái đơn") ApplicationStatus status,
 
-        @Schema(description = "Thư xin việc")
-        String coverLetter,
+                @Schema(description = "Thư xin việc") String coverLetter,
 
-        @Schema(description = "URL của CV đính kèm lúc nộp")
-        String resumeUrl,
+                @Schema(description = "URL của CV đính kèm lúc nộp") String resumeUrl,
 
-        @Schema(description = "Thời điểm nộp đơn")
-        OffsetDateTime appliedAt) {
+                @Schema(description = "Thời điểm nộp đơn") OffsetDateTime appliedAt) {
 }

@@ -136,28 +136,18 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationRepository.save(application);
     }
 
-    private Profile getAuthorizedCandidateProfile(UUID candidateId) {
-        securityUtil.isAuthorized(candidateId, List.of(UserRole.CANDIDATE));
-        User user = securityUtil.getCurrentUser();
-
-        if (user.getProfile() == null) {
-            throw new ForbiddenException("Không tìm thấy hồ sơ ứng viên");
-        }
-
-        return user.getProfile();
-    }
-
     @Override
     public Page<ApplicationListResponse> getCandidateApplications(
             UUID candidateId, ApplicationStatus status, Pageable pageable) {
-        Profile profile = getAuthorizedCandidateProfile(candidateId);
+        securityUtil.isAuthorized(candidateId, List.of(UserRole.CANDIDATE));
+        User user = securityUtil.getCurrentUser();
 
         Page<Application> applications;
         if (status != null) {
             applications = applicationRepository.findByCandidateIdAndStatus(
-                    profile.getId(), status, pageable);
+                    user.getProfile().getId(), status, pageable);
         } else {
-            applications = applicationRepository.findByCandidateId(profile.getId(), pageable);
+            applications = applicationRepository.findByCandidateId(user.getProfile().getId(), pageable);
         }
 
         return applications.map(applicationMapper::toListResponse);

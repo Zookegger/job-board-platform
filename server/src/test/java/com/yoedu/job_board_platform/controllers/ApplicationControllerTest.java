@@ -16,8 +16,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -31,17 +33,12 @@ import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
-import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
-import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
-import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
-import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
-import com.yoedu.job_board_platform.repositories.JobSkillRepository;
-import com.yoedu.job_board_platform.repositories.ProfileRepository;
-import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
+import com.yoedu.job_board_platform.utils.DatabaseCleaner;
 
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
@@ -53,27 +50,17 @@ class ApplicationControllerTest {
         @Autowired
         MockMvc mockMvc;
         @Autowired
+        JdbcTemplate jdbcTemplate;
+        @Autowired
+        EntityManager entityManager;
+        @Autowired
         UserRepository userRepository;
-        @Autowired
-        ProfileRepository profileRepository;
-        @Autowired
-        CompanyRepository companyRepository;
-        @Autowired
-        CompanyEmployerDetailRepository companyEmployerDetailRepository;
         @Autowired
         JobRepository jobRepository;
         @Autowired
         JobCategoryRepository jobCategoryRepository;
         @Autowired
-        SkillRepository skillRepository;
-        @Autowired
-        JobSkillRepository jobSkillRepository;
-        @Autowired
-        CandidateDetailRepository candidateDetailRepository;
-        @Autowired
         ApplicationRepository applicationRepository;
-        @Autowired
-        ApplicationStatusLogRepository applicationStatusLogRepository;
         @Autowired
         PasswordEncoder passwordEncoder;
 
@@ -82,17 +69,7 @@ class ApplicationControllerTest {
 
         @BeforeEach
         void cleanup() {
-                applicationStatusLogRepository.deleteAll();
-                applicationRepository.deleteAll();
-                candidateDetailRepository.deleteAll();
-                jobSkillRepository.deleteAll();
-                jobRepository.deleteAll();
-                jobCategoryRepository.deleteAll();
-                skillRepository.deleteAll();
-                companyEmployerDetailRepository.deleteAll();
-                companyRepository.deleteAll();
-                profileRepository.deleteAll();
-                userRepository.deleteAll();
+                DatabaseCleaner.cleanAllTables(jdbcTemplate, entityManager);
 
                 savedCategory = jobCategoryRepository.save(
                                 JobCategory.builder().name("IT").build());
