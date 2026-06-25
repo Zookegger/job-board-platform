@@ -71,7 +71,7 @@ public class PublicController implements PublicApi {
         Job job = jobRepository.findBySlugAndStatus(slug, JobStatus.ACTIVE)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy công việc"));
         JobResponse response = jobMapper.toResponse(job).withSkills(
-                jobSkillService.getSkillsForJob(job.getId()));
+                jobSkillService.getSkillsByJobId(job.getId()));
         return ResponseEntity.ok(response);
     }
 
