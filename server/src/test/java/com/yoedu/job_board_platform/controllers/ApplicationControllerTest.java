@@ -32,7 +32,9 @@ import com.yoedu.job_board_platform.models.JobCategory;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.models.ApplicationStatusLog;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
+import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
@@ -61,6 +63,8 @@ class ApplicationControllerTest {
         JobCategoryRepository jobCategoryRepository;
         @Autowired
         ApplicationRepository applicationRepository;
+        @Autowired
+        ApplicationStatusLogRepository applicationStatusLogRepository;
         @Autowired
         PasswordEncoder passwordEncoder;
 
@@ -237,6 +241,58 @@ class ApplicationControllerTest {
 
                 mockMvc.perform(get("/api/applications")
                                 .cookie(tokenCookie))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void candidate_getTimeline_ownApplication_returnsTimeline() throws Exception {
+                registerAndLoginEmployer("employer-timeline@test.com", "password123");
+                Job job = createActiveJobForEmployer("employer-timeline@test.com");
+
+                Cookie tokenCookie = registerAndLoginCandidate("candidate-timeline@test.com", "password123");
+                Application app = createApplicationForCandidate("candidate-timeline@test.com", job, ApplicationStatus.PENDING);
+
+                User candidate = userRepository.findByEmail("candidate-timeline@test.com").orElseThrow();
+                applicationStatusLogRepository.save(ApplicationStatusLog.builder()
+                                .application(app)
+                                .status(ApplicationStatus.PENDING)
+                                .changedBy(candidate)
+                                .note("Hồ sơ đã tiếp nhận")
+                                .build());
+                applicationStatusLogRepository.save(ApplicationStatusLog.builder()
+                                .application(app)
+                                .status(ApplicationStatus.REVIEWING)
+                                .changedBy(candidate)
+                                .note("Đang xem xét")
+                                .build());
+
+                MvcResult res = mockMvc.perform(get("/api/applications/" + app.getId() + "/timeline")
+                                .cookie(tokenCookie))
+                                .andExpect(status().isOk())
+                                .andReturn();
+
+                var json = objectMapper.readTree(res.getResponse().getContentAsString());
+                assertThat(json.isArray()).isTrue();
+                assertThat(json.size()).isEqualTo(2);
+                assertThat(json.get(0).get("status").asText()).isEqualTo("PENDING");
+                assertThat(json.get(0).get("statusLabel").asText()).isEqualTo("Chờ xử lý");
+                assertThat(json.get(0).get("note").asText()).isEqualTo("Hồ sơ đã tiếp nhận");
+                assertThat(json.get(1).get("status").asText()).isEqualTo("REVIEWING");
+                assertThat(json.get(1).get("statusLabel").asText()).isEqualTo("Đang xem xét");
+        }
+
+        @Test
+        void candidate_getTimeline_otherCandidateApplication_returns403() throws Exception {
+                registerAndLoginEmployer("employer-timeline2@test.com", "password123");
+                Job job = createActiveJobForEmployer("employer-timeline2@test.com");
+
+                registerAndLoginCandidate("candidate-other@test.com", "password123");
+                Application app = createApplicationForCandidate("candidate-other@test.com", job, ApplicationStatus.PENDING);
+
+                Cookie otherCookie = registerAndLoginCandidate("candidate-different@test.com", "password123");
+
+                mockMvc.perform(get("/api/applications/" + app.getId() + "/timeline")
+                                .cookie(otherCookie))
                                 .andExpect(status().isForbidden());
         }
 }

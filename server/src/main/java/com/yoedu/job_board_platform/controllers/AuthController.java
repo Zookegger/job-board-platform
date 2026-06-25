@@ -81,7 +81,6 @@ public class AuthController implements AuthApi {
 	}
 
 	@PostMapping("/logout")
-	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<Void> logout(HttpServletRequest req, HttpServletResponse res) {
 		String refreshToken = cookieUtil.extract(req, CookieName.REFRESH_TOKEN);
 		if (refreshToken != null) {

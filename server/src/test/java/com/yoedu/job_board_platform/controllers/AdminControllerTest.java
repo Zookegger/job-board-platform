@@ -44,6 +44,7 @@ import com.yoedu.job_board_platform.models.Skill;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
+import com.yoedu.job_board_platform.repositories.CompanyApprovalLogRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
@@ -106,6 +107,9 @@ class AdminControllerTest {
         @Autowired
         JobCategoryRepository jobCategoryRepository;
 
+        @Autowired
+        CompanyApprovalLogRepository companyApprovalLogRepository;
+
         private final ObjectMapper objectMapper = new ObjectMapper();
         private Skill savedSkillActive;
         private Skill savedSkillInactive;
@@ -121,6 +125,7 @@ class AdminControllerTest {
                 jobCategoryRepository.deleteAll();
                 notificationRepository.deleteAll();
                 employerDetailRepository.deleteAll();
+                companyApprovalLogRepository.deleteAll();
                 companyRepository.deleteAll();
                 profileRepository.deleteAll();
                 refreshTokenRepository.deleteAll();

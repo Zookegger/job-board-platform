@@ -32,6 +32,8 @@ export interface ApplicationResponse {
 	jobSlug: string;
 	jobTitle: string;
 	companyName: string;
+	companyLogoUrl: string | null;
+	jobLocation: string | null;
 	status: ApplicationStatus;
 	coverLetter: string | null;
 	resumeUrl: string | null;

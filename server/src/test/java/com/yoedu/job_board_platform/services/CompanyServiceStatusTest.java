@@ -25,6 +25,7 @@ import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.repositories.CompanyApprovalLogRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
@@ -44,6 +45,9 @@ class CompanyServiceStatusTest {
 
     @Mock
     private JobRepository jobRepository;
+
+    @Mock
+    private CompanyApprovalLogRepository companyApprovalLogRepository;
 
     @InjectMocks
     private CompanyServiceImpl service;
@@ -183,6 +187,8 @@ class CompanyServiceStatusTest {
         User employer = buildEmployer(company);
 
         when(userRepository.findById(employerId)).thenReturn(Optional.of(employer));
+        when(companyApprovalLogRepository.findByCompanyIdOrderByCreatedAtDesc(company.getId()))
+                .thenReturn(List.of());
 
         List<ApprovalLogResponse> result = service.getHistoryByEmployerId(employerId);
 

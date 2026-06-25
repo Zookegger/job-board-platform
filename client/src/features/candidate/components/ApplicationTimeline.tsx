@@ -1,5 +1,6 @@
 import type { ApplicationStatus, ApplicationTimelineResponse } from "@/types/application";
-import { CheckCircle2, Clock, MessageSquare, UserCheck, XCircle, Ban } from "lucide-react";
+import { formatDate } from "@/utils/DateUtils";
+import { Ban, CheckCircle2, Clock, MessageSquare, UserCheck, XCircle } from "lucide-react";
 
 const DOT_COLORS: Record<ApplicationStatus, string> = {
 	PENDING: "bg-amber-500",
@@ -11,20 +12,13 @@ const DOT_COLORS: Record<ApplicationStatus, string> = {
 };
 
 const DOT_ICONS: Record<ApplicationStatus, React.ReactNode> = {
-	PENDING: <Clock className="size-3 text-white" />,
-	REVIEWING: <MessageSquare className="size-3 text-white" />,
-	INTERVIEW: <UserCheck className="size-3 text-white" />,
-	HIRED: <CheckCircle2 className="size-3 text-white" />,
-	REJECTED: <XCircle className="size-3 text-white" />,
-	WITHDRAWN: <Ban className="size-3 text-white" />,
+	PENDING: <Clock className="size-4 text-white" />,
+	REVIEWING: <MessageSquare className="size-4 text-white" />,
+	INTERVIEW: <UserCheck className="size-4 text-white" />,
+	HIRED: <CheckCircle2 className="size-4 text-white" />,
+	REJECTED: <XCircle className="size-4 text-white" />,
+	WITHDRAWN: <Ban className="size-4 text-white" />,
 };
-
-function formatDate(value: string) {
-	return new Intl.DateTimeFormat("vi-VN", {
-		dateStyle: "medium",
-		timeStyle: "short",
-	}).format(new Date(value));
-}
 
 interface ApplicationTimelineProps {
 	timeline: ApplicationTimelineResponse[];
@@ -49,8 +43,8 @@ export function ApplicationTimeline({ timeline, currentStatus }: ApplicationTime
 				return (
 					<li key={entry.id} className="mb-6 last:mb-0 ml-2">
 						<span
-							className={`absolute -left-1.5 mt-1.5 flex size-3 items-center justify-center rounded-full border-2 border-white ${
-								isActive ? "size-4 -left-2" : ""
+							className={`absolute -left-3 mt-1.5 flex size-6 items-center justify-center rounded-full border-2 border-white ${
+								isActive ? "size-8 -left-4.5" : ""
 							} ${DOT_COLORS[entry.status]}`}
 						>
 							{DOT_ICONS[entry.status]}

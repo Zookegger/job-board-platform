@@ -15,6 +15,17 @@ const applicationApi = {
 				);
 			}),
 
+	getDetail: (id: string): Promise<ApplicationResponse> =>
+		client
+			.get(ApiRoutes.APPLICATION_DETAIL(id))
+			.then((res) => res.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Không thể tải chi tiết đơn ứng tuyển.",
+					error.response?.status || 500,
+				);
+			}),
+
 	getByJob: (jobId: string): Promise<{ applied: boolean; applicationId?: string }> =>
 		client
 			.get(ApiRoutes.APPLICATION_BY_JOB(jobId))
