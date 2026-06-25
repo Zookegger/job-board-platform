@@ -1,4 +1,4 @@
-import type { ApplicationRequest, ApplicationResponse } from "@/types/application";
+import type { ApplicationRequest, ApplicationResponse, ApplicationTimelineResponse } from "@/types/application";
 import ApiError from "@/utils/ApiError";
 import ApiRoutes from "@/utils/ApiRoutes";
 import client from "./client";
@@ -33,6 +33,17 @@ const applicationApi = {
 			.catch((error) => {
 				throw new ApiError(
 					error.response?.data?.message || error.message || "Rút đơn thất bại.",
+					error.response?.status || 500,
+				);
+			}),
+
+	getTimeline: (id: string): Promise<ApplicationTimelineResponse[]> =>
+		client
+			.get(ApiRoutes.APPLICATION_TIMELINE(id))
+			.then((res) => res.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Không thể tải lịch sử trạng thái.",
 					error.response?.status || 500,
 				);
 			}),

@@ -4,7 +4,7 @@ import publicJobApi from "@/api/jobs";
 export const publicJobKeys = {
 	all: ["public", "jobs"] as const,
 	list: (page: number, size: number) => ["public", "jobs", "list", page, size] as const,
-	detail: (id: string) => ["public", "jobs", "detail", id] as const,
+	detail: (slug: string) => ["public", "jobs", "detail", slug] as const,
 };
 
 export function usePublicJobs(page = 0, size = 12) {
@@ -14,10 +14,10 @@ export function usePublicJobs(page = 0, size = 12) {
 	});
 }
 
-export function usePublicJobDetail(id: string) {
+export function usePublicJobDetail(slug: string) {
 	return useQuery({
-		queryKey: publicJobKeys.detail(id),
-		queryFn: () => publicJobApi.getJobDetail(id),
-		enabled: !!id,
+		queryKey: publicJobKeys.detail(slug),
+		queryFn: () => publicJobApi.getJobDetail(slug),
+		enabled: !!slug,
 	});
 }

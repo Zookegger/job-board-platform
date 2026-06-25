@@ -22,6 +22,8 @@ import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
+import com.yoedu.job_board_platform.mappers.ApplicationMapper;
+import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.models.Company;
@@ -31,6 +33,7 @@ import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.Resume;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
+import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.ResumeRepository;
 import com.yoedu.job_board_platform.services.impl.ApplicationServiceImpl;
@@ -43,6 +46,9 @@ class ApplicationServiceImplTest {
     private ApplicationRepository applicationRepository;
 
     @Mock
+    private ApplicationStatusLogRepository applicationStatusLogRepository;
+
+    @Mock
     private JobRepository jobRepository;
 
     @Mock
@@ -50,6 +56,12 @@ class ApplicationServiceImplTest {
 
     @Mock
     private SecurityUtil securityUtil;
+
+    @Mock
+    private ApplicationMapper applicationMapper;
+
+    @Mock
+    private ApplicationStatusLogMapper applicationStatusLogMapper;
 
     @InjectMocks
     private ApplicationServiceImpl applicationService;

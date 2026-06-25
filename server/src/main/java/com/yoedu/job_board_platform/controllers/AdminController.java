@@ -65,8 +65,7 @@ public class AdminController implements AdminApi {
 
     @GetMapping("/users")
     public ResponseEntity<?> getUsers(
-            @RequestParam(required = false) UserRole role,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(required = false) UserRole role, Pageable pageable) {
         return ResponseEntity.ok("Danh sách user");
     }
 

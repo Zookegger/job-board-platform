@@ -12,6 +12,7 @@ const STATUS_MAP: Record<string, string> = {
 
 export interface JobCardData {
 	id: string;
+	slug: string;
 	title: string;
 	location?: string;
 	status?: string;
@@ -40,7 +41,7 @@ function JobCard({ job }: JobCardProps) {
 			<div className="flex items-start justify-between gap-4">
 				<div className="min-w-0 flex-1">
 					<Link
-						to={`/jobs/${job.id}`}
+						to={`/jobs/${job.slug}`}
 						className="text-base font-semibold text-gray-900 hover:text-blue-600"
 					>
 						{job.title}
@@ -61,7 +62,7 @@ function JobCard({ job }: JobCardProps) {
 					)}
 				</div>
 				<Link
-					to={`/jobs/${job.id}`}
+					to={`/jobs/${job.slug}`}
 					className="shrink-0 rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
 				>
 					Xem chi tiết

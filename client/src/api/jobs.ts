@@ -9,8 +9,8 @@ const publicJobApi = {
 			.get<PageResponse<JobListResponse>>(ApiRoutes.PUBLIC_JOBS, { params: { page, size } })
 			.then((r) => r.data),
 
-	getJobDetail: (id: string): Promise<JobResponse> =>
-		client.get<JobResponse>(ApiRoutes.PUBLIC_JOB_DETAIL(id)).then((r) => r.data),
+	getJobDetail: (slug: string): Promise<JobResponse> =>
+		client.get<JobResponse>(ApiRoutes.PUBLIC_JOB_DETAIL(slug)).then((r) => r.data),
 };
 
 export default publicJobApi;

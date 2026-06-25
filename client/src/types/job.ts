@@ -73,6 +73,7 @@ export interface JobRequest {
 
 export interface JobListResponse {
 	id: string;
+	slug: string;
 	title: string;
 	status: JobStatus;
 	locationTypes: LocationTypes;

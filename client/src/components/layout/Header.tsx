@@ -69,8 +69,7 @@ function MobileNav({ isAuthenticated, user, logout }: { isAuthenticated: boolean
 						{user?.role === UserRole.CANDIDATE && (
 							<>
 								<Button variant='ghost' className='justify-start' onClick={() => navigate(RouterRoutes.PROFILE)}>Hồ sơ</Button>
-								<Button variant='ghost' className='justify-start' onClick={() => navigate(RouterRoutes.CANDIDATE_APPLICATIONS)}>Đơn ứng tuyển</Button>
-								<Button variant='ghost' className='justify-start' onClick={() => navigate(RouterRoutes.CANDIDATE_SAVED_JOBS)}>Việc đã lưu</Button>
+							<Button variant='ghost' className='justify-start' onClick={() => navigate(RouterRoutes.CANDIDATE_APPLICATIONS)}>Đơn ứng tuyển</Button>
 							</>
 						)}
 						{user?.role === UserRole.EMPLOYER && (
@@ -108,9 +107,6 @@ export function Header() {
 			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.PROFILE)}>Hồ sơ</DropdownMenuItem>
 			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.CANDIDATE_APPLICATIONS)}>
 				Đơn ứng tuyển
-			</DropdownMenuItem>
-			<DropdownMenuItem onSelect={() => navigate(RouterRoutes.CANDIDATE_SAVED_JOBS)}>
-				Việc đã lưu
 			</DropdownMenuItem>
 		</>
 	);

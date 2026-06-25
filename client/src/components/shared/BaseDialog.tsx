@@ -40,7 +40,7 @@ export function BaseDialog({ isOpen, onClose, title, description, children, foot
 				if (!open) onClose();
 			}}
 		>
-			<DialogContent className={sizeClass}>
+			<DialogContent className={sizeClass + " p-3 sm:p-6"}>
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 					{description && <DialogDescription>{description}</DialogDescription>}
