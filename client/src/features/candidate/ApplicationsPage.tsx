@@ -108,7 +108,7 @@ export default function CandidateApplicationsPage() {
 										</div>
 									)}
 									<Link
-										to={RouterRoutes.JOB_DETAIL(application.jobId)}
+										to={RouterRoutes.JOB_DETAIL(application.jobSlug)}
 										className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
 									>
 										Xem tin tuyển dụng <ExternalLink className="size-3" />

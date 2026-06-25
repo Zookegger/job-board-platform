@@ -3,6 +3,7 @@ export type ApplicationStatus = "PENDING" | "REVIEWING" | "INTERVIEW" | "HIRED" 
 export interface ApplicationListResponse {
 	id: string;
 	jobId: string;
+	jobSlug: string;
 	jobTitle: string;
 	companyName: string;
 	companyLogoUrl: string | null;
@@ -27,6 +28,7 @@ export interface ApplicationRequest {
 export interface ApplicationResponse {
 	id: string;
 	jobId: string;
+	jobSlug: string;
 	jobTitle: string;
 	companyName: string;
 	status: ApplicationStatus;

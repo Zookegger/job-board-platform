@@ -10,6 +10,7 @@ import com.yoedu.job_board_platform.models.Application;
 public interface ApplicationMapper {
 
     @Mapping(target = "jobId", source = "job.id")
+    @Mapping(target = "jobSlug", source = "job.slug")
     @Mapping(target = "jobTitle", source = "job.title")
     @Mapping(target = "companyName", source = "job.company.companyName")
     @Mapping(target = "companyLogoUrl", source = "job.company.logoUrl")

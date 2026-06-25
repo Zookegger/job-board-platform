@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record ApplicationListResponse(
                 @Schema(description = "ID đơn ứng tuyển") UUID id,
                 @Schema(description = "ID công việc đã ứng tuyển") UUID jobId,
+                @Schema(description = "Slug của công việc") String jobSlug,
                 @Schema(description = "Tiêu đề công việc") String jobTitle,
                 @Schema(description = "Tên công ty") String companyName,
                 @Schema(description = "Logo công ty") String companyLogoUrl,

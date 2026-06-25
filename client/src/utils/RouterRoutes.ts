@@ -4,7 +4,7 @@ const RouterRoutes = {
 	REGISTER: "/sign-up",
 	FORGOT_PASSWORD: "/forgot-password",
 	JOBS: "/jobs",
-	JOB_DETAIL: (id: string) => `/jobs/${id}`,
+	JOB_DETAIL: (slug: string) => `/jobs/${slug}`,
 	COMPANIES: "/companies",
 	COMPANY_DETAIL: (slug: string) => `/companies/${slug}`,
 

@@ -45,15 +45,14 @@ function formatDate(dateStr: string | null | undefined) {
 }
 
 export function JobDetailPage() {
-	const { id } = useParams<{ id: string }>();
+	const { slug } = useParams<{ slug: string }>();
 	const { user } = useAuth();
 	const isCandidate = user?.role === UserRole.CANDIDATE;
-	const { data: applicationData, isLoading: checkLoading } = useApplicationByJob(isCandidate ? id : undefined);
+	const { data: job, isLoading, isError } = usePublicJobDetail(slug ?? "");
+	const { data: applicationData, isLoading: checkLoading } = useApplicationByJob(job?.id);
 	const hasApplied = applicationData?.applied ?? false;
 	const applicationId = applicationData?.applicationId ?? null;
 	const [applyOpen, setApplyOpen] = useState(false);
-
-	const { data: job, isLoading, isError } = usePublicJobDetail(id ?? "");
 
 	if (isLoading) {
 		return (
@@ -162,7 +161,7 @@ export function JobDetailPage() {
 								<CheckCircle2 className="h-4 w-4 text-green-600" />
 								Đã ứng tuyển
 							</Button>
-							<WithdrawButton applicationId={applicationId} jobId={id!} />
+							<WithdrawButton applicationId={applicationId} jobId={job.id} />
 						</>
 					) : (
 						<Button onClick={() => setApplyOpen(true)} size="lg">

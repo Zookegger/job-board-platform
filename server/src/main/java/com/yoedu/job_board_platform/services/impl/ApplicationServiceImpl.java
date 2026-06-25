@@ -82,6 +82,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return new ApplicationResponse(
                 saved.getId(),
                 job.getId(),
+                job.getSlug(),
                 job.getTitle(),
                 job.getCompany().getCompanyName(),
                 saved.getStatus(),

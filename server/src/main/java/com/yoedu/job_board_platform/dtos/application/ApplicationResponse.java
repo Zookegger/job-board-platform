@@ -14,6 +14,8 @@ public record ApplicationResponse(
 
                 @Schema(description = "UUID của tin tuyển dụng") UUID jobId,
 
+                @Schema(description = "Slug của công việc") String jobSlug,
+
                 @Schema(description = "Tên công việc") String jobTitle,
 
                 @Schema(description = "Tên công ty") String companyName,
