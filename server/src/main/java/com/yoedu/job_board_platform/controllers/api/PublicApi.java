@@ -22,10 +22,7 @@ public interface PublicApi {
                         @ApiResponse(responseCode = "200", description = "Danh sách việc có phân trang — mặc định 12 item/trang, sắp xếp theo ngày tạo", content = @Content),
                         @ApiResponse(responseCode = "400", description = "Tham số không hợp lệ", content = @Content)
         })
-        ResponseEntity<?> getJobs(
-                        @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") int page,
-                        @Parameter(description = "Số lượng item trên mỗi trang", example = "12") int size,
-                        @Parameter(description = "Sắp xếp theo trường (date_created, updated_at)", example = "date_created") String sortBy);
+        ResponseEntity<?> getJobs(Pageable pageable);
 
         @Operation(summary = "Tìm kiếm nâng cao", description = """
                         Tìm kiếm việc làm theo từ khóa, ngành nghề và địa điểm.
@@ -39,7 +36,8 @@ public interface PublicApi {
         ResponseEntity<?> searchJobs(
                         @Parameter(description = "Từ khóa tìm kiếm (tìm trong tiêu đề & mô tả)", example = "Java") String keyword,
                         @Parameter(description = "ID ngành nghề (category)", example = "1") Long categoryId,
-                        @Parameter(description = "Địa điểm làm việc", example = "Hà Nội") String location);
+                        @Parameter(description = "Địa điểm làm việc", example = "Hà Nội") String location,
+                        Pageable pageable);
 
         @Operation(summary = "Chi tiết công việc", description = """
                         Lấy thông tin chi tiết của một công việc cụ thể bao gồm: mô tả, yêu cầu, phúc lợi,
@@ -51,7 +49,7 @@ public interface PublicApi {
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy công việc hoặc không ở trạng thái Active", content = @Content)
         })
         ResponseEntity<?> getJobDetail(
-                        @Parameter(description = "ID của công việc cần xem chi tiết", example = "1", required = true) Long id);
+                        @Parameter(description = "Slug của công việc cần xem chi tiết", example = "senior-java-developer", required = true) String slug);
 
         @Operation(summary = "Metadata cho bộ lọc", description = """
                         Trả về danh sách các option filter: ngành nghề, địa điểm, mức lương, loại hình công việc, cấp bậc.

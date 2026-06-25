@@ -1,8 +1,10 @@
 package com.yoedu.job_board_platform.controllers;
 
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,9 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.ApplicationApi;
+import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
+import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
+import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.ApplicationService;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 public class ApplicationController implements ApplicationApi {
 
     private final ApplicationService applicationService;
+    private final SecurityUtil securityUtil;
 
     @PostMapping
     public ResponseEntity<?> submitApplication(@RequestBody @Valid ApplicationRequest request) {
@@ -38,10 +45,12 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @GetMapping
-    public ResponseEntity<?> getApplications(
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok("Danh sách đơn ứng tuyển");
+    public ResponseEntity<Page<ApplicationListResponse>> getMyApplications(
+            @RequestParam(required = false) ApplicationStatus status, Pageable pageable) {
+        UUID candidateId = securityUtil.getCurrentUserId();
+        Page<ApplicationListResponse> result = applicationService.getCandidateApplications(
+                candidateId, status, pageable);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
@@ -50,8 +59,8 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @GetMapping("/{id}/timeline")
-    public ResponseEntity<?> getApplicationTimeline(@PathVariable UUID id) {
-        return ResponseEntity.ok("Timeline đơn ứng tuyển");
+    public ResponseEntity<List<ApplicationTimelineResponse>> getApplicationTimeline(@PathVariable UUID id) {
+        return ResponseEntity.ok(applicationService.getTimeline(id));
     }
 
     @DeleteMapping("/{id}")
@@ -68,12 +77,6 @@ public class ApplicationController implements ApplicationApi {
 
     @GetMapping("/by-job/{jobId}")
     public ResponseEntity<?> getApplicationByJob(@PathVariable UUID jobId) {
-        boolean applied = applicationService.checkApplied(jobId);
-        UUID applicationId = applicationService.getApplicationIdByJob(jobId);
-        return ResponseEntity.ok(Map.of(
-                "applied", applied,
-                "applicationId", applicationId
-        ));
+        return ResponseEntity.ok(applicationService.checkApplicationByJob(jobId));
     }
 }
-

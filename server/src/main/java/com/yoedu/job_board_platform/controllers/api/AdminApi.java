@@ -49,7 +49,7 @@ public interface AdminApi {
         })
         ResponseEntity<?> getUsers(
                         @Parameter(description = "Lọc theo vai trò: CANDIDATE, EMPLOYER, ADMIN", example = "CANDIDATE") UserRole role,
-                        @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") int page);
+                        @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") Pageable pageable);
 
         @Operation(summary = "Thống kê người dùng", description = "Thống kê số lượng user theo role, số user đăng ký mới theo ngày/tuần/tháng.")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dữ liệu thống kê người dùng", content = @Content)
@@ -87,7 +87,7 @@ public interface AdminApi {
                         @Parameter(description = "Từ khóa tìm theo tên, email, phone, mã số thuế, địa chỉ, website") String keyword,
                         @Parameter(description = "true: có mã số thuế, false: thiếu mã số thuế") Boolean hasTaxCode,
                         @Parameter(description = "true: có email/phone, false: thiếu liên hệ") Boolean hasContact,
-                        @ParameterObject Pageable pageable);
+                        @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable);
 
         @Operation(summary = "Danh sách tất cả công ty", description = "Lấy danh sách tất cả công ty, hỗ trợ tìm kiếm, lọc theo trạng thái và phân trang.")
         @ApiResponses({
@@ -97,7 +97,7 @@ public interface AdminApi {
         ResponseEntity<Page<AdminCompanyListResponse>> getAllCompanies(
                         @Parameter(description = "Từ khóa tìm theo tên, email, phone, mã số thuế, địa chỉ, website") String keyword,
                         @Parameter(description = "Lọc theo trạng thái: PENDING, APPROVED, REJECTED, SUSPENDED") String status,
-                        @ParameterObject Pageable pageable);
+                        @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable);
 
         @Operation(summary = "Duyệt công ty", description = "Phê duyệt công ty — sau khi duyệt, employer có thể đăng tin tuyển dụng. Hệ thống gửi email thông báo cho employer.")
         @ApiResponses({
@@ -148,7 +148,7 @@ public interface AdminApi {
         })
         ResponseEntity<Page<AdminJobListResponse>> getAllJobs(
                         @Parameter(description = "Lọc theo trạng thái: DRAFT, PENDING_APPROVAL, ACTIVE, EXPIRED, REJECTED", example = "PENDING_APPROVAL") String status,
-                        @ParameterObject Pageable pageable);
+                        @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable);
 
         @Operation(summary = "Danh sách tin tuyển dụng chờ duyệt", description = "Lấy danh sách tin tuyển dụng với trạng thái PENDING_APPROVAL.")
         @ApiResponses({

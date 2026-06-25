@@ -15,11 +15,10 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public final class CompanySpecification {
-
-    private CompanySpecification() {
-    }
 
     public static Specification<Company> hasStatus(String status) {
         return (root, query, cb) -> {

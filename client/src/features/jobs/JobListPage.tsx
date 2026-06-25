@@ -26,7 +26,7 @@ function JobCard({ job }: { job: JobListResponse }) {
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex-1 min-w-0">
 						<Link
-							to={RouterRoutes.JOB_DETAIL(job.id)}
+							to={RouterRoutes.JOB_DETAIL(job.slug)}
 							className="text-base font-semibold hover:text-primary line-clamp-2"
 						>
 							{job.title}

@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 public record JobListResponse(
         @Schema(description = "ID tin tuyển dụng") UUID id,
+        @Schema(description = "Slug (URL thân thiện)") String slug,
         @Schema(description = "Tiêu đề công việc") String title,
         @Schema(description = "Trạng thái") JobStatus status,
         @Schema(description = "Hình thức làm việc") LocationTypes locationTypes,

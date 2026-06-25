@@ -15,8 +15,8 @@ import { JobDetailPage } from "@/features/jobs/JobDetailPage";
 import { JobListPage } from "@/features/jobs/JobListPage";
 
 import CandidateApplicationsPage from "@/features/candidate/ApplicationsPage";
-import CandidateSavedJobsPage from "@/features/candidate/SavedJobsPage";
-import CandidateSettingsPage from "@/features/candidate/SettingsPage";
+import CandidateApplicationDetailPage from "@/features/candidate/ApplicationDetailPage";
+
 
 import EmployerApplicationsPage from "@/features/employer/ApplicationsPage";
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
@@ -58,7 +58,7 @@ export const router = createBrowserRouter([
 					{ path: RouterRoutes.REGISTER, element: <RegisterPage /> },
 					{ path: RouterRoutes.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
 					{ path: RouterRoutes.JOBS, element: <JobListPage /> },
-					{ path: RouterRoutes.JOB_DETAIL(":id"), element: <JobDetailPage /> },
+					{ path: RouterRoutes.JOB_DETAIL(":slug"), element: <JobDetailPage /> },
 					{ path: RouterRoutes.COMPANIES, element: <CompanyListPage /> },
 					{ path: RouterRoutes.COMPANY_DETAIL(":slug"), element: <PublicCompanyPage /> },
 					{ path: RouterRoutes.UNAUTHORIZED, element: <UnauthorizedPage /> },
@@ -82,8 +82,7 @@ export const router = createBrowserRouter([
 					{
 						children: [
 							{ path: RouterRoutes.CANDIDATE_APPLICATIONS, element: <CandidateApplicationsPage /> },
-							{ path: RouterRoutes.CANDIDATE_SAVED_JOBS, element: <CandidateSavedJobsPage /> },
-							{ path: RouterRoutes.CANDIDATE_SETTINGS, element: <CandidateSettingsPage /> },
+							{ path: RouterRoutes.CANDIDATE_APPLICATION_DETAIL(":id"), element: <CandidateApplicationDetailPage /> },
 						],
 					},
 				],
@@ -106,7 +105,7 @@ export const router = createBrowserRouter([
 							},
 							{ path: RouterRoutes.EMPLOYER_DASHBOARD, element: <EmployerDashboardPage /> },
 							{ path: RouterRoutes.EMPLOYER_JOBS, element: <EmployerJobsPage /> },
-							{ path: RouterRoutes.EMPLOYER_JOB_DETAIL(":id"), element: <EmployerJobDetailPage /> },
+							{ path: RouterRoutes.EMPLOYER_JOB_DETAIL(":slug"), element: <EmployerJobDetailPage /> },
 							{ path: RouterRoutes.EMPLOYER_APPLICATIONS, element: <EmployerApplicationsPage /> },
 							{ path: RouterRoutes.EMPLOYER_COMPANY, element: <EmployerCompanyPage /> },
 							{ path: RouterRoutes.EMPLOYER_SETTINGS, element: <EmployerSettingsPage /> },
@@ -140,6 +139,11 @@ export const router = createBrowserRouter([
 						],
 					},
 				],
+			},
+
+			{
+				path: "/companies/:companyId",
+				element: <PublicCompanyPage />,
 			},
 
 			// 404

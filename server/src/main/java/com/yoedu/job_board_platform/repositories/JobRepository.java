@@ -2,6 +2,7 @@ package com.yoedu.job_board_platform.repositories;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -37,6 +38,8 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
             @Param("status") JobStatus status);
 
     boolean existsBySlug(String slug);
+
+    Optional<Job> findBySlugAndStatus(String slug, JobStatus status);
 
     @Modifying
     @Query("UPDATE Job j SET j.status = :newStatus WHERE j.status = :currentStatus AND j.expirationDate IS NOT NULL AND j.expirationDate < :now")

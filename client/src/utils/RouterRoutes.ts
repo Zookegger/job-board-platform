@@ -4,7 +4,7 @@ const RouterRoutes = {
 	REGISTER: "/sign-up",
 	FORGOT_PASSWORD: "/forgot-password",
 	JOBS: "/jobs",
-	JOB_DETAIL: (id: string) => `/jobs/${id}`,
+	JOB_DETAIL: (slug: string) => `/jobs/${slug}`,
 	COMPANIES: "/companies",
 	COMPANY_DETAIL: (slug: string) => `/companies/${slug}`,
 
@@ -12,10 +12,8 @@ const RouterRoutes = {
 	UNAUTHORIZED: "/unauthorized",
 
 	// Candidate
-	CANDIDATE: "/candidate",
-	CANDIDATE_APPLICATIONS: "/candidate/applications",
-	CANDIDATE_SAVED_JOBS: "/candidate/saved-jobs",
-	CANDIDATE_SETTINGS: "/candidate/settings",
+	CANDIDATE_APPLICATIONS: "/applications",
+	CANDIDATE_APPLICATION_DETAIL: (id: string) => `/applications/${id}`,
 
 	// Employer
 	EMPLOYER_DASHBOARD: "/employer/dashboard",

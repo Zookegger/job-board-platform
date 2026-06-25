@@ -1,10 +1,14 @@
 package com.yoedu.job_board_platform.controllers;
 
-import java.math.BigDecimal;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,42 +16,29 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yoedu.job_board_platform.TestcontainersConfiguration;
-import com.yoedu.job_board_platform.models.Company;
-import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
-import com.yoedu.job_board_platform.models.CompanyStatus;
-import com.yoedu.job_board_platform.models.EmploymentType;
-import com.yoedu.job_board_platform.models.ExperienceLevel;
+import com.yoedu.job_board_platform.models.Application;
+import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobCategory;
 import com.yoedu.job_board_platform.models.JobStatus;
-import com.yoedu.job_board_platform.models.LocationTypes;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.User;
-import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
-import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
-import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
-import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
-import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
-import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
-import com.yoedu.job_board_platform.repositories.JobSkillRepository;
-import com.yoedu.job_board_platform.repositories.ProfileRepository;
-import com.yoedu.job_board_platform.repositories.RefreshTokenRepository;
-import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
+import com.yoedu.job_board_platform.utils.DatabaseCleaner;
 
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.Cookie;
 
 @SpringBootTest
@@ -56,270 +47,196 @@ import jakarta.servlet.http.Cookie;
 @Import(TestcontainersConfiguration.class)
 class ApplicationControllerTest {
 
-    @Autowired MockMvc mockMvc;
-    @Autowired UserRepository userRepository;
-    @Autowired ProfileRepository profileRepository;
-    @Autowired CompanyRepository companyRepository;
-    @Autowired CompanyEmployerDetailRepository companyEmployerDetailRepository;
-    @Autowired JobRepository jobRepository;
-    @Autowired JobCategoryRepository jobCategoryRepository;
-    @Autowired ApplicationRepository applicationRepository;
-    @Autowired ApplicationStatusLogRepository applicationStatusLogRepository;
-    @Autowired CandidateDetailRepository candidateDetailRepository;
-    @Autowired CandidateSkillRepository candidateSkillRepository;
-    @Autowired JobSkillRepository jobSkillRepository;
-    @Autowired SkillRepository skillRepository;
-    @Autowired RefreshTokenRepository refreshTokenRepository;
-    @Autowired PasswordEncoder passwordEncoder;
+        @Autowired
+        MockMvc mockMvc;
+        @Autowired
+        JdbcTemplate jdbcTemplate;
+        @Autowired
+        EntityManager entityManager;
+        @Autowired
+        UserRepository userRepository;
+        @Autowired
+        JobRepository jobRepository;
+        @Autowired
+        JobCategoryRepository jobCategoryRepository;
+        @Autowired
+        ApplicationRepository applicationRepository;
+        @Autowired
+        PasswordEncoder passwordEncoder;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private Job activeJob;
-    private Job expiredJob;
+        private final ObjectMapper objectMapper = new ObjectMapper();
+        private JobCategory savedCategory;
 
-    @BeforeEach
-    void cleanup() {
-        applicationStatusLogRepository.deleteAll();
-        applicationRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
-        candidateSkillRepository.deleteAll();
-        jobSkillRepository.deleteAll();
-        skillRepository.deleteAll();
-        jobRepository.deleteAll();
-        jobCategoryRepository.deleteAll();
-        companyEmployerDetailRepository.deleteAll();
-        companyRepository.deleteAll();
-        candidateDetailRepository.deleteAll();
-        profileRepository.deleteAll();
-        userRepository.deleteAll();
+        @BeforeEach
+        void cleanup() {
+                DatabaseCleaner.cleanAllTables(jdbcTemplate, entityManager);
 
-        JobCategory category = jobCategoryRepository.save(
-                JobCategory.builder().name("CNTT").build());
+                savedCategory = jobCategoryRepository.save(
+                                JobCategory.builder().name("IT").build());
+        }
 
-        Company company = companyRepository.save(Company.builder()
-                .companyName("Tech Corp")
-                .slug("tech-corp-test")
-                .address("Hà Nội")
-                .description("Test company")
-                .website("https://techcorp.vn")
-                .logoUrl("")
-                .email("hr@techcorp.vn")
-                .phone("0900000001")
-                .status(CompanyStatus.APPROVED)
-                .taxCode("123456789")
-                .isApproved(true)
-                .createdAt(OffsetDateTime.now())
-                .build());
+        private Cookie registerAndLoginEmployer(String email, String password) throws Exception {
+                var registerPayload = objectMapper.writeValueAsString(Map.of(
+                                "companyName", "Test Corp " + email.hashCode(),
+                                "taxCode", "0123456789" + Math.abs(email.hashCode() % 100000000),
+                                "address", "123 Street",
+                                "fullName", "Trần Thị B",
+                                "userEmail", email,
+                                "userPhone", "0900000001",
+                                "password", password,
+                                "confirmPassword", password));
+                mockMvc.perform(post("/api/auth/register/company")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(registerPayload))
+                                .andExpect(status().isCreated());
 
-        User employer = User.builder()
-                .email("employer.test@techcorp.vn")
-                .password(passwordEncoder.encode("password123"))
-                .role(UserRole.EMPLOYER)
-                .isActive(true)
-                .build();
-        Profile employerProfile = Profile.builder()
-                .user(employer)
-                .fullName("HR Manager")
-                .phone("0900000002")
-                .build();
-        employer.setProfile(employerProfile);
-        userRepository.save(employer);
-        companyEmployerDetailRepository.save(CompanyEmployerDetail.builder()
-                .profile(employerProfile)
-                .company(company)
-                .roleInCompany("HR")
-                .build());
+                var loginPayload = objectMapper.writeValueAsString(
+                                Map.of("email", email, "password", password));
+                MvcResult loginRes = mockMvc.perform(post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(loginPayload))
+                                .andExpect(status().isOk())
+                                .andReturn();
+                return loginRes.getResponse().getCookie("accessToken");
+        }
 
-        activeJob = jobRepository.save(Job.builder()
-                .company(company)
-                .category(category)
-                .title("Java Developer")
-                .slug("java-developer-test")
-                .description("Mô tả")
-                .location("Hà Nội")
-                .locationTypes(LocationTypes.ONSITE)
-                .employmentType(EmploymentType.FULL_TIME)
-                .experienceLevel(ExperienceLevel.MID)
-                .salaryMin(new BigDecimal("15000000"))
-                .salaryMax(new BigDecimal("25000000"))
-                .numberOfOpenings(3)
-                .status(JobStatus.ACTIVE)
-                .postedDate(OffsetDateTime.now())
-                .expirationDate(OffsetDateTime.now().plusDays(30))
-                .build());
+        private Cookie registerAndLoginCandidate(String email, String password) throws Exception {
+                var registerPayload = objectMapper.writeValueAsString(Map.of(
+                                "email", email,
+                                "fullName", "Nguyễn Văn A",
+                                "password", password,
+                                "confirmPassword", password));
+                mockMvc.perform(post("/api/auth/register/candidate")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(registerPayload))
+                                .andExpect(status().isCreated());
 
-        expiredJob = jobRepository.save(Job.builder()
-                .company(company)
-                .category(category)
-                .title("Expired Job")
-                .slug("expired-job-test")
-                .description("Mô tả")
-                .location("Hà Nội")
-                .locationTypes(LocationTypes.REMOTE)
-                .employmentType(EmploymentType.CONTRACT)
-                .experienceLevel(ExperienceLevel.JUNIOR)
-                .salaryMin(new BigDecimal("10000000"))
-                .salaryMax(new BigDecimal("15000000"))
-                .numberOfOpenings(1)
-                .status(JobStatus.EXPIRED)
-                .postedDate(OffsetDateTime.now().minusDays(60))
-                .expirationDate(OffsetDateTime.now().minusDays(1))
-                .build());
-    }
+                var loginPayload = objectMapper.writeValueAsString(
+                                Map.of("email", email, "password", password));
+                MvcResult loginRes = mockMvc.perform(post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(loginPayload))
+                                .andExpect(status().isOk())
+                                .andReturn();
+                return loginRes.getResponse().getCookie("accessToken");
+        }
 
-    /** Đăng ký candidate và trả về accessToken cookie */
-    private Cookie registerAndLoginCandidate(String email) throws Exception {
-        var registerPayload = objectMapper.writeValueAsString(Map.of(
-                "email", email,
-                "fullName", "Ứng Viên Test",
-                "password", "password123",
-                "confirmPassword", "password123"));
-        mockMvc.perform(post("/api/auth/register/candidate")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerPayload))
-                .andExpect(status().isCreated());
+        private Job createActiveJobForEmployer(String employerEmail) {
+                User employer = userRepository.findByEmail(employerEmail).orElseThrow();
+                var company = employer.getProfile().getEmployerDetail().getCompany();
 
-        var loginPayload = objectMapper.writeValueAsString(
-                Map.of("email", email, "password", "password123"));
-        MvcResult loginRes = mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginPayload))
-                .andExpect(status().isOk())
-                .andReturn();
-        return loginRes.getResponse().getCookie("accessToken");
-    }
+                return jobRepository.save(Job.builder()
+                                .title("Senior Java Developer")
+                                .slug("senior-java-developer-" + UUID.randomUUID())
+                                .description("Job description")
+                                .company(company)
+                                .category(savedCategory)
+                                .location("Hà Nội")
+                                .locationTypes(com.yoedu.job_board_platform.models.LocationTypes.ONSITE)
+                                .employmentType(com.yoedu.job_board_platform.models.EmploymentType.FULL_TIME)
+                                .experienceLevel(com.yoedu.job_board_platform.models.ExperienceLevel.MID)
+                                .status(JobStatus.ACTIVE)
+                                .build());
+        }
 
-    // ----------------------------------------------------------------
-    // US-28 TC-01: Nộp đơn thành công vào job ACTIVE
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_success() throws Exception {
-        Cookie cookie = registerAndLoginCandidate("candidate.apply1@test.com");
+        private Application createApplicationForCandidate(String candidateEmail, Job job, ApplicationStatus status) {
+                User candidate = userRepository.findByEmail(candidateEmail).orElseThrow();
+                Profile profile = candidate.getProfile();
 
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "jobId", activeJob.getId().toString(),
-                "coverLetter", "Kính gửi nhà tuyển dụng, tôi rất muốn ứng tuyển vị trí này."));
+                return applicationRepository.save(Application.builder()
+                                .candidate(profile)
+                                .job(job)
+                                .status(status)
+                                .appliedAt(OffsetDateTime.now())
+                                .build());
+        }
 
-        mockMvc.perform(post("/api/applications")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.jobId").value(activeJob.getId().toString()))
-                .andExpect(jsonPath("$.jobTitle").value("Java Developer"))
-                .andExpect(jsonPath("$.companyName").value("Tech Corp"))
-                .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.coverLetter").value("Kính gửi nhà tuyển dụng, tôi rất muốn ứng tuyển vị trí này."));
+        @Test
+        void candidate_listApplications_noApplications_returnsEmpty() throws Exception {
+                Cookie tokenCookie = registerAndLoginCandidate("candidate-apps@test.com", "password123");
 
-        assertThat(applicationRepository.count()).isEqualTo(1);
-    }
+                MvcResult res = mockMvc.perform(get("/api/applications")
+                                .cookie(tokenCookie))
+                                .andExpect(status().isOk())
+                                .andReturn();
 
-    // ----------------------------------------------------------------
-    // US-28 TC-02: Nộp đơn không có cover letter → vẫn thành công
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_noCoverLetter_success() throws Exception {
-        Cookie cookie = registerAndLoginCandidate("candidate.apply2@test.com");
+                var json = objectMapper.readTree(res.getResponse().getContentAsString());
+                assertThat(json.get("totalElements").asInt()).isEqualTo(0);
+                assertThat(json.get("content").isArray()).isTrue();
+                assertThat(json.get("content").isEmpty()).isTrue();
+        }
 
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "jobId", activeJob.getId().toString()));
+        @Test
+        void candidate_listApplications_returnsApplications() throws Exception {
+                registerAndLoginEmployer("employer-apps@test.com", "password123");
+                Job job = createActiveJobForEmployer("employer-apps@test.com");
 
-        mockMvc.perform(post("/api/applications")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("PENDING"));
-    }
+                Cookie tokenCookie = registerAndLoginCandidate("candidate-apps2@test.com", "password123");
+                createApplicationForCandidate("candidate-apps2@test.com", job, ApplicationStatus.PENDING);
 
-    // ----------------------------------------------------------------
-    // US-28 TC-03: Nộp đơn 2 lần vào cùng job → 400
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_duplicate_returns400() throws Exception {
-        Cookie cookie = registerAndLoginCandidate("candidate.apply3@test.com");
+                MvcResult res = mockMvc.perform(get("/api/applications")
+                                .cookie(tokenCookie))
+                                .andExpect(status().isOk())
+                                .andReturn();
 
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "jobId", activeJob.getId().toString()));
+                var json = objectMapper.readTree(res.getResponse().getContentAsString());
+                assertThat(json.get("totalElements").asInt()).isEqualTo(1);
+                assertThat(json.get("content").get(0).get("jobTitle").asText()).isEqualTo("Senior Java Developer");
+                assertThat(json.get("content").get(0).get("status").asText()).isEqualTo("PENDING");
+        }
 
-        mockMvc.perform(post("/api/applications")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isCreated());
+        @Test
+        void candidate_listApplications_filterByStatus_returnsFiltered() throws Exception {
+                registerAndLoginEmployer("employer-filter-apps@test.com", "password123");
+                Job job1 = createActiveJobForEmployer("employer-filter-apps@test.com");
 
-        mockMvc.perform(post("/api/applications")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isBadRequest());
+                Job job2 = jobRepository.save(Job.builder()
+                                .title("Frontend Developer")
+                                .slug("frontend-developer-" + UUID.randomUUID())
+                                .description("Job description")
+                                .company(job1.getCompany())
+                                .category(savedCategory)
+                                .locationTypes(com.yoedu.job_board_platform.models.LocationTypes.REMOTE)
+                                .employmentType(com.yoedu.job_board_platform.models.EmploymentType.FULL_TIME)
+                                .experienceLevel(com.yoedu.job_board_platform.models.ExperienceLevel.JUNIOR)
+                                .status(JobStatus.ACTIVE)
+                                .build());
 
-        assertThat(applicationRepository.count()).isEqualTo(1);
-    }
+                Cookie tokenCookie = registerAndLoginCandidate("candidate-filter-apps@test.com", "password123");
+                createApplicationForCandidate("candidate-filter-apps@test.com", job1, ApplicationStatus.PENDING);
+                createApplicationForCandidate("candidate-filter-apps@test.com", job2, ApplicationStatus.REVIEWING);
 
-    // ----------------------------------------------------------------
-    // US-28 TC-04: Nộp đơn vào job EXPIRED → 400
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_expiredJob_returns400() throws Exception {
-        Cookie cookie = registerAndLoginCandidate("candidate.apply4@test.com");
+                MvcResult pendingRes = mockMvc.perform(get("/api/applications")
+                                .cookie(tokenCookie)
+                                .param("status", "PENDING"))
+                                .andExpect(status().isOk())
+                                .andReturn();
+                var pendingJson = objectMapper.readTree(pendingRes.getResponse().getContentAsString());
+                assertThat(pendingJson.get("totalElements").asInt()).isEqualTo(1);
+                assertThat(pendingJson.get("content").get(0).get("status").asText()).isEqualTo("PENDING");
 
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "jobId", expiredJob.getId().toString()));
+                MvcResult reviewingRes = mockMvc.perform(get("/api/applications")
+                                .cookie(tokenCookie)
+                                .param("status", "REVIEWING"))
+                                .andExpect(status().isOk())
+                                .andReturn();
+                var reviewingJson = objectMapper.readTree(reviewingRes.getResponse().getContentAsString());
+                assertThat(reviewingJson.get("totalElements").asInt()).isEqualTo(1);
+                assertThat(reviewingJson.get("content").get(0).get("status").asText()).isEqualTo("REVIEWING");
+        }
 
-        mockMvc.perform(post("/api/applications")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isBadRequest());
+        @Test
+        void candidate_listApplications_withoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/api/applications"))
+                                .andExpect(status().isUnauthorized());
+        }
 
-        assertThat(applicationRepository.count()).isEqualTo(0);
-    }
+        @Test
+        void candidate_listApplications_asEmployer_returns403() throws Exception {
+                Cookie tokenCookie = registerAndLoginEmployer("employer-no-apps@test.com", "password123");
 
-    // ----------------------------------------------------------------
-    // US-28 TC-05: Nộp đơn khi chưa đăng nhập → 401
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_unauthenticated_returns401() throws Exception {
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "jobId", activeJob.getId().toString()));
-
-        mockMvc.perform(post("/api/applications")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isUnauthorized());
-    }
-
-    // ----------------------------------------------------------------
-    // US-28 TC-06: jobId không tồn tại → 404
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_jobNotFound_returns404() throws Exception {
-        Cookie cookie = registerAndLoginCandidate("candidate.apply6@test.com");
-
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "jobId", "00000000-0000-0000-0000-000000000000"));
-
-        mockMvc.perform(post("/api/applications")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isNotFound());
-    }
-
-    // ----------------------------------------------------------------
-    // US-28 TC-07: Thiếu jobId (validation) → 400
-    // ----------------------------------------------------------------
-    @Test
-    void submitApplication_missingJobId_returns400() throws Exception {
-        Cookie cookie = registerAndLoginCandidate("candidate.apply7@test.com");
-
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "coverLetter", "No job ID provided"));
-
-        mockMvc.perform(post("/api/applications")
-                        .cookie(cookie)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isBadRequest());
-    }
+                mockMvc.perform(get("/api/applications")
+                                .cookie(tokenCookie))
+                                .andExpect(status().isForbidden());
+        }
 }
