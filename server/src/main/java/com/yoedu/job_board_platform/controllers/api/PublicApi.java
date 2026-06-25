@@ -51,7 +51,7 @@ public interface PublicApi {
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy công việc hoặc không ở trạng thái Active", content = @Content)
         })
         ResponseEntity<?> getJobDetail(
-                        @Parameter(description = "ID của công việc cần xem chi tiết", example = "1", required = true) Long id);
+                        @Parameter(description = "Slug của công việc cần xem chi tiết", example = "senior-java-developer", required = true) String slug);
 
         @Operation(summary = "Metadata cho bộ lọc", description = """
                         Trả về danh sách các option filter: ngành nghề, địa điểm, mức lương, loại hình công việc, cấp bậc.

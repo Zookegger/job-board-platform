@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleInternal(Exception ex) {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("success", false);
-        response.put("message", ex.getMessage() != null ? ex.getMessage() : "An internal error occurred");
+        response.put("message", "Internal server error");
         return ResponseEntity.internalServerError().body(response);
     }
 

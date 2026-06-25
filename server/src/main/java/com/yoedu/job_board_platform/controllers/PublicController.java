@@ -26,11 +26,14 @@ import com.yoedu.job_board_platform.mappers.CompanyMapper;
 import com.yoedu.job_board_platform.mappers.JobCategoryMapper;
 import com.yoedu.job_board_platform.mappers.JobMapper;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobCategory;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
+import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.services.CompanyService;
+import com.yoedu.job_board_platform.services.JobSkillService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +46,7 @@ public class PublicController implements PublicApi {
     private final CompanyMapper companyMapper;
     private final JobMapper jobMapper;
     private final JobRepository jobRepository;
+    private final JobSkillService jobSkillService;
     private final JobCategoryMapper jobCategoryMapper;
     private final CompanyRepository companyRepository;
 
@@ -62,9 +66,13 @@ public class PublicController implements PublicApi {
         return ResponseEntity.ok("Kết quả tìm kiếm");
     }
 
-    @GetMapping("/jobs/{id}")
-    public ResponseEntity<?> getJobDetail(@PathVariable Long id) {
-        return ResponseEntity.ok("Chi tiết job");
+    @GetMapping("/jobs/{slug}")
+    public ResponseEntity<JobResponse> getJobDetail(@PathVariable String slug) {
+        Job job = jobRepository.findBySlugAndStatus(slug, JobStatus.ACTIVE)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy công việc"));
+        JobResponse response = jobMapper.toResponse(job).withSkills(
+                jobSkillService.getSkillsForJob(job.getId()));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/jobs/filter-options")
