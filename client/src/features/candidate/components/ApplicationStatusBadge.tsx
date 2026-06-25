@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { ApplicationStatus } from "@/types/application";
 import { APPLICATION_STATUS_LABELS } from "@/types/application";
-import { CheckCircle2, Clock, MessageSquare, UserCheck, XCircle } from "lucide-react";
+import { Ban, CheckCircle2, Clock, MessageSquare, UserCheck, XCircle } from "lucide-react";
 
 const STATUS_CONFIG: Record<
 	ApplicationStatus,
@@ -31,6 +31,11 @@ const STATUS_CONFIG: Record<
 		label: APPLICATION_STATUS_LABELS.REJECTED,
 		className: "border-red-300 bg-red-100 text-red-800",
 		icon: <XCircle className="size-3" />,
+	},
+	WITHDRAWN: {
+		label: APPLICATION_STATUS_LABELS.WITHDRAWN,
+		className: "border-gray-300 bg-gray-100 text-gray-800",
+		icon: <Ban className="size-3" />,
 	},
 };
 

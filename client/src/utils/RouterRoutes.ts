@@ -12,10 +12,8 @@ const RouterRoutes = {
 	UNAUTHORIZED: "/unauthorized",
 
 	// Candidate
-	CANDIDATE: "/candidate",
-	CANDIDATE_APPLICATIONS: "/candidate/applications",
-	CANDIDATE_SAVED_JOBS: "/candidate/saved-jobs",
-	CANDIDATE_SETTINGS: "/candidate/settings",
+	CANDIDATE_APPLICATIONS: "/applications",
+	CANDIDATE_APPLICATION_DETAIL: (id: string) => `/applications/${id}`,
 
 	// Employer
 	EMPLOYER_DASHBOARD: "/employer/dashboard",

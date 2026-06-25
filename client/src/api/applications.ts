@@ -1,5 +1,5 @@
 import type { ApplicationListResponse, ApplicationStatus } from "@/types/application";
-import type { PaginationParams, PaginationResponse } from "@/types/pagination";
+import type { PaginationParams, PageResponse } from "@/types/pagination";
 import ApiError from "@/utils/ApiError";
 import client from "./client";
 
@@ -11,7 +11,7 @@ const withoutEmptyParams = (params: MyApplicationsParams) =>
 	Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined && value !== ""));
 
 const applicationsApi = {
-	getMyApplications: (params: MyApplicationsParams = {}): Promise<PaginationResponse<ApplicationListResponse>> =>
+	getMyApplications: (params: MyApplicationsParams = {}): Promise<PageResponse<ApplicationListResponse>> =>
 		client
 			.get("/applications", { params: withoutEmptyParams(params) })
 			.then((response) => response.data)

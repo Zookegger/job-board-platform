@@ -15,8 +15,8 @@ import { JobDetailPage } from "@/features/jobs/JobDetailPage";
 import { JobListPage } from "@/features/jobs/JobListPage";
 
 import CandidateApplicationsPage from "@/features/candidate/ApplicationsPage";
-import CandidateSavedJobsPage from "@/features/candidate/SavedJobsPage";
-import CandidateSettingsPage from "@/features/candidate/SettingsPage";
+import CandidateApplicationDetailPage from "@/features/candidate/ApplicationDetailPage";
+
 
 import EmployerApplicationsPage from "@/features/employer/ApplicationsPage";
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
@@ -82,8 +82,7 @@ export const router = createBrowserRouter([
 					{
 						children: [
 							{ path: RouterRoutes.CANDIDATE_APPLICATIONS, element: <CandidateApplicationsPage /> },
-							{ path: RouterRoutes.CANDIDATE_SAVED_JOBS, element: <CandidateSavedJobsPage /> },
-							{ path: RouterRoutes.CANDIDATE_SETTINGS, element: <CandidateSettingsPage /> },
+							{ path: RouterRoutes.CANDIDATE_APPLICATION_DETAIL(":id"), element: <CandidateApplicationDetailPage /> },
 						],
 					},
 				],

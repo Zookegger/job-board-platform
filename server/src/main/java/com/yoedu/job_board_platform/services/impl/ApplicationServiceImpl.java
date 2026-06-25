@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,12 +14,16 @@ import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ConflictException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
+import com.yoedu.job_board_platform.dtos.application.ApplicationCheckResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
+import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
 import com.yoedu.job_board_platform.mappers.ApplicationMapper;
+import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
+import com.yoedu.job_board_platform.models.ApplicationStatusLog;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
@@ -26,6 +31,7 @@ import com.yoedu.job_board_platform.models.Resume;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
+import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.ResumeRepository;
 import com.yoedu.job_board_platform.services.ApplicationService;
@@ -38,10 +44,12 @@ import lombok.RequiredArgsConstructor;
 public class ApplicationServiceImpl implements ApplicationService {
 
     private final ApplicationRepository applicationRepository;
+    private final ApplicationStatusLogRepository applicationStatusLogRepository;
     private final JobRepository jobRepository;
     private final ResumeRepository resumeRepository;
     private final SecurityUtil securityUtil;
     private final ApplicationMapper applicationMapper;
+    private final ApplicationStatusLogMapper applicationStatusLogMapper;
 
     @Override
     @Transactional
@@ -79,6 +87,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application saved = applicationRepository.save(application);
 
+        ApplicationStatusLog initialLog = ApplicationStatusLog.builder()
+                .application(saved)
+                .status(ApplicationStatus.PENDING)
+                .changedBy(user)
+                .note("Đơn ứng tuyển đã được gửi")
+                .build();
+        applicationStatusLogRepository.save(initialLog);
+
         return new ApplicationResponse(
                 saved.getId(),
                 job.getId(),
@@ -114,6 +130,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public ApplicationCheckResponse checkApplicationByJob(UUID jobId) {
+        boolean applied = checkApplied(jobId);
+        UUID applicationId = getApplicationIdByJob(jobId);
+        return new ApplicationCheckResponse(applied, applicationId);
+    }
+
+    @Override
     @Transactional
     public void withdrawApplication(UUID id) {
         User user = securityUtil.getCurrentUser();
@@ -138,6 +161,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ApplicationListResponse> getCandidateApplications(
             UUID candidateId, ApplicationStatus status, Pageable pageable) {
         securityUtil.isAuthorized(candidateId, List.of(UserRole.CANDIDATE));
@@ -151,6 +175,31 @@ public class ApplicationServiceImpl implements ApplicationService {
             applications = applicationRepository.findByCandidateId(user.getProfile().getId(), pageable);
         }
 
-        return applications.map(applicationMapper::toListResponse);
+        List<ApplicationListResponse> mapped = applications.getContent().stream()
+                .map(applicationMapper::toListResponse)
+                .toList();
+        return new PageImpl<>(mapped, pageable, applications.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApplicationTimelineResponse> getTimeline(UUID applicationId) {
+        User user = securityUtil.getCurrentUser();
+        Profile profile = user.getProfile();
+        if (profile == null) {
+            throw new ResourceNotFoundException("Không tìm thấy hồ sơ ứng viên");
+        }
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn ứng tuyển"));
+
+        if (!application.getCandidate().getId().equals(profile.getId())) {
+            throw new ForbiddenException("Bạn không có quyền xem timeline của đơn này");
+        }
+
+        List<ApplicationStatusLog> logs = applicationStatusLogRepository
+                .findByApplicationIdOrderByChangedAtAsc(applicationId);
+
+        return applicationStatusLogMapper.toTimelineResponseList(logs);
     }
 }

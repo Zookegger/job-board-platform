@@ -1,5 +1,6 @@
 package com.yoedu.job_board_platform.services;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -7,9 +8,11 @@ import org.springframework.data.domain.Pageable;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
+import com.yoedu.job_board_platform.dtos.application.ApplicationCheckResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
+import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 
 /**
@@ -65,4 +68,21 @@ public interface ApplicationService {
      * @return UUID của đơn, hoặc null nếu chưa nộp
      */
     UUID getApplicationIdByJob(UUID jobId);
+
+    /**
+     * Kiểm tra trạng thái ứng tuyển của ứng viên hiện tại cho một job.
+     * Trả về DTO gồm applied (boolean) và applicationId (UUID hoặc null).
+     *
+     * @param jobId UUID của tin tuyển dụng
+     * @return ApplicationCheckResponse với applied và applicationId
+     */
+    ApplicationCheckResponse checkApplicationByJob(UUID jobId);
+
+    /**
+     * Lấy lịch sử thay đổi trạng thái của một đơn ứng tuyển.
+     *
+     * @param applicationId UUID của đơn ứng tuyển
+     * @return danh sách các bản ghi thay đổi trạng thái theo thứ tự thời gian
+     */
+    List<ApplicationTimelineResponse> getTimeline(UUID applicationId);
 }

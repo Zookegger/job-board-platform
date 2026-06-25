@@ -49,7 +49,7 @@ public interface AdminApi {
         })
         ResponseEntity<?> getUsers(
                         @Parameter(description = "Lọc theo vai trò: CANDIDATE, EMPLOYER, ADMIN", example = "CANDIDATE") UserRole role,
-                        @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") int page);
+                        @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") Pageable pageable);
 
         @Operation(summary = "Thống kê người dùng", description = "Thống kê số lượng user theo role, số user đăng ký mới theo ngày/tuần/tháng.")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dữ liệu thống kê người dùng", content = @Content)

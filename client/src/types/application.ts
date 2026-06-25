@@ -1,4 +1,4 @@
-export type ApplicationStatus = "PENDING" | "REVIEWING" | "INTERVIEW" | "HIRED" | "REJECTED";
+export type ApplicationStatus = "PENDING" | "REVIEWING" | "INTERVIEW" | "HIRED" | "REJECTED" | "WITHDRAWN";
 
 export interface ApplicationListResponse {
 	id: string;
@@ -18,6 +18,7 @@ export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
 	INTERVIEW: "Phỏng vấn",
 	HIRED: "Đã tuyển",
 	REJECTED: "Từ chối",
+	WITHDRAWN: "Đã rút đơn",
 };
 
 export interface ApplicationRequest {
@@ -35,4 +36,13 @@ export interface ApplicationResponse {
 	coverLetter: string | null;
 	resumeUrl: string | null;
 	appliedAt: string;
+}
+
+export interface ApplicationTimelineResponse {
+	id: string;
+	status: ApplicationStatus;
+	statusLabel: string;
+	changedByName: string;
+	note: string | null;
+	changedAt: string;
 }

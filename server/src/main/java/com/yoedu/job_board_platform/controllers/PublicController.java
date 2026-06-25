@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.PublicApi;
 import com.yoedu.job_board_platform.dtos.company.PublicCompanyListResponse;
@@ -31,7 +32,6 @@ import com.yoedu.job_board_platform.models.JobCategory;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
-import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.services.CompanyService;
 import com.yoedu.job_board_platform.services.JobSkillService;
 
@@ -51,10 +51,7 @@ public class PublicController implements PublicApi {
     private final CompanyRepository companyRepository;
 
     @GetMapping("/jobs")
-    public ResponseEntity<?> getJobs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "date_created") String sortBy) {
+    public ResponseEntity<?> getJobs(Pageable pageable) {
         return ResponseEntity.ok("Danh sách việc");
     }
 
@@ -62,7 +59,7 @@ public class PublicController implements PublicApi {
     public ResponseEntity<?> searchJobs(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String location) {
+            @RequestParam(required = false) String location, Pageable pageable) {
         return ResponseEntity.ok("Kết quả tìm kiếm");
     }
 
@@ -99,7 +96,8 @@ public class PublicController implements PublicApi {
                 .stream()
                 .collect(Collectors.groupingBy(
                         row -> (UUID) ((Object[]) row)[0],
-                        Collectors.mapping(row -> jobCategoryMapper.toResponse((JobCategory) ((Object[]) row)[1]), Collectors.toList())));
+                        Collectors.mapping(row -> jobCategoryMapper.toResponse((JobCategory) ((Object[]) row)[1]),
+                                Collectors.toList())));
 
         Map<UUID, Long> jobCountByCompanyId = companyRepository
                 .countByCompanyIdsAndStatus(companyIds, JobStatus.ACTIVE)

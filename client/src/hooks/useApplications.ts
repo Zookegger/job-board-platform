@@ -48,3 +48,11 @@ export function useMyApplications(params: MyApplicationsParams) {
 		retry: false,
 	});
 }
+
+export function useApplicationTimeline(id: string | undefined) {
+	return useQuery({
+		queryKey: ["applications", "timeline", id],
+		queryFn: () => applicationApi.getTimeline(id!),
+		enabled: !!id,
+	});
+}
