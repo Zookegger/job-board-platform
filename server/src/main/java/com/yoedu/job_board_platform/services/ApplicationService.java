@@ -79,6 +79,17 @@ public interface ApplicationService {
     ApplicationCheckResponse checkApplicationByJob(UUID jobId);
 
     /**
+     * Lấy chi tiết một đơn ứng tuyển.
+     * Chỉ cho phép xem đơn của chính mình.
+     *
+     * @param id UUID của đơn ứng tuyển
+     * @return ApplicationResponse thông tin chi tiết đơn
+     * @throws NotFoundException nếu không tìm thấy đơn
+     * @throws ForbiddenException nếu không phải đơn của mình
+     */
+    ApplicationResponse getApplicationDetail(UUID id);
+
+    /**
      * Lấy lịch sử thay đổi trạng thái của một đơn ứng tuyển.
      *
      * @param applicationId UUID của đơn ứng tuyển

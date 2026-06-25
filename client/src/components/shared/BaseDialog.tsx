@@ -30,7 +30,6 @@ export interface BaseDialogProps {
 export function BaseDialog({ isOpen, onClose, title, description, children, footer, modal, size }: BaseDialogProps) {
 	const sizeClass = size ? `max-w-${size}` : "max-w-md";
 
-
 	return (
 		<Dialog
 			modal={modal}
@@ -45,7 +44,7 @@ export function BaseDialog({ isOpen, onClose, title, description, children, foot
 					<DialogTitle>{title}</DialogTitle>
 					{description && <DialogDescription>{description}</DialogDescription>}
 				</DialogHeader>
-
+				
 				{children}
 
 				{footer && <DialogFooter>{footer}</DialogFooter>}

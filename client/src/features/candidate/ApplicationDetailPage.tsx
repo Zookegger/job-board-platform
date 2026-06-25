@@ -1,5 +1,4 @@
-import { useApplicationTimeline, useMyApplications } from "@/hooks/useApplications";
-import type { ApplicationListResponse } from "@/types/application";
+import { useApplicationDetail, useApplicationTimeline } from "@/hooks/useApplications";
 import { ApplicationStatusBadge } from "./components/ApplicationStatusBadge";
 import { ApplicationTimeline } from "./components/ApplicationTimeline";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import RouterRoutes from "@/utils/RouterRoutes";
 import { Building2, ExternalLink, MapPin, ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { useMemo } from "react";
 
 function formatDate(value: string | null) {
 	if (!value) return "—";
@@ -52,14 +50,13 @@ function ApplicationDetailSkeleton() {
 export default function CandidateApplicationDetailPage() {
 	const { id } = useParams<{ id: string }>();
 
-	const queryParams = useMemo(() => ({ page: 0, size: 100 }), []);
-	const { data: applicationsData, isLoading: listLoading } = useMyApplications(queryParams);
-
-	const application = applicationsData?.content?.find((a: ApplicationListResponse) => a.id === id);
+	const { data: application, isLoading: detailLoading } = useApplicationDetail(id);
 
 	const { data: timeline, isLoading: timelineLoading, isError, error } = useApplicationTimeline(id);
 
-	if (listLoading || timelineLoading) {
+	const isLoading = detailLoading || timelineLoading;
+
+	if (isLoading) {
 		return <ApplicationDetailSkeleton />;
 	}
 

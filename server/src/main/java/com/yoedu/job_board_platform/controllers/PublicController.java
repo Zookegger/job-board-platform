@@ -33,6 +33,7 @@ import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.services.CompanyService;
+import com.yoedu.job_board_platform.services.JobCategoryService;
 import com.yoedu.job_board_platform.services.JobSkillService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,6 +49,7 @@ public class PublicController implements PublicApi {
     private final JobRepository jobRepository;
     private final JobSkillService jobSkillService;
     private final JobCategoryMapper jobCategoryMapper;
+    private final JobCategoryService jobCategoryService;
     private final CompanyRepository companyRepository;
 
     @GetMapping("/jobs")
@@ -75,6 +77,11 @@ public class PublicController implements PublicApi {
     @GetMapping("/jobs/filter-options")
     public ResponseEntity<?> getFilterOptions() {
         return ResponseEntity.ok("Filter options");
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<JobCategoryResponse>> getCategories() {
+        return ResponseEntity.ok(jobCategoryMapper.toResponseList(jobCategoryService.getAllCategories()));
     }
 
     @Operation(summary = "Danh sách công ty (công khai)", description = "Lấy danh sách công ty đã được duyệt, phân trang, có tìm kiếm theo tên và ngành nghề.")

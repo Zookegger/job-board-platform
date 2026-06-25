@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ import com.yoedu.job_board_platform.mappers.ApplicationMapper;
 import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
+import com.yoedu.job_board_platform.models.ApplicationStatusLog;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
@@ -109,15 +111,28 @@ class ApplicationServiceImplTest {
         Resume resume = buildResume(profile);
         ApplicationRequest request = new ApplicationRequest(job.getId(), "Thư xin việc");
 
+        Application mappedApp = Application.builder()
+                .coverLetter("Thư xin việc")
+                .resumeUrl("/uploads/resumes/cv.pdf")
+                .status(ApplicationStatus.PENDING)
+                .build();
+
+        ApplicationResponse responseDto = new ApplicationResponse(
+                null, job.getId(), job.getSlug(), job.getTitle(), job.getCompany().getCompanyName(),
+                job.getCompany().getLogoUrl(), job.getLocation(),
+                ApplicationStatus.PENDING, "Thư xin việc", "/uploads/resumes/cv.pdf", null);
+
         when(securityUtil.getCurrentUser()).thenReturn(user);
         when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
         when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(false);
         when(resumeRepository.findByCandidateDetailProfileId(profile.getId())).thenReturn(Optional.of(resume));
+        when(applicationMapper.toEntity(request)).thenReturn(mappedApp);
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application a = inv.getArgument(0);
             a.setId(UUID.randomUUID());
             return a;
         });
+        when(applicationMapper.toDetailResponse(any(Application.class))).thenReturn(responseDto);
 
         ApplicationResponse result = applicationService.submitApplication(request);
 
@@ -136,15 +151,28 @@ class ApplicationServiceImplTest {
         Resume resume = buildResume(profile);
         ApplicationRequest request = new ApplicationRequest(job.getId(), null);
 
+        Application mappedApp = Application.builder()
+                .coverLetter(null)
+                .resumeUrl("/uploads/resumes/cv.pdf")
+                .status(ApplicationStatus.PENDING)
+                .build();
+
+        ApplicationResponse responseDto = new ApplicationResponse(
+                null, job.getId(), job.getSlug(), job.getTitle(), job.getCompany().getCompanyName(),
+                job.getCompany().getLogoUrl(), job.getLocation(),
+                ApplicationStatus.PENDING, null, "/uploads/resumes/cv.pdf", null);
+
         when(securityUtil.getCurrentUser()).thenReturn(user);
         when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
         when(applicationRepository.existsByCandidateIdAndJobIdAndStatusNot(profile.getId(), job.getId(), ApplicationStatus.WITHDRAWN)).thenReturn(false);
         when(resumeRepository.findByCandidateDetailProfileId(profile.getId())).thenReturn(Optional.of(resume));
+        when(applicationMapper.toEntity(request)).thenReturn(mappedApp);
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application a = inv.getArgument(0);
             a.setId(UUID.randomUUID());
             return a;
         });
+        when(applicationMapper.toDetailResponse(any(Application.class))).thenReturn(responseDto);
 
         ApplicationResponse result = applicationService.submitApplication(request);
 
@@ -344,5 +372,60 @@ class ApplicationServiceImplTest {
                 .isInstanceOf(ForbiddenException.class);
 
         verify(applicationRepository, never()).save(any());
+    }
+
+    // ─── getTimeline ──────────────────────────────────────────────────────
+
+    @Test
+    void TC_14_getTimeline_success() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID appId = UUID.randomUUID();
+
+        Application application = Application.builder()
+                .id(appId)
+                .candidate(profile)
+                .status(ApplicationStatus.INTERVIEW)
+                .build();
+
+        ApplicationStatusLog log = ApplicationStatusLog.builder()
+                .id(UUID.randomUUID())
+                .application(application)
+                .status(ApplicationStatus.PENDING)
+                .changedBy(user)
+                .build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+        when(applicationStatusLogRepository.findByApplicationIdOrderByChangedAtAsc(appId))
+                .thenReturn(List.of(log));
+        when(applicationStatusLogMapper.toTimelineResponseList(any())).thenReturn(List.of());
+
+        var result = applicationService.getTimeline(appId);
+
+        assertThat(result).isNotNull();
+        verify(applicationStatusLogMapper).toTimelineResponseList(any());
+    }
+
+    @Test
+    void TC_15_getTimeline_throwsForbidden_whenNotOwner() {
+        Profile owner = buildProfile();
+        Profile other = buildProfile();
+        User user = buildUser(other);
+        UUID appId = UUID.randomUUID();
+
+        Application application = Application.builder()
+                .id(appId)
+                .candidate(owner)
+                .status(ApplicationStatus.PENDING)
+                .build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationService.getTimeline(appId))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(applicationStatusLogRepository, never()).findByApplicationIdOrderByChangedAtAsc(any());
     }
 }
