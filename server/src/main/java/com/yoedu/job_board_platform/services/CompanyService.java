@@ -111,6 +111,16 @@ public interface CompanyService {
     Page<Job> getPublicJobsByCompany(String slug, Pageable pageable);
 
     /**
+     * Tìm kiếm tất cả công ty cho admin (không lọc isApproved).
+     *
+     * @param keyword        từ khóa tìm kiếm
+     * @param jobCategoryIds danh sách ID ngành nghề
+     * @param pageable       thông tin phân trang
+     * @return trang kết quả
+     */
+    Page<Company> searchAllCompanies(String keyword, Set<Integer> jobCategoryIds, Pageable pageable);
+
+    /**
      * Lấy trạng thái phê duyệt của công ty thuộc employer đang đăng nhập.
      *
      * @param employerId UUID của employer (= userId)

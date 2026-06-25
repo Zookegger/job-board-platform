@@ -3,6 +3,7 @@ package com.yoedu.job_board_platform.services;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
@@ -10,6 +11,7 @@ import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.job.JobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobRequest;
 import com.yoedu.job_board_platform.dtos.job.JobResponse;
+import com.yoedu.job_board_platform.dtos.job.JobSearchRequest;
 import com.yoedu.job_board_platform.models.JobStatus;
 
 /**
@@ -109,4 +111,23 @@ public interface JobService {
      * @throws NotFoundException nếu tin không tồn tại hoặc không ở trạng thái ACTIVE
      */
     JobResponse getActiveJobDetail(UUID jobId);
+
+    /**
+     * Tìm kiếm việc làm công khai với bộ lọc và phân trang.
+     * Chỉ trả về các job ở trạng thái ACTIVE.
+     *
+     * @param request  bộ lọc tìm kiếm
+     * @param pageable thông tin phân trang
+     * @return trang kết quả JobListResponse
+     */
+    Page<JobListResponse> searchPublicJobs(JobSearchRequest request, Pageable pageable);
+
+    /**
+     * Lấy chi tiết việc làm công khai theo slug.
+     *
+     * @param slug slug của công việc
+     * @return JobResponse thông tin chi tiết
+     * @throws NotFoundException nếu không tìm thấy
+     */
+    JobResponse getPublicJobDetail(String slug);
 }

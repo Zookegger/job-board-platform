@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
@@ -16,6 +17,7 @@ import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.job.JobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobRequest;
 import com.yoedu.job_board_platform.dtos.job.JobResponse;
+import com.yoedu.job_board_platform.dtos.job.JobSearchRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.mappers.JobMapper;
 import com.yoedu.job_board_platform.models.Company;
@@ -26,6 +28,7 @@ import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Skill;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.specifications.JobSpecification;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
@@ -226,6 +229,34 @@ public class JobServiceImpl implements JobService {
             throw new NotFoundException("Không tìm thấy tin tuyển dụng");
         }
 
+        JobResponse response = jobMapper.toResponse(job);
+        List<SkillResponse> skills = jobSkillService.getSkillsByJobId(job.getId());
+        if (!skills.isEmpty()) {
+            response = response.withSkills(skills);
+        }
+        return response;
+    }
+
+    @Override
+    public Page<JobListResponse> searchPublicJobs(JobSearchRequest request, Pageable pageable) {
+        Specification<Job> spec = Specification.where(JobSpecification.hasStatus("ACTIVE"))
+                .and(JobSpecification.hasKeyword(request != null ? request.keyword() : null))
+                .and(JobSpecification.hasCategoryIds(request != null ? request.categoryIds() : null))
+                .and(JobSpecification.hasLocationTypes(request != null ? request.locationTypes() : null))
+                .and(JobSpecification.hasEmploymentTypes(request != null ? request.employmentTypes() : null))
+                .and(JobSpecification.hasExperienceLevels(request != null ? request.experienceLevels() : null))
+                .and(JobSpecification.salaryOverlap(
+                        request != null ? request.minSalary() : null,
+                        request != null ? request.maxSalary() : null))
+                .and(JobSpecification.hasSkillIds(request != null ? request.skillIds() : null));
+
+        return jobRepository.findAll(spec, pageable).map(jobMapper::toSummary);
+    }
+
+    @Override
+    public JobResponse getPublicJobDetail(String slug) {
+        Job job = jobRepository.findBySlugAndStatus(slug, JobStatus.ACTIVE)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy công việc"));
         JobResponse response = jobMapper.toResponse(job);
         List<SkillResponse> skills = jobSkillService.getSkillsByJobId(job.getId());
         if (!skills.isEmpty()) {
