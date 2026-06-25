@@ -21,6 +21,7 @@ import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.ApplicationApi;
 import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
+import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
@@ -54,8 +55,8 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getApplicationDetail(@PathVariable UUID id) {
-        return ResponseEntity.ok("Chi tiết đơn");
+    public ResponseEntity<ApplicationResponse> getApplicationDetail(@PathVariable UUID id) {
+        return ResponseEntity.ok(applicationService.getApplicationDetail(id));
     }
 
     @GetMapping("/{id}/timeline")

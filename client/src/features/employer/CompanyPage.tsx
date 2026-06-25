@@ -19,7 +19,6 @@ import {
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import type { ApprovalLogResponse } from "@/api/companyStatus";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCompanyApprovalHistory, useCompanyStatus } from "@/hooks/useCompanyStatus";
+import { useCompanyStatus } from "@/hooks/useCompanyStatus";
 import { useEmployerProfile, useUpdateEmployerProfile, useUploadCompanyLogo } from "@/hooks/useProfile";
 import { companySchema, type CompanyFormData } from "@/lib/schemas/company";
 import { useToast } from "@/providers/ToastProvider";
@@ -79,36 +78,36 @@ function StatusBadge({ status }: { status: string }) {
 	);
 }
 
-function ApprovalTimeline({ logs }: { logs: ApprovalLogResponse[] }) {
-	if (logs.length === 0) {
-		return <p className='py-6 text-center text-sm text-muted-foreground'>Chưa có lịch sử phê duyệt.</p>;
-	}
+// function ApprovalTimeline({ logs }: { logs: ApprovalLogResponse[] }) {
+// 	if (logs.length === 0) {
+// 		return <p className='py-6 text-center text-sm text-muted-foreground'>Chưa có lịch sử phê duyệt.</p>;
+// 	}
 
-	return (
-		<ol className='relative border-l border-gray-200 pl-6'>
-			{logs.map((log, i) => (
-				<li
-					key={i}
-					className='mb-6 ml-2'
-				>
-					<span className='absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-white bg-gray-400' />
-					<div className='flex flex-wrap items-center gap-2'>
-						<StatusBadge status={log.newStatus} />
-						{log.oldStatus && (
-							<span className='text-xs text-muted-foreground'>
-								← {STATUS_CONFIG[log.oldStatus as ApprovalStatus]?.label ?? log.oldStatus}
-							</span>
-						)}
-					</div>
-					{log.note && <p className='mt-1 text-sm text-gray-600'>{log.note}</p>}
-					<time className='mt-1 block text-xs text-muted-foreground'>
-						{formatDate(log.createdAt, { dateStyle: "short", timeStyle: "short" })}
-					</time>
-				</li>
-			))}
-		</ol>
-	);
-}
+// 	return (
+// 		<ol className='relative border-l border-gray-200 pl-6'>
+// 			{logs.map((log, i) => (
+// 				<li
+// 					key={i}
+// 					className='mb-6 ml-2'
+// 				>
+// 					<span className='absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-white bg-gray-400' />
+// 					<div className='flex flex-wrap items-center gap-2'>
+// 						<StatusBadge status={log.newStatus} />
+// 						{log.oldStatus && (
+// 							<span className='text-xs text-muted-foreground'>
+// 								← {STATUS_CONFIG[log.oldStatus as ApprovalStatus]?.label ?? log.oldStatus}
+// 							</span>
+// 						)}
+// 					</div>
+// 					{log.note && <p className='mt-1 text-sm text-gray-600'>{log.note}</p>}
+// 					<time className='mt-1 block text-xs text-muted-foreground'>
+// 						{formatDate(log.createdAt, { dateStyle: "short", timeStyle: "short" })}
+// 					</time>
+// 				</li>
+// 			))}
+// 		</ol>
+// 	);
+// }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -130,7 +129,7 @@ export default function EmployerCompanyPage() {
 		refetch: refetchStatus,
 		dataUpdatedAt,
 	} = useCompanyStatus();
-	const { data: history = [], isLoading: historyLoading, refetch: refetchHistory } = useCompanyApprovalHistory();
+	// const { data: history = [], isLoading: historyLoading, refetch: refetchHistory } = useCompanyApprovalHistory();
 
 	const {
 		register,
@@ -179,7 +178,7 @@ export default function EmployerCompanyPage() {
 
 	const handleRefresh = () => {
 		refetchStatus();
-		refetchHistory();
+		// refetchHistory();
 	};
 
 	const renderProfileSkeleton = () => (
@@ -540,7 +539,7 @@ export default function EmployerCompanyPage() {
 							variant='outline'
 							size='sm'
 							onClick={handleRefresh}
-							disabled={historyLoading}
+							// disabled={historyLoading}
 							className='gap-1.5'
 						>
 							<RefreshCw className='h-4 w-4' />
@@ -575,7 +574,7 @@ export default function EmployerCompanyPage() {
 				<Separator />
 
 				{/* History card */}
-				<Card>
+				{/* <Card>
 					<CardHeader>
 						<CardTitle className='text-base'>Lịch sử phê duyệt</CardTitle>
 					</CardHeader>
@@ -589,7 +588,7 @@ export default function EmployerCompanyPage() {
 							<ApprovalTimeline logs={history} />
 						)}
 					</CardContent>
-				</Card>
+				</Card> */}
 			</div>
 		);
 	};

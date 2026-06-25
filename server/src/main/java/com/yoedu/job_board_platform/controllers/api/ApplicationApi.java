@@ -8,6 +8,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
+import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,7 +55,7 @@ public interface ApplicationApi {
                         @ApiResponse(responseCode = "403", description = "Không phải đơn của bạn", content = @Content),
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy đơn ứng tuyển", content = @Content)
         })
-        ResponseEntity<?> getApplicationDetail(
+        ResponseEntity<ApplicationResponse> getApplicationDetail(
                         @Parameter(description = "ID của đơn ứng tuyển", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", required = true) UUID id);
 
         @Operation(summary = "Lịch sử trạng thái đơn", description = """

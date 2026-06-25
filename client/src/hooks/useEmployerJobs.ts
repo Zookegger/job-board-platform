@@ -53,6 +53,7 @@ export function useSubmitForReview(id: string) {
 		mutationFn: () => employerJobApi.submitForReview(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: EMPLOYER_JOB_KEY.detail(id) });
+			queryClient.invalidateQueries({ queryKey: EMPLOYER_JOB_KEY.lists() });
 		},
 	});
 }

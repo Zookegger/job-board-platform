@@ -77,13 +77,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .orElseThrow(
                         () -> new BadRequestException("Bạn chưa upload CV. Vui lòng upload CV trước khi ứng tuyển."));
 
-        Application application = Application.builder()
-                .candidate(profile)
-                .job(job)
-                .coverLetter(request.coverLetter())
-                .resumeUrl(resume.getFilePath())
-                .appliedAt(OffsetDateTime.now())
-                .build();
+        Application application = applicationMapper.toEntity(request);
+        application.setCandidate(profile);
+        application.setJob(job);
+        application.setStatus(ApplicationStatus.PENDING);
+        application.setResumeUrl(resume.getFilePath());
+        application.setAppliedAt(OffsetDateTime.now());
 
         Application saved = applicationRepository.save(application);
 
@@ -95,16 +94,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .build();
         applicationStatusLogRepository.save(initialLog);
 
-        return new ApplicationResponse(
-                saved.getId(),
-                job.getId(),
-                job.getSlug(),
-                job.getTitle(),
-                job.getCompany().getCompanyName(),
-                saved.getStatus(),
-                saved.getCoverLetter(),
-                saved.getResumeUrl(),
-                saved.getAppliedAt());
+        return applicationMapper.toDetailResponse(saved);
     }
 
     @Override
@@ -179,6 +169,24 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .map(applicationMapper::toListResponse)
                 .toList();
         return new PageImpl<>(mapped, pageable, applications.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApplicationResponse getApplicationDetail(UUID id) {
+        Profile profile = securityUtil.getCurrentUser().getProfile();
+        if (profile == null) {
+            throw new ResourceNotFoundException("Không tìm thấy hồ sơ ứng viên");
+        }
+
+        Application application = applicationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn ứng tuyển"));
+
+        if (!application.getCandidate().getId().equals(profile.getId())) {
+            throw new ForbiddenException("Bạn không có quyền xem đơn này");
+        }
+
+        return applicationMapper.toDetailResponse(application);
     }
 
     @Override

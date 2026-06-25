@@ -56,3 +56,11 @@ export function useApplicationTimeline(id: string | undefined) {
 		enabled: !!id,
 	});
 }
+
+export function useApplicationDetail(id: string | undefined) {
+	return useQuery({
+		queryKey: ["applications", "detail", id],
+		queryFn: () => applicationApi.getDetail(id!),
+		enabled: !!id,
+	});
+}
