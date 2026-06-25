@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.ApplicationApi;
+import com.yoedu.job_board_platform.dtos.application.ApplicationCheckResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
@@ -41,7 +42,7 @@ public class ApplicationController implements ApplicationApi {
     private final SecurityUtil securityUtil;
 
     @PostMapping
-    public ResponseEntity<?> submitApplication(@RequestBody @Valid ApplicationRequest request) {
+    public ResponseEntity<ApplicationResponse> submitApplication(@RequestBody @Valid ApplicationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(applicationService.submitApplication(request));
     }
 
@@ -73,11 +74,11 @@ public class ApplicationController implements ApplicationApi {
     @GetMapping("/cv/application/{id}")
     @PreAuthorize(AuthorizationConstants.CANDIDATE_OR_EMPLOYER)
     public ResponseEntity<?> getApplicationCV(@PathVariable UUID id) {
-        return ResponseEntity.ok("CV của đơn");
+        return ResponseEntity.ok("CV của đơn"); // TODO: Add CV view
     }
 
     @GetMapping("/by-job/{jobId}")
-    public ResponseEntity<?> getApplicationByJob(@PathVariable UUID jobId) {
+    public ResponseEntity<ApplicationCheckResponse> checkApplicationByJob(@PathVariable UUID jobId) {
         return ResponseEntity.ok(applicationService.checkApplicationByJob(jobId));
     }
 }

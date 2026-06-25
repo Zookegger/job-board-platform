@@ -33,6 +33,18 @@ const skillApi = {
 				);
 			}),
 
+	/** Lấy toàn bộ danh sách kỹ năng (public — không phân trang). */
+	getAllSkillsPublic: (): Promise<SkillResponse[]> =>
+		client
+			.get("/skills/public")
+			.then((r) => r.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.message || "Không thể tải danh sách kỹ năng.",
+					error.response?.status || 500,
+				);
+			}),
+
 	/** Cập nhật toàn bộ kỹ năng của ứng viên (replace). */
 	updateCandidateSkills: (request: UpdateCandidateSkillsRequest): Promise<CandidateSkillResponse[]> =>
 		client

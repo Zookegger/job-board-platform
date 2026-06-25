@@ -7,6 +7,15 @@ export const SKILL_KEYS = {
 	candidate: ["skills", "candidate"] as const,
 };
 
+/** Lấy toàn bộ danh sách kỹ năng (public — không phân trang, cache 10 phút). */
+export function useAllSkillsPublic() {
+	return useQuery({
+		queryKey: ["skills", "public"],
+		queryFn: () => skillApi.getAllSkillsPublic(),
+		staleTime: 10 * 60 * 1000,
+	});
+}
+
 /** Lấy toàn bộ danh sách kỹ năng có sẵn (cache 10 phút). */
 export function useAllSkills() {
 	return useQuery({

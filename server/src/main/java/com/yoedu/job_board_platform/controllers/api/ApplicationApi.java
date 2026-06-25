@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 
+import com.yoedu.job_board_platform.dtos.application.ApplicationCheckResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
@@ -33,7 +34,7 @@ public interface ApplicationApi {
                         @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ CANDIDATE)", content = @Content),
                         @ApiResponse(responseCode = "404", description = "Không tìm thấy công việc", content = @Content)
         })
-        ResponseEntity<?> submitApplication(
+        ResponseEntity<ApplicationResponse> submitApplication(
                         @Parameter(description = "Thông tin đơn ứng tuyển", required = true) @Valid ApplicationRequest request);
 
         @Operation(summary = "Danh sách đơn đã nộp", description = """
@@ -107,6 +108,6 @@ public interface ApplicationApi {
                         @ApiResponse(responseCode = "200", description = "{ \"applied\": true, \"applicationId\": \"...\" }", content = @Content),
                         @ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ CANDIDATE)", content = @Content)
         })
-        ResponseEntity<?> getApplicationByJob(
+        ResponseEntity<ApplicationCheckResponse> checkApplicationByJob(
                         @Parameter(description = "UUID của tin tuyển dụng", required = true) UUID jobId);
 }

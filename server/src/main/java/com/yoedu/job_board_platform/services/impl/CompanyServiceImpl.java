@@ -139,6 +139,14 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
+    public Page<Company> searchAllCompanies(String keyword, Set<Integer> jobCategoryIds, Pageable pageable) {
+        Specification<Company> spec = Specification
+                .where(CompanySpecification.hasKeyword(keyword))
+                .and(CompanySpecification.hasCategoryId(jobCategoryIds));
+        return companyRepository.findAll(spec, pageable);
+    }
+
+    @Override
     public Page<Company> listCompaniesPage(String keyword, String status, Set<Integer> jobCategoryIds, Pageable pageable) {
         Specification<Company> spec = Specification
                 .where(CompanySpecification.isApproved())
