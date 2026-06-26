@@ -27,6 +27,8 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
 
     Page<Job> findByStatus(JobStatus status, Pageable pageable);
 
+    long countByStatus(JobStatus status);
+
     long countByCompanyIdAndStatus(UUID companyId, JobStatus status);
 
     @Query("SELECT DISTINCT j.category FROM Job j WHERE j.company.id = :companyId AND j.status = :status")

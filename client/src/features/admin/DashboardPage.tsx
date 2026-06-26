@@ -62,11 +62,17 @@ function MetricCardSkeleton() {
 export default function AdminDashboardPage() {
 	const { data: stats, isLoading, isError } = useAdminDashboardStats();
 
-	const dashboardMetrics: MetricCardItem[] = [
+		const dashboardMetrics: MetricCardItem[] = [
 		{
 			label: "Tổng người dùng",
 			value: stats?.totalUsers ?? 0,
 			description: "Tất cả tài khoản trên hệ thống",
+			icon: Users,
+		},
+		{
+			label: "Người dùng mới",
+			value: stats?.newUsers ?? 0,
+			description: "Trong 7 ngày gần nhất",
 			icon: Users,
 		},
 		{
@@ -76,9 +82,21 @@ export default function AdminDashboardPage() {
 			icon: Building2,
 		},
 		{
-			label: "Tổng tin tuyển dụng",
+			label: "Công ty chờ duyệt",
+			value: stats?.pendingCompanies ?? 0,
+			description: "Công ty đang chờ admin xử lý",
+			icon: Building2,
+		},
+		{
+			label: "Tin đã duyệt",
 			value: stats?.totalJobs ?? 0,
-			description: "Tất cả tin tuyển dụng trong hệ thống",
+			description: "Tin tuyển dụng đang hiển thị công khai",
+			icon: Briefcase,
+		},
+		{
+			label: "Tin chờ duyệt",
+			value: stats?.pendingJobs ?? 0,
+			description: "Tin tuyển dụng đang chờ admin duyệt",
 			icon: Briefcase,
 		},
 		{
@@ -110,7 +128,7 @@ export default function AdminDashboardPage() {
 			) : (
 				<div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
 					{isLoading
-						? Array.from({ length: 4 }).map((_, index) => (
+						? Array.from({ length: 7 }).map((_, index) => (
 								<MetricCardSkeleton key={index} />
 							))
 						: dashboardMetrics.map((metric) => (

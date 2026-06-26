@@ -33,13 +33,15 @@ import jakarta.validation.Valid;
 public interface AdminApi {
 
         @Operation(summary = "Dashboard thống kê tổng quan", description = """
-                Lấy các chỉ số tổng quan cho màn hình Admin Dashboard:
-                tổng người dùng, tổng công ty, tổng tin tuyển dụng và tổng hồ sơ ứng tuyển.
-                """)
+                        Lấy các chỉ số tổng quan cho màn hình Admin Dashboard:
+                        tổng người dùng, tổng công ty, tổng tin tuyển dụng đã duyệt,
+                        tổng hồ sơ ứng tuyển, số người dùng mới, số tin chờ duyệt
+                        và số công ty chờ duyệt.
+                        """)
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "Dữ liệu thống kê tổng quan dashboard",
-                content = @Content)
+                        responseCode = "200",
+                        description = "Dữ liệu thống kê tổng quan dashboard",
+                        content = @Content)
         ResponseEntity<AdminDashboardStatsResponse> getDashboardStats();
 
         @Operation(summary = "Danh sách người dùng", description = """

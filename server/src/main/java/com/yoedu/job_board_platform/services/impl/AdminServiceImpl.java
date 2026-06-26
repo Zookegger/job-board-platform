@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.time.OffsetDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -367,11 +368,16 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(readOnly = true)
     public AdminDashboardStatsResponse getDashboardStats() {
-    return new AdminDashboardStatsResponse(
-            userRepository.count(),
-            companyRepository.count(),
-            jobRepository.count(),
-            applicationRepository.count()
-    );
+        OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
+
+        return new AdminDashboardStatsResponse(
+                userRepository.count(),
+                companyRepository.count(),
+                jobRepository.countByStatus(JobStatus.ACTIVE),
+                applicationRepository.count(),
+                userRepository.countByCreatedAtAfter(sevenDaysAgo),
+                jobRepository.countByStatus(JobStatus.PENDING_APPROVAL),
+                companyRepository.countByStatus(CompanyStatus.PENDING)
+        );
     }
 }

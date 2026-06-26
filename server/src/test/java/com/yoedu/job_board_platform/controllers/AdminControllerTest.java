@@ -783,18 +783,33 @@ class AdminControllerTest {
 
         @Test
         void admin_canGetDashboardStats() throws Exception {
-        Company company = createPendingCompany(
-                        "Dashboard Corp",
+        createPendingCompany(
+                        "Pending Dashboard Corp",
                         "123456789",
-                        "dashboard@example.com",
+                        "pending-dashboard@example.com",
                         "0900000011");
 
-        Job job = createPendingJob(company, "Dashboard Job");
+        Company approvedCompany = createPendingCompany(
+                        "Approved Dashboard Corp",
+                        "987654321",
+                        "approved-dashboard@example.com",
+                        "0900000012");
+
+                approvedCompany.setStatus(CompanyStatus.APPROVED);
+                approvedCompany.setApproved(true);
+                approvedCompany = companyRepository.save(approvedCompany);
+
+                Job activeJob = createPendingJob(approvedCompany, "Dashboard Active Job");
+                activeJob.setStatus(JobStatus.ACTIVE);
+                activeJob = jobRepository.save(activeJob);
+
+                createPendingJob(approvedCompany, "Dashboard Pending Job");
+
         Profile candidateProfile = createCandidateProfile("candidate-dashboard@example.com");
 
         applicationRepository.save(Application.builder()
                         .candidate(candidateProfile)
-                        .job(job)
+                        .job(activeJob)
                         .status(ApplicationStatus.PENDING)
                         .coverLetter("Tôi muốn ứng tuyển")
                         .appliedAt(OffsetDateTime.now())
@@ -805,9 +820,12 @@ class AdminControllerTest {
         mockMvc.perform(get("/api/admin/dashboard/stats")
                         .cookie(adminCookie))
                         .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.totalUsers").value(3))
-                        .andExpect(jsonPath("$.totalCompanies").value(1))
+                        .andExpect(jsonPath("$.totalUsers").value(4))
+                        .andExpect(jsonPath("$.totalCompanies").value(2))
                         .andExpect(jsonPath("$.totalJobs").value(1))
-                        .andExpect(jsonPath("$.totalApplications").value(1));
+                        .andExpect(jsonPath("$.totalApplications").value(1))
+                        .andExpect(jsonPath("$.newUsers").value(4))
+                        .andExpect(jsonPath("$.pendingJobs").value(1))
+                        .andExpect(jsonPath("$.pendingCompanies").value(1));
         }
 }

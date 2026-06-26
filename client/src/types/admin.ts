@@ -3,4 +3,7 @@ export interface AdminDashboardStatsResponse {
 	totalCompanies: number;
 	totalJobs: number;
 	totalApplications: number;
+	newUsers: number;
+	pendingJobs: number;
+	pendingCompanies: number;
 }
