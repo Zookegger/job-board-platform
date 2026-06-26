@@ -48,3 +48,23 @@ export interface ApplicationTimelineResponse {
 	note: string | null;
 	changedAt: string;
 }
+
+export interface EmployerApplicationListResponse {
+	id: string;
+	candidateId: string;
+	candidateName: string;
+	candidateAvatarUrl: string | null;
+	candidateEmail: string;
+	jobId: string;
+	jobTitle: string;
+	status: ApplicationStatus;
+	coverLetter: string | null;
+	resumeUrl: string | null;
+	appliedAt: string;
+}
+
+export interface EmployerApplicationParams {
+	jobId?: string;
+	status?: string;
+	page?: number;
+}

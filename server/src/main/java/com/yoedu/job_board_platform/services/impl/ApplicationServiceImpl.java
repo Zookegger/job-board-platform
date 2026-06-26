@@ -19,11 +19,13 @@ import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
+import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
 import com.yoedu.job_board_platform.mappers.ApplicationMapper;
 import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.models.ApplicationStatusLog;
+import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
@@ -209,5 +211,63 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .findByApplicationIdOrderByChangedAtAsc(applicationId);
 
         return applicationStatusLogMapper.toTimelineResponseList(logs);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EmployerApplicationListResponse> getEmployerApplications(
+            UUID companyId, UUID jobId, ApplicationStatus status, Pageable pageable) {
+
+        Page<Application> applications;
+        if (jobId != null && status != null) {
+            applications = applicationRepository.findByJobCompanyIdAndJobIdAndStatus(companyId, jobId, status, pageable);
+        } else if (jobId != null) {
+            applications = applicationRepository.findByJobCompanyIdAndJobId(companyId, jobId, pageable);
+        } else if (status != null) {
+            applications = applicationRepository.findByJobCompanyIdAndStatus(companyId, status, pageable);
+        } else {
+            applications = applicationRepository.findByJobCompanyId(companyId, pageable);
+        }
+
+        return applications.map(applicationMapper::toEmployerListResponse);
+    }
+
+    @Override
+    @Transactional
+    public void updateApplicationStatus(UUID applicationId, ApplicationStatus newStatus, String reason) {
+        User employer = securityUtil.getCurrentUser();
+        Profile profile = employer.getProfile();
+
+        if (profile == null || profile.getEmployerDetail() == null) {
+            throw new ForbiddenException("Bạn chưa có thông tin công ty");
+        }
+
+        Company company = profile.getEmployerDetail().getCompany();
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn ứng tuyển"));
+
+        // Kiểm tra quyền sở hữu
+        if (!application.getJob().getCompany().getId().equals(company.getId())) {
+            throw new ForbiddenException("Bạn không có quyền cập nhật đơn ứng tuyển này");
+        }
+
+        // Validate trạng thái đích (employer chỉ được dùng 4 trạng thái này)
+        if (newStatus == ApplicationStatus.PENDING || newStatus == ApplicationStatus.WITHDRAWN) {
+            throw new BadRequestException("Trạng thái không hợp lệ: " + newStatus);
+        }
+
+        application.setStatus(newStatus);
+        applicationRepository.save(application);
+
+        // Ghi lịch sử thay đổi trạng thái
+        String note = (reason != null && !reason.isBlank()) ? reason : null;
+        ApplicationStatusLog log = ApplicationStatusLog.builder()
+                .application(application)
+                .status(newStatus)
+                .changedBy(employer)
+                .note(note)
+                .build();
+        applicationStatusLogRepository.save(log);
     }
 }

@@ -24,4 +24,14 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     boolean existsByCandidateIdAndJobIdAndStatusNot(UUID candidateId, UUID jobId, ApplicationStatus status);
 
     Optional<Application> findByCandidateIdAndJobId(UUID candidateId, UUID jobId);
+
+    // --- Employer queries ---
+    Page<Application> findByJobCompanyId(UUID companyId, Pageable pageable);
+
+    Page<Application> findByJobCompanyIdAndStatus(UUID companyId, ApplicationStatus status, Pageable pageable);
+
+    Page<Application> findByJobCompanyIdAndJobId(UUID companyId, UUID jobId, Pageable pageable);
+
+    Page<Application> findByJobCompanyIdAndJobIdAndStatus(
+            UUID companyId, UUID jobId, ApplicationStatus status, Pageable pageable);
 }
