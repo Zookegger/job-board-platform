@@ -53,7 +53,7 @@ export interface PublicCompanyListParams {
 const publicCompanyApi = {
 	getDetail: (slug: string): Promise<PublicCompany> =>
 		client
-			.get(`/public/companies/${slug}`)
+			.get(`/companies/public/${slug}`)
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
@@ -64,7 +64,7 @@ const publicCompanyApi = {
 
 	getJobs: (slug: string, page = 0, size = 6): Promise<PageResponse<PublicCompanyJob>> =>
 		client
-			.get(`/public/companies/${slug}/jobs`, { params: { page, size } })
+			.get(`/companies/public/${slug}/jobs`, { params: { page, size } })
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
@@ -75,7 +75,7 @@ const publicCompanyApi = {
 
 	getList: (params: PublicCompanyListParams = {}): Promise<PageResponse<PublicCompanyListItem>> =>
 		client
-			.get("/public/companies", { params: { page: params.page ?? 0, size: params.size ?? 12, keyword: params.keyword, categoryId: params.categoryId } })
+			.get("/companies/public/search", { params: { page: params.page ?? 0, size: params.size ?? 12, keyword: params.keyword, categoryId: params.categoryId } })
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(

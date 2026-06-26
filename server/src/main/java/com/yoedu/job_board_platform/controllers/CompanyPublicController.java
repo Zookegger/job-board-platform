@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.config.ApiPaths;
-import com.yoedu.job_board_platform.controllers.api.PublicApi;
 import com.yoedu.job_board_platform.dtos.company.PublicCompanyListResponse;
 import com.yoedu.job_board_platform.dtos.company.PublicCompanyResponse;
 import com.yoedu.job_board_platform.dtos.job.JobCategoryResponse;
@@ -33,65 +32,33 @@ import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.services.CompanyService;
-import com.yoedu.job_board_platform.services.JobCategoryService;
-import com.yoedu.job_board_platform.services.JobSkillService;
+import com.yoedu.job_board_platform.services.JobService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping(ApiPaths.BASE + "/public")
+@RequestMapping(ApiPaths.BASE + "/companies")
 @RequiredArgsConstructor
-public class PublicController implements PublicApi {
+public class CompanyPublicController {
+
     private final CompanyService companyService;
     private final CompanyMapper companyMapper;
     private final JobMapper jobMapper;
-    private final JobRepository jobRepository;
-    private final JobSkillService jobSkillService;
+    private final JobService jobService;
     private final JobCategoryMapper jobCategoryMapper;
-    private final JobCategoryService jobCategoryService;
     private final CompanyRepository companyRepository;
-
-    @GetMapping("/jobs")
-    public ResponseEntity<?> getJobs(Pageable pageable) {
-        return ResponseEntity.ok("Danh sách việc");
-    }
-
-    @GetMapping("/jobs/search")
-    public ResponseEntity<?> searchJobs(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String location, Pageable pageable) {
-        return ResponseEntity.ok("Kết quả tìm kiếm");
-    }
-
-    @GetMapping("/jobs/{slug}")
-    public ResponseEntity<JobResponse> getJobDetail(@PathVariable String slug) {
-        Job job = jobRepository.findBySlugAndStatus(slug, JobStatus.ACTIVE)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy công việc"));
-        JobResponse response = jobMapper.toResponse(job).withSkills(
-                jobSkillService.getSkillsByJobId(job.getId()));
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/jobs/filter-options")
-    public ResponseEntity<?> getFilterOptions() {
-        return ResponseEntity.ok("Filter options");
-    }
-
-    @GetMapping("/categories")
-    public ResponseEntity<List<JobCategoryResponse>> getCategories() {
-        return ResponseEntity.ok(jobCategoryMapper.toResponseList(jobCategoryService.getAllCategories()));
-    }
+    private final JobRepository jobRepository;
 
     @Operation(summary = "Danh sách công ty (công khai)", description = "Lấy danh sách công ty đã được duyệt, phân trang, có tìm kiếm theo tên và ngành nghề.")
-    @GetMapping("/companies")
-    public ResponseEntity<Page<PublicCompanyListResponse>> getCompanies(
+    @GetMapping("/public/search")
+    public ResponseEntity<Page<PublicCompanyListResponse>> searchPublicCompanies(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Set<Integer> categoryId,
             @RequestParam(required = false) String status,
             Pageable pageable) {
-        Page<Company> companies = companyService.listCompaniesPage(keyword, status, categoryId, pageable);
+        String filterStatus = (status != null) ? status : "APPROVED";
+        Page<Company> companies = companyService.listCompaniesPage(keyword, filterStatus, categoryId, pageable);
 
         List<UUID> companyIds = companies.getContent().stream().map(Company::getId).toList();
         if (companyIds.isEmpty()) {
@@ -121,15 +88,16 @@ public class PublicController implements PublicApi {
         }));
     }
 
-    @GetMapping("/companies/{slug}")
-    public ResponseEntity<PublicCompanyResponse> findCompanyBySlug(@PathVariable String slug) {
+    @Operation(summary = "Chi tiết công ty (công khai)", description = "Lấy thông tin chi tiết của công ty theo slug.")
+    @GetMapping("/public/{slug}")
+    public ResponseEntity<PublicCompanyResponse> getPublicCompanyDetail(@PathVariable String slug) {
         return ResponseEntity.ok(companyService.getPublicCompanyDetail(slug));
     }
 
-    @GetMapping("/companies/{slug}/jobs")
-    public ResponseEntity<Page<JobResponse>> getCompanyJobs(
+    @Operation(summary = "Việc làm của công ty (công khai)", description = "Lấy danh sách việc làm đang tuyển của công ty theo slug.")
+    @GetMapping("/public/{slug}/jobs")
+    public ResponseEntity<Page<JobResponse>> getPublicCompanyJobs(
             @PathVariable String slug, Pageable pageable) {
-
         return ResponseEntity.ok(companyService.getPublicJobsByCompany(slug, pageable).map(jobMapper::toResponse));
     }
 }

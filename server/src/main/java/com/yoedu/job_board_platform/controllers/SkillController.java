@@ -43,6 +43,14 @@ public class SkillController implements SkillApi {
         return ResponseEntity.ok(skillService.getAllSkills(pageable, publicFilter).map(skillMapper::toResponse));
     }
 
+    /** Danh sách kỹ năng phẳng (không phân trang) — dùng cho filter sidebar. */
+    @GetMapping("/public")
+    public ResponseEntity<List<SkillResponse>> getAllSkillsPublic() {
+        var allActive = skillService.getAllSkills(
+                Pageable.unpaged(), new SkillFilterRequest(null, true));
+        return ResponseEntity.ok(allActive.getContent().stream().map(skillMapper::toResponse).toList());
+    }
+
     /** Lấy danh sách kỹ năng của ứng viên đang đăng nhập. */
     @GetMapping("/profile")
     @PreAuthorize(AuthorizationConstants.CANDIDATE)

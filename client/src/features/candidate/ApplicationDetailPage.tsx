@@ -1,11 +1,10 @@
-import { useApplicationDetail, useApplicationTimeline } from "@/hooks/useApplications";
-import { ApplicationStatusBadge } from "./components/ApplicationStatusBadge";
-import { ApplicationTimeline } from "./components/ApplicationTimeline";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useApplicationDetail, useApplicationTimeline } from "@/hooks/useApplications";
 import RouterRoutes from "@/utils/RouterRoutes";
-import { Building2, ExternalLink, MapPin, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Building2, ExternalLink, MapPin } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { ApplicationStatusBadge, ApplicationTimeline } from "../../components/shared/ApplicationTimeline";
 
 function formatDate(value: string | null) {
 	if (!value) return "—";

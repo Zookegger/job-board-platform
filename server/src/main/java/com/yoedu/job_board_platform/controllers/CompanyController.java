@@ -129,11 +129,12 @@ public class CompanyController implements CompanyApi {
 
     @Override
     @GetMapping("/search")
+    @PreAuthorize(AuthorizationConstants.ADMIN)
     public ResponseEntity<Page<PublicCompanyResponse>> listCompaniesPage(String keyword,
             Set<Integer> jobCategoryIds,
             Pageable pageable) {
 
-        var companies = companyService.listCompaniesPage(keyword, CompanyStatus.APPROVED.toString(), jobCategoryIds, pageable);
+        var companies = companyService.searchAllCompanies(keyword, jobCategoryIds, pageable);
 
         return ResponseEntity.ok(companies.map(companyMapper::toPublicResponse));
     }
