@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/shared/DataTable";
 import { Button } from "@/components/ui/button";
-import { ApplicationStatusBadge } from "@/features/candidate/components/ApplicationStatusBadge";
+import { ApplicationStatusBadge } from "@/components/shared/ApplicationTimeline";
 import { useMyApplications } from "@/hooks/useApplications";
 import type { ApplicationListResponse, ApplicationStatus } from "@/types/application";
 import { formatDate } from "@/utils/DateUtils";
