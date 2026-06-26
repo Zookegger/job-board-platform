@@ -25,7 +25,8 @@ public interface EmployerApplicationApi {
     ResponseEntity<Page<EmployerApplicationListResponse>> getApplications(
             @Parameter(description = "Lọc theo ID tin tuyển dụng") UUID jobId,
             @Parameter(description = "Lọc theo trạng thái") String status,
-            @Parameter(description = "Số trang (bắt đầu từ 0)") int page);
+            @Parameter(description = "Số trang (bắt đầu từ 0)") int page,
+            @Parameter(description = "Số phần tử mỗi trang") int size);
 
     @Operation(summary = "Chi tiết đơn ứng tuyển")
     @ApiResponses({

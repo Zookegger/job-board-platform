@@ -40,7 +40,8 @@ public class EmployerApplicationController implements EmployerApplicationApi {
     public ResponseEntity<Page<EmployerApplicationListResponse>> getApplications(
             @RequestParam(required = false) UUID jobId,
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         Profile profile = securityUtil.getCurrentUser().getProfile();
         CompanyEmployerDetail employerDetail = profile != null ? profile.getEmployerDetail() : null;
@@ -61,7 +62,7 @@ public class EmployerApplicationController implements EmployerApplicationApi {
 
         Page<EmployerApplicationListResponse> result = applicationService.getEmployerApplications(
                 company.getId(), jobId, statusEnum,
-                PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "appliedAt")));
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "appliedAt")));
 
         return ResponseEntity.ok(result);
     }
@@ -77,7 +78,12 @@ public class EmployerApplicationController implements EmployerApplicationApi {
             @RequestParam String status,
             @RequestParam(required = false) String reason) {
 
-        ApplicationStatus newStatus = ApplicationStatus.valueOf(status.toUpperCase());
+        ApplicationStatus newStatus;
+        try {
+            newStatus = ApplicationStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid status value: " + status);
+        }
         applicationService.updateApplicationStatus(id, newStatus, reason);
         return ResponseEntity.ok().build();
     }

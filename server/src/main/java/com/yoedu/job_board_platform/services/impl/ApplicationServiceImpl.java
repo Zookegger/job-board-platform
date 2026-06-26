@@ -88,13 +88,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application saved = applicationRepository.save(application);
 
-        ApplicationStatusLog initialLog = ApplicationStatusLog.builder()
-                .application(saved)
-                .status(ApplicationStatus.PENDING)
-                .changedBy(user)
-                .note("Đơn ứng tuyển đã được gửi")
-                .build();
-        applicationStatusLogRepository.save(initialLog);
+        applicationStatusLogRepository.save(
+                applicationStatusLogMapper.createLog(saved, ApplicationStatus.PENDING, user, "Đơn ứng tuyển đã được gửi"));
 
         return applicationMapper.toDetailResponse(saved);
     }
@@ -262,12 +257,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Ghi lịch sử thay đổi trạng thái
         String note = (reason != null && !reason.isBlank()) ? reason : null;
-        ApplicationStatusLog log = ApplicationStatusLog.builder()
-                .application(application)
-                .status(newStatus)
-                .changedBy(employer)
-                .note(note)
-                .build();
-        applicationStatusLogRepository.save(log);
+        applicationStatusLogRepository.save(
+                applicationStatusLogMapper.createLog(application, newStatus, employer, note));
     }
 }

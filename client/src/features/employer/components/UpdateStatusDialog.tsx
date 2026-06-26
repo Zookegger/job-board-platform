@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateApplicationStatus } from "@/hooks/useEmployerApplications";
 import { cn } from "@/lib/utils";
-import type { ApplicationStatus, EmployerApplicationListResponse } from "@/types/application";
+import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type EmployerApplicationListResponse } from "@/types/application";
 import getErrorMessage from "@/utils/getErrorMessage";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { useEffect } from "react";
@@ -23,39 +23,32 @@ import { toast } from "sonner";
 const EMPLOYER_STATUSES: ApplicationStatus[] = ["REVIEWING", "INTERVIEW", "HIRED", "REJECTED"];
 
 interface StatusMeta {
-	label: string;
 	chipClass: string;
 	btnClass: string;
 }
 
 const STATUS_META: Record<string, StatusMeta> = {
 	PENDING: {
-		label: "Chờ xử lý",
 		chipClass: "bg-amber-50 text-amber-700 border border-amber-300",
 		btnClass: "bg-amber-600 hover:bg-amber-700 focus-visible:ring-amber-500",
 	},
 	REVIEWING: {
-		label: "Đang xem xét",
 		chipClass: "bg-blue-50 text-blue-700 border border-blue-300",
 		btnClass: "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500",
 	},
 	INTERVIEW: {
-		label: "Phỏng vấn",
 		chipClass: "bg-violet-50 text-violet-700 border border-violet-300",
 		btnClass: "bg-violet-600 hover:bg-violet-700 focus-visible:ring-violet-500",
 	},
 	HIRED: {
-		label: "Đã tuyển",
 		chipClass: "bg-green-50 text-green-700 border border-green-300",
 		btnClass: "bg-green-600 hover:bg-green-700 focus-visible:ring-green-500",
 	},
 	REJECTED: {
-		label: "Từ chối",
 		chipClass: "bg-red-50 text-red-700 border border-red-300",
 		btnClass: "bg-red-600 hover:bg-red-700 focus-visible:ring-red-500",
 	},
 	WITHDRAWN: {
-		label: "Đã rút đơn",
 		chipClass: "bg-gray-100 text-gray-600 border border-gray-300",
 		btnClass: "bg-gray-600 hover:bg-gray-700 focus-visible:ring-gray-500",
 	},
@@ -96,7 +89,7 @@ function StatusChip({ status }: { status: string }) {
 				meta.chipClass,
 			)}
 		>
-			{meta.label}
+			{APPLICATION_STATUS_LABELS[status as ApplicationStatus] ?? status}
 		</span>
 	);
 }
@@ -212,7 +205,7 @@ export function UpdateStatusDialog({ application, open, onOpenChange }: UpdateSt
 								</SelectTrigger>
 								<SelectContent>
 									{EMPLOYER_STATUSES.map((s) => (
-										<SelectItem key={s} value={s} textValue={STATUS_META[s]?.label ?? s}>
+										<SelectItem key={s} value={s} textValue={APPLICATION_STATUS_LABELS[s] ?? s}>
 											<StatusChip status={s} />
 										</SelectItem>
 									))}

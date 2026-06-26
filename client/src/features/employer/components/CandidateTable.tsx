@@ -4,7 +4,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { useEmployerApplications } from "@/hooks/useEmployerApplications";
 import type { EmployerApplicationListResponse, EmployerApplicationParams } from "@/types/application";
 import { formatDate } from "@/utils/DateUtils";
-import { Building2, Eye, RefreshCw, UserCog } from "lucide-react";
+import { Eye, RefreshCw, User, UserCog } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CvPreviewModal } from "./CvPreviewModal";
 import { UpdateStatusDialog } from "./UpdateStatusDialog";
@@ -19,7 +19,7 @@ function CandidateAvatar({ application }: { application: EmployerApplicationList
 			{application.candidateAvatarUrl ? (
 				<img src={application.candidateAvatarUrl} alt={application.candidateName} className='h-full w-full object-cover' />
 			) : (
-				<Building2 className='size-4 text-muted-foreground/70' />
+				<User className='size-4 text-muted-foreground/70' />
 			)}
 		</div>
 	);
@@ -27,6 +27,7 @@ function CandidateAvatar({ application }: { application: EmployerApplicationList
 
 export default function CandidateTable({ jobId }: CandidateTableProps) {
 	const [page, setPage] = useState(0);
+	const [pageSize, setPageSize] = useState(10);
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 	const [selected, setSelected] = useState<EmployerApplicationListResponse | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -36,10 +37,11 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 	const params: EmployerApplicationParams = useMemo(
 		() => ({
 			page,
+			size: pageSize,
 			jobId,
 			status: statusFilter === "all" ? undefined : statusFilter,
 		}),
-		[page, jobId, statusFilter],
+		[page, pageSize, jobId, statusFilter],
 	);
 
 	const { data, isLoading, isError, error, isFetching, refetch } = useEmployerApplications(params);
@@ -173,9 +175,9 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 					pageResponse={data}
 					pageable={{
 						page,
-						pageSize: 10,
+						pageSize,
 						onPageChange: setPage,
-						onPageSizeChange: () => {},
+						onPageSizeChange: (newSize) => { setPageSize(newSize); setPage(0); },
 						isFetching,
 					}}
 				/>

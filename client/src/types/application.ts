@@ -67,4 +67,5 @@ export interface EmployerApplicationParams {
 	jobId?: string;
 	status?: string;
 	page?: number;
+	size?: number;
 }
