@@ -4,8 +4,9 @@ import { DataTable } from "@/components/shared/DataTable";
 import { useEmployerApplications } from "@/hooks/useEmployerApplications";
 import type { EmployerApplicationListResponse, EmployerApplicationParams } from "@/types/application";
 import { formatDate } from "@/utils/DateUtils";
-import { Building2, RefreshCw, UserCog } from "lucide-react";
+import { Building2, Eye, RefreshCw, UserCog } from "lucide-react";
 import { useMemo, useState } from "react";
+import { CvPreviewModal } from "./CvPreviewModal";
 import { UpdateStatusDialog } from "./UpdateStatusDialog";
 
 interface CandidateTableProps {
@@ -29,6 +30,8 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 	const [selected, setSelected] = useState<EmployerApplicationListResponse | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
+	const [cvTarget, setCvTarget] = useState<EmployerApplicationListResponse | null>(null);
+	const [cvOpen, setCvOpen] = useState(false);
 
 	const params: EmployerApplicationParams = useMemo(
 		() => ({
@@ -47,6 +50,11 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 	function openDialog(application: EmployerApplicationListResponse) {
 		setSelected(application);
 		setDialogOpen(true);
+	}
+
+	function openCvPreview(application: EmployerApplicationListResponse) {
+		setCvTarget(application);
+		setCvOpen(true);
 	}
 
 	return (
@@ -127,15 +135,28 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 							header: "Thao tác",
 							className: "align-middle text-right",
 							render: (app) => (
-								<Button
-									variant='ghost'
-									size='sm'
-									className='h-8 gap-1.5 px-3 hover:bg-primary/10 hover:text-primary'
-									onClick={() => openDialog(app)}
-								>
-									<UserCog className='size-4' />
-									<span className='hidden sm:inline'>Cập nhật</span>
-								</Button>
+								<div className='flex items-center justify-end gap-1'>
+									<Button
+										variant='ghost'
+										size='icon'
+										className='h-8 w-8 hover:bg-primary/10 hover:text-primary disabled:opacity-40'
+										onClick={() => openCvPreview(app)}
+										disabled={!app.resumeUrl}
+										title={app.resumeUrl ? 'Xem CV' : 'Ứng viên chưa tải CV'}
+										aria-label='Xem CV'
+									>
+										<Eye className='size-4' />
+									</Button>
+									<Button
+										variant='ghost'
+										size='sm'
+										className='h-8 gap-1.5 px-3 hover:bg-primary/10 hover:text-primary'
+										onClick={() => openDialog(app)}
+									>
+										<UserCog className='size-4' />
+										<span className='hidden sm:inline'>Cập nhật</span>
+									</Button>
+								</div>
 							),
 						},
 					]}
@@ -164,6 +185,13 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 				application={selected}
 				open={dialogOpen}
 				onOpenChange={setDialogOpen}
+			/>
+
+			<CvPreviewModal
+				candidateName={cvTarget?.candidateName ?? ""}
+				resumeUrl={cvTarget?.resumeUrl ?? null}
+				open={cvOpen}
+				onClose={() => setCvOpen(false)}
 			/>
 		</div>
 	);
