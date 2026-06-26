@@ -9,6 +9,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
+import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
 import com.yoedu.job_board_platform.models.Application;
 
 @Mapper(componentModel = "spring")
@@ -29,6 +30,14 @@ public interface ApplicationMapper {
     @Mapping(target = "companyLogoUrl", source = "job.company.logoUrl")
     @Mapping(target = "jobLocation", source = "job.location")
     ApplicationResponse toDetailResponse(Application application);
+
+    @Mapping(target = "candidateId", source = "candidate.id")
+    @Mapping(target = "candidateName", source = "candidate.fullName")
+    @Mapping(target = "candidateAvatarUrl", source = "candidate.avatarUrl")
+    @Mapping(target = "candidateEmail", source = "candidate.user.email")
+    @Mapping(target = "jobId", source = "job.id")
+    @Mapping(target = "jobTitle", source = "job.title")
+    EmployerApplicationListResponse toEmployerListResponse(Application application);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "candidate", ignore = true)

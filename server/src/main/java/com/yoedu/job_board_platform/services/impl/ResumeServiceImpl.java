@@ -108,12 +108,15 @@ public class ResumeServiceImpl implements ResumeService {
             throw new RuntimeException("Lỗi lưu file CV", e);
         }
 
+        // Lưu URL path (không phải OS path) để dùng được trực tiếp trên frontend
+        var urlPath = "/uploads/resumes/" + fileName;
+
         Resume resume;
         if (existingResume != null) {
             resume = existingResume;
             resume.setTitle(title != null ? title : resume.getTitle());
             resume.setOriginalFileName(file.getOriginalFilename());
-            resume.setFilePath(targetPath.toString());
+            resume.setFilePath(urlPath);
             resume.setFileSize(file.getSize());
             resume.setFileType("application/pdf");
             resume.setUpdatedAt(now);
@@ -123,7 +126,7 @@ public class ResumeServiceImpl implements ResumeService {
             resume.setCandidateDetail(detail);
             resume.setTitle(title != null ? title : "CV của tôi");
             resume.setOriginalFileName(file.getOriginalFilename());
-            resume.setFilePath(targetPath.toString());
+            resume.setFilePath(urlPath);
             resume.setFileSize(file.getSize());
             resume.setFileType("application/pdf");
             resume.setCreatedAt(now);
@@ -159,7 +162,7 @@ public class ResumeServiceImpl implements ResumeService {
         }
 
         try {
-            Files.deleteIfExists(Paths.get(resume.getFilePath()));
+            Files.deleteIfExists(resolveOsPath(resume.getFilePath()));
         } catch (IOException e) {
             log.warn("Không thể xóa file CV trên disk: {}", resume.getFilePath(), e);
         }
@@ -175,7 +178,7 @@ public class ResumeServiceImpl implements ResumeService {
         }
 
         try {
-            var path = Paths.get(resume.getFilePath());
+            var path = resolveOsPath(resume.getFilePath());
             var resource = new UrlResource(path.toUri());
             if (resource.exists() && resource.isReadable()) {
                 return resource;
@@ -189,5 +192,17 @@ public class ResumeServiceImpl implements ResumeService {
     @Override
     public List<ResumeResponse> listResumes() {
         return resumeRepository.findAll().stream().map(resumeMapper::toResponse).toList();
+    }
+
+    /**
+     * Chuyển URL path ("/uploads/resumes/x.pdf") hoặc OS path cũ ("uploads\resumes\x.pdf")
+     * thành java.nio.Path có thể dùng để đọc/xóa file trên disk.
+     */
+    private java.nio.file.Path resolveOsPath(String filePath) {
+        if (filePath.startsWith("/uploads/")) {
+            return Paths.get(uploadDir, filePath.substring("/uploads/".length()));
+        }
+        // backward-compat: đường dẫn OS cũ (tuyệt đối hoặc tương đối)
+        return Paths.get(filePath);
     }
 }
