@@ -160,9 +160,9 @@ class SkillControllerTest {
     }
 
     @Test
-    void getCandidateSkills_withoutAuth_returns401() throws Exception {
-        mockMvc.perform(get("/api/skills/profile"))
-                .andExpect(status().isUnauthorized());
+	void getCandidateSkills_withoutAuth_returns403() throws Exception {
+		mockMvc.perform(get("/api/skills/profile"))
+				.andExpect(status().isForbidden());
     }
 
     // ----------------------------------------------------------------
@@ -201,13 +201,13 @@ class SkillControllerTest {
     }
 
     @Test
-    void updateCandidateSkills_withoutAuth_returns401() throws Exception {
-        var payload = objectMapper.writeValueAsString(Map.of(
-                "skills", List.of(Map.of("skillId", 1, "proficientLevel", "BEGINNER"))));
+	void updateCandidateSkills_withoutAuth_returns403() throws Exception {
+		var payload = objectMapper.writeValueAsString(Map.of(
+				"skills", List.of(Map.of("skillId", 1, "proficientLevel", "BEGINNER"))));
 
-        mockMvc.perform(put("/api/skills/profile")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isUnauthorized());
+		mockMvc.perform(put("/api/skills/profile")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(payload))
+				.andExpect(status().isForbidden());
     }
 }

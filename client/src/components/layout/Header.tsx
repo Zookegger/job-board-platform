@@ -211,7 +211,7 @@ export function Header() {
 						</SheetTrigger>
 						<SheetContent
 							side='right'
-							className='w-70 sm:w-[320px]'
+							className='w-full sm:max-w-sm'
 						>
 							<MobileNav
 								isAuthenticated={!!isAuthenticated}

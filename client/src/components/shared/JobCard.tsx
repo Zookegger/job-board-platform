@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import type { PublicCompanyJob } from "@/api/publicCompany";
 import { formatDate } from "@/utils/DateUtils";
 
 const STATUS_MAP: Record<string, string> = {
@@ -10,20 +11,9 @@ const STATUS_MAP: Record<string, string> = {
 	REJECTED: "Bị từ chối",
 };
 
-export interface JobCardData {
-	id: string;
-	slug: string;
-	title: string;
-	location?: string;
-	status?: string;
-	createdAt?: string;
-	companyName?: string;
-	companySlug?: string;
-	skills?: Array<{ id: number; name: string; isActive: boolean }>;
-}
 
 interface JobCardProps {
-	job: JobCardData;
+	job: PublicCompanyJob;
 }
 
 function JobStatusBadge({ status }: { status?: string }) {
@@ -101,3 +91,4 @@ function JobCard({ job }: JobCardProps) {
 }
 
 export { JobCard };
+

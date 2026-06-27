@@ -8,7 +8,7 @@ type FileSizeUnit = "B" | "KB" | "MB";
  * @param bytes số byte của tệp tin cần định dạng
  * @returns Chuỗi kích thước tệp tin đã được định dạng
  */
-function formatFileSize(bytes: number, unit: FileSizeUnit): string {
+function formatFileSize(bytes: number, unit?: FileSizeUnit): string {
 	if (unit === "B") {
 		return `${bytes} B`;
 	}

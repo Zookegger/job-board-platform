@@ -37,7 +37,7 @@ export interface CandidateRegisterRequest {
 
 export interface CompanyRegisterRequest {
 	companyName: string;
-	taxCode?: string;
+	taxCode: string;
 	address: string;
 	fullName: string;
 	userEmail: string;
