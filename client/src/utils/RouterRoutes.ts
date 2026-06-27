@@ -20,9 +20,7 @@ const RouterRoutes = {
 	EMPLOYER_JOBS: "/employer/jobs",
 	EMPLOYER_CREATE_JOB: "/employer/jobs/new",
 	EMPLOYER_JOB_DETAIL: (id: string) => `/employer/jobs/${id}`,
-	EMPLOYER_APPLICATIONS: "/employer/applications",
 	EMPLOYER_COMPANY: "/employer/company",
-	EMPLOYER_SETTINGS: "/employer/settings",
 
 	// Admin
 	ADMIN_DASHBOARD: "/admin/dashboard",
@@ -30,7 +28,6 @@ const RouterRoutes = {
 	ADMIN_COMPANIES: "/admin/companies",
 	ADMIN_JOBS: "/admin/jobs",
 	ADMIN_REPORTS: "/admin/reports",
-	ADMIN_SETTINGS: "/admin/settings",
 	ADMIN_SKILLS: "/admin/skills",
 };
 

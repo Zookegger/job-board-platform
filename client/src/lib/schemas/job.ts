@@ -1,11 +1,12 @@
+import { EmploymentTypes, ExperienceLevels, LocationTypes } from "@/types/job";
 import { z } from "zod";
 
 export const jobSchema = z
 	.object({
 		title: z.string().min(1, "Tiêu đề không được để trống").max(255, "Tiêu đề tối đa 255 ký tự"),
 		description: z.string().min(1, "Mô tả không được để trống"),
-		requirements: z.string().optional().default(""),
-		benefits: z.string().optional().default(""),
+		requirements: z.string().min(1, "Yêu cầu ứng viên không được để trống"),
+		benefits: z.string().min(1, "Quyền lợi không được để trống"),
 		categoryId: z.number({
 			error: "Vui lòng chọn ngành nghề",
 		}),
@@ -13,14 +14,10 @@ export const jobSchema = z
 		salaryMin: z.number().min(0, "Lương không được âm").optional().nullable(),
 		salaryMax: z.number().min(0, "Lương không được âm").optional().nullable(),
 		currency: z.string().default("VND"),
-		location: z.string().optional().default(""),
-		locationTypes: z.enum(["ONSITE", "REMOTE", "HYBRID"], { error: "Vui lòng chọn hình thức làm việc" }),
-		employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"], {
-			error: "Vui lòng chọn loại hình",
-		}),
-		experienceLevel: z.enum(["INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"], {
-			error: "Vui lòng chọn cấp bậc kinh nghiệm",
-		}),
+		location: z.string().default(""),
+		locationTypes: z.enum(LocationTypes, { error: "Vui lòng chọn hình thức làm việc" }),
+		employmentType: z.enum(EmploymentTypes, { error: "Vui lòng chọn loại hình" }),
+		experienceLevel: z.enum(ExperienceLevels, { error: "Vui lòng chọn cấp bậc kinh nghiệm" }),
 		skillIds: z.array(z.number()).optional().default([]),
 	})
 	.refine(

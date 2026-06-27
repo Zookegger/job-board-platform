@@ -1,18 +1,19 @@
 import { BaseDialog } from "@/components/shared/BaseDialog";
-import { DataTable } from "@/components/shared/DataTable";
+import { DataTable, type DataTableActions } from "@/components/shared/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useDeleteEmployerJob, useEmployerJobs, useSubmitForReview } from "@/hooks/useEmployerJobs";
 import type { JobListResponse, JobStatus } from "@/types/job";
 import { EMPLOYMENT_TYPE_LABELS, EXPERIENCE_LEVEL_LABELS, JOB_STATUS_LABELS, LOCATION_TYPES_LABELS } from "@/types/job";
+import { formatDate } from "@/utils/DateUtils";
 import getErrorMessage from "@/utils/getErrorMessage";
-import { Briefcase, Eye, Plus, RefreshCw, Search, SendHorizonal, Trash2 } from "lucide-react";
+import { formatSalary } from "@/utils/StringUtil";
+import { Briefcase, Eye, Plus, RefreshCw, Search, SendHorizonal, SendHorizontal, Trash2 } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
-
-import { formatDate } from "@/utils/DateUtils";
-import { formatSalary } from "@/utils/StringUtil";
+import CandidateTable from "./components/CandidateTable";
 import JobFormDialog from "./components/JobFormDialog";
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -59,6 +60,8 @@ export default function EmployerJobsPage() {
 	const [formDialogOpen, setFormDialogOpen] = useState(false);
 	const [formDialogMode, setFormDialogMode] = useState<"create" | "detail" | "edit">("create");
 	const [selectedJobId, setSelectedJobId] = useState<string | undefined>(undefined);
+
+	const [candidateSheetJob, setCandidateSheetJob] = useState<JobListResponse | null>(null);
 
 	const [submitDialog, setSubmitDialog] = useState<{
 		open: boolean;
@@ -121,6 +124,39 @@ export default function EmployerJobsPage() {
 		setDeleteDialog({ open: true, job });
 	};
 
+	const tableActions: DataTableActions<JobListResponse>[] = [
+		{
+			header: "Thao tác",
+			items: [
+				{
+					label: "Xem chi tiết",
+					icon: Eye,
+					variant: "outline",
+					onClick: (job) => {
+						setFormDialogMode("detail");
+						setSelectedJobId(job.id);
+						setFormDialogOpen(true);
+					},
+				},
+				{
+					label: "Gửi duyệt",
+					icon: SendHorizontal,
+					variant: "primary", // Maps directly to your mobile variant
+					show: (job) => job.status === "DRAFT",
+					disabled: () => actionPending,
+					onClick: (job) => openSubmitDialog(job),
+				},
+				{
+					label: "Xóa",
+					icon: Trash2,
+					variant: "destructive",
+					disabled: () => actionPending,
+					onClick: (job) => openDeleteDialog(job),
+				},
+			],
+		},
+	];
+
 	const confirmDelete = () => {
 		if (!deleteDialog.job) return;
 
@@ -145,7 +181,11 @@ export default function EmployerJobsPage() {
 				<div className='flex gap-2'>
 					<Button
 						variant='outline'
-						onClick={() => { setFormDialogMode("create"); setSelectedJobId(undefined); setFormDialogOpen(true); }}
+						onClick={() => {
+							setFormDialogMode("create");
+							setSelectedJobId(undefined);
+							setFormDialogOpen(true);
+						}}
 					>
 						<Plus /> Tạo tin
 					</Button>
@@ -194,7 +234,11 @@ export default function EmployerJobsPage() {
 						render: (job) => (
 							<div className='min-w-0'>
 								<button
-									onClick={() => { setFormDialogMode("detail"); setSelectedJobId(job.id); setFormDialogOpen(true); }}
+									onClick={() => {
+										setFormDialogMode("detail");
+										setSelectedJobId(job.id);
+										setFormDialogOpen(true);
+									}}
 									className='text-left font-medium text-foreground hover:text-primary hover:underline'
 								>
 									{job.title}
@@ -230,42 +274,6 @@ export default function EmployerJobsPage() {
 						className: "align-top text-sm text-muted-foreground",
 						render: (job) => formatDate(job.createdAt),
 					},
-					{
-						key: "actions",
-						header: "Thao tác",
-						className: "align-top",
-						render: (job) => (
-							<div className='flex flex-wrap gap-2'>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() => { setFormDialogMode("detail"); setSelectedJobId(job.id); setFormDialogOpen(true); }}
-								>
-									<Eye /> Xem
-								</Button>
-								{job.status === "DRAFT" && (
-									<Button
-										variant='outline'
-										size='sm'
-										disabled={actionPending}
-										onClick={() => openSubmitDialog(job)}
-									>
-										<SendHorizonal /> Gửi duyệt
-									</Button>
-								)}
-								{(job.status === "DRAFT" || job.status === "REJECTED") && (
-									<Button
-										variant='destructive'
-										size='sm'
-										disabled={actionPending}
-										onClick={() => openDeleteDialog(job)}
-									>
-										<Trash2 /> Xóa
-									</Button>
-								)}
-							</div>
-						),
-					},
 				]}
 				data={jobs}
 				isLoading={isLoading}
@@ -295,6 +303,11 @@ export default function EmployerJobsPage() {
 					label: "tin",
 				}}
 				minWidth='min-w-[900px]'
+				actions={tableActions}
+				onRowClick={(job) => {
+					setCandidateSheetJob(job);
+				}}
+				rowTitle="Bấm để xem danh sách ứng tuyển"
 			/>
 
 			<BaseDialog
@@ -356,11 +369,34 @@ export default function EmployerJobsPage() {
 					}}
 					mode={formDialogMode}
 					jobId={selectedJobId}
-					onCreated={(id) => { setSelectedJobId(id); setFormDialogMode("detail"); }}
+					onCreated={(id) => {
+						setSelectedJobId(id);
+						setFormDialogMode("detail");
+					}}
 					onEditJob={() => setFormDialogMode("edit")}
 					onCancelEdit={() => setFormDialogMode("detail")}
 				/>
 			)}
+
+			<Sheet
+				open={!!candidateSheetJob}
+				onOpenChange={(open) => {
+					if (!open) setCandidateSheetJob(null);
+				}}
+			>
+				<SheetContent
+					side='right'
+					className='w-dvw! sm:max-w-3xl! p-0'
+				>
+					<SheetHeader className='px-6 pt-6 pb-2'>
+						<SheetTitle className='text-lg'>Ứng viên — {candidateSheetJob?.title ?? ""}</SheetTitle>
+						<SheetDescription>Danh sách ứng viên đã nộp đơn cho tin tuyển dụng này</SheetDescription>
+					</SheetHeader>
+					<div className='flex-1 overflow-y-auto px-6 pb-6'>
+						{candidateSheetJob && <CandidateTable jobId={candidateSheetJob.id} />}
+					</div>
+				</SheetContent>
+			</Sheet>
 		</div>
 	);
 }

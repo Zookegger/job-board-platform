@@ -16,6 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ConflictException;
@@ -23,12 +27,14 @@ import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
+import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
 import com.yoedu.job_board_platform.mappers.ApplicationMapper;
 import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.models.ApplicationStatusLog;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
@@ -36,8 +42,10 @@ import com.yoedu.job_board_platform.models.Resume;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
+import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.ResumeRepository;
+import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.services.impl.ApplicationServiceImpl;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 
@@ -64,6 +72,12 @@ class ApplicationServiceImplTest {
 
     @Mock
     private ApplicationStatusLogMapper applicationStatusLogMapper;
+
+    @Mock
+    private CandidateSkillRepository candidateSkillRepository;
+
+    @Mock
+    private SkillRepository skillRepository;
 
     @InjectMocks
     private ApplicationServiceImpl applicationService;
@@ -99,6 +113,44 @@ class ApplicationServiceImplTest {
         resume.setId(UUID.randomUUID());
         resume.setFilePath("/uploads/resumes/cv.pdf");
         return resume;
+    }
+
+    // ─── Employer helpers ─────────────────────────────────────────────────
+
+    private Company buildCompany() {
+        Company company = new Company();
+        company.setId(UUID.randomUUID());
+        company.setCompanyName("ACME Corp");
+        return company;
+    }
+
+    private Job buildJobWithCompany(Company company, String title) {
+        Job job = new Job();
+        job.setId(UUID.randomUUID());
+        job.setTitle(title);
+        job.setStatus(JobStatus.ACTIVE);
+        job.setCompany(company);
+        return job;
+    }
+
+    private User buildEmployerUser(Company company) {
+        Profile profile = buildProfile();
+        CompanyEmployerDetail detail = CompanyEmployerDetail.builder()
+                .profile(profile)
+                .company(company)
+                .roleInCompany("HR Manager")
+                .build();
+        profile.setEmployerDetail(detail);
+        return buildUser(profile);
+    }
+
+    private Application buildApplication(Profile candidate, Job job, ApplicationStatus status) {
+        return Application.builder()
+                .id(UUID.randomUUID())
+                .candidate(candidate)
+                .job(job)
+                .status(status)
+                .build();
     }
 
     // ─── submitApplication ──────────────────────────────────────────────────
@@ -427,5 +479,190 @@ class ApplicationServiceImplTest {
                 .isInstanceOf(ForbiddenException.class);
 
         verify(applicationStatusLogRepository, never()).findByApplicationIdOrderByChangedAtAsc(any());
+    }
+
+    // ─── getEmployerApplications ──────────────────────────────────────────
+
+    @Test
+    void TC_16_getEmployerApplications_success_allFilters() {
+        Company company = buildCompany();
+        UUID companyId = company.getId();
+        UUID jobId = UUID.randomUUID();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Profile candidate = buildProfile();
+        Job job = buildJobWithCompany(company, "Backend Developer");
+        Application application = buildApplication(candidate, job, ApplicationStatus.REVIEWING);
+        Page<Application> appPage = new PageImpl<>(List.of(application));
+
+        when(applicationRepository.findByJobCompanyIdAndJobIdAndStatus(companyId, jobId, ApplicationStatus.REVIEWING,
+                pageable)).thenReturn(appPage);
+        when(candidateSkillRepository.findAllByIdCandidateIdIn(List.of(candidate.getId())))
+                .thenReturn(List.of());
+        when(skillRepository.findAllById(List.of()))
+                .thenReturn(List.of());
+
+        EmployerApplicationListResponse response = new EmployerApplicationListResponse(
+                application.getId(), candidate.getId(), null, null, null, null,
+                jobId, "Backend Developer", ApplicationStatus.REVIEWING,
+                null, null, null, List.of());
+        when(applicationMapper.toEmployerListResponse(application, List.of()))
+                .thenReturn(response);
+
+        Page<EmployerApplicationListResponse> result = applicationService.getEmployerApplications(
+                companyId, jobId, ApplicationStatus.REVIEWING, pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).jobTitle()).isEqualTo("Backend Developer");
+        verify(applicationRepository).findByJobCompanyIdAndJobIdAndStatus(
+                companyId, jobId, ApplicationStatus.REVIEWING, pageable);
+    }
+
+    @Test
+    void TC_17_getEmployerApplications_success_noFilters() {
+        Company company = buildCompany();
+        UUID companyId = company.getId();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Profile candidate = buildProfile();
+        Job job = buildJobWithCompany(company, "Frontend Developer");
+        Application application = buildApplication(candidate, job, ApplicationStatus.PENDING);
+        Page<Application> appPage = new PageImpl<>(List.of(application));
+
+        when(applicationRepository.findByJobCompanyId(companyId, pageable))
+                .thenReturn(appPage);
+        when(candidateSkillRepository.findAllByIdCandidateIdIn(List.of(candidate.getId())))
+                .thenReturn(List.of());
+        when(skillRepository.findAllById(List.of()))
+                .thenReturn(List.of());
+
+        EmployerApplicationListResponse response = new EmployerApplicationListResponse(
+                application.getId(), candidate.getId(), null, null, null, null,
+                null, "Frontend Developer", ApplicationStatus.PENDING,
+                null, null, null, List.of());
+        when(applicationMapper.toEmployerListResponse(application, List.of()))
+                .thenReturn(response);
+
+        Page<EmployerApplicationListResponse> result = applicationService.getEmployerApplications(
+                companyId, null, null, pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        verify(applicationRepository).findByJobCompanyId(companyId, pageable);
+    }
+
+    @Test
+    void TC_18_getEmployerApplications_emptyPage() {
+        Company company = buildCompany();
+        UUID companyId = company.getId();
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<Application> emptyPage = Page.empty();
+        when(applicationRepository.findByJobCompanyId(companyId, pageable))
+                .thenReturn(emptyPage);
+
+        Page<EmployerApplicationListResponse> result = applicationService.getEmployerApplications(
+                companyId, null, null, pageable);
+
+        assertThat(result).isEmpty();
+        verify(applicationMapper, never()).toEmployerListResponse(any(Application.class), any());
+        verify(candidateSkillRepository, never()).findAllByIdCandidateIdIn(any());
+    }
+
+    // ─── updateApplicationStatus ──────────────────────────────────────────
+
+    @Test
+    void TC_19_updateApplicationStatus_success() {
+        Company company = buildCompany();
+        User employer = buildEmployerUser(company);
+        UUID appId = UUID.randomUUID();
+
+        Profile candidate = buildProfile();
+        Job job = buildJobWithCompany(company, "Backend Developer");
+        Application application = buildApplication(candidate, job, ApplicationStatus.PENDING);
+
+        ApplicationStatusLog log = ApplicationStatusLog.builder().build();
+
+        when(securityUtil.getCurrentUser()).thenReturn(employer);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+        when(applicationStatusLogMapper.createLog(application, ApplicationStatus.REVIEWING, employer, "Đang xem xét"))
+                .thenReturn(log);
+
+        applicationService.updateApplicationStatus(appId, ApplicationStatus.REVIEWING, "Đang xem xét");
+
+        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.REVIEWING);
+        verify(applicationRepository).save(application);
+        verify(applicationStatusLogRepository).save(log);
+    }
+
+    @Test
+    void TC_20_updateApplicationStatus_throwsForbidden_noCompany() {
+        Profile profile = buildProfile();
+        User user = buildUser(profile);
+        UUID appId = UUID.randomUUID();
+
+        when(securityUtil.getCurrentUser()).thenReturn(user);
+
+        assertThatThrownBy(() -> applicationService.updateApplicationStatus(appId, ApplicationStatus.REVIEWING, null))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessageContaining("chưa có thông tin công ty");
+
+        verify(applicationRepository, never()).findById(any());
+    }
+
+    @Test
+    void TC_21_updateApplicationStatus_throwsForbidden_wrongCompany() {
+        Company employerCompany = buildCompany();
+        Company otherCompany = buildCompany();
+        User employer = buildEmployerUser(employerCompany);
+        UUID appId = UUID.randomUUID();
+
+        Profile candidate = buildProfile();
+        Job job = buildJobWithCompany(otherCompany, "Backend Developer");
+        Application application = buildApplication(candidate, job, ApplicationStatus.PENDING);
+
+        when(securityUtil.getCurrentUser()).thenReturn(employer);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationService.updateApplicationStatus(appId, ApplicationStatus.REVIEWING, null))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessageContaining("không có quyền");
+
+        verify(applicationRepository, never()).save(any());
+    }
+
+    @Test
+    void TC_22_updateApplicationStatus_throwsBadRequest_invalidStatus() {
+        Company company = buildCompany();
+        User employer = buildEmployerUser(company);
+        UUID appId = UUID.randomUUID();
+
+        Profile candidate = buildProfile();
+        Job job = buildJobWithCompany(company, "Backend Developer");
+        Application application = buildApplication(candidate, job, ApplicationStatus.PENDING);
+
+        when(securityUtil.getCurrentUser()).thenReturn(employer);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationService.updateApplicationStatus(appId, ApplicationStatus.PENDING, null))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Trạng thái không hợp lệ");
+
+        verify(applicationRepository, never()).save(any());
+    }
+
+    @Test
+    void TC_23_updateApplicationStatus_throwsNotFound() {
+        Company company = buildCompany();
+        User employer = buildEmployerUser(company);
+        UUID appId = UUID.randomUUID();
+
+        when(securityUtil.getCurrentUser()).thenReturn(employer);
+        when(applicationRepository.findById(appId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> applicationService.updateApplicationStatus(appId, ApplicationStatus.REVIEWING, null))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("đơn ứng tuyển");
     }
 }

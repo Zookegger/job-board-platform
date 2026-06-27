@@ -1,12 +1,13 @@
-import type { PendingCompany } from "@/api/admin";
+import type { AdminPendingCompanyResponse } from "@/types/company";
+
 
 type CompanyDetailsDrawerProps = {
-  company: PendingCompany;
-  isOpen: boolean;
-  onClose: () => void;
-  onApprove: () => void;
-  onReject: () => void;
-  onSuspend: () => void;
+	company: AdminPendingCompanyResponse;
+	isOpen: boolean;
+	onClose: () => void;
+	onApprove: () => void;
+	onReject: () => void;
+	onSuspend: () => void;
 };
 
 export default function CompanyDetailsDrawer({

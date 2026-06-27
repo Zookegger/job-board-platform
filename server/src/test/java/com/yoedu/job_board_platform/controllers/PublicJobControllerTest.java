@@ -49,7 +49,7 @@ class PublicJobControllerTest {
         void getCategories_returnsAllCategories() throws Exception {
                 jobCategoryRepository.save(JobCategory.builder().name("Finance").build());
 
-                var res = mockMvc.perform(get("/api/public/categories"))
+				var res = mockMvc.perform(get("/api/categories"))
                                 .andExpect(status().isOk())
                                 .andReturn();
 
@@ -63,7 +63,7 @@ class PublicJobControllerTest {
         void getCategories_whenEmpty_returnsEmptyList() throws Exception {
                 jobCategoryRepository.deleteAll();
 
-                var res = mockMvc.perform(get("/api/public/categories"))
+				var res = mockMvc.perform(get("/api/categories"))
                                 .andExpect(status().isOk())
                                 .andReturn();
 

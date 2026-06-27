@@ -13,6 +13,7 @@ import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
+import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 
 /**
@@ -96,4 +97,29 @@ public interface ApplicationService {
      * @return danh sách các bản ghi thay đổi trạng thái theo thứ tự thời gian
      */
     List<ApplicationTimelineResponse> getTimeline(UUID applicationId);
+
+    /**
+     * Lấy danh sách đơn ứng tuyển theo công ty (dành cho Employer).
+     * Có thể lọc thêm theo jobId và status.
+     *
+     * @param companyId UUID của công ty
+     * @param jobId     lọc theo tin tuyển dụng (có thể null)
+     * @param status    lọc theo trạng thái (có thể null)
+     * @param pageable  thông tin phân trang
+     * @return trang dữ liệu EmployerApplicationListResponse
+     */
+    Page<EmployerApplicationListResponse> getEmployerApplications(
+            UUID companyId, UUID jobId, ApplicationStatus status, Pageable pageable);
+
+    /**
+     * Cập nhật trạng thái đơn ứng tuyển (dành cho Employer).
+     * Kiểm tra quyền sở hữu và tính hợp lệ của trạng thái đích.
+     *
+     * @param applicationId UUID của đơn ứng tuyển
+     * @param newStatus     trạng thái mới (REVIEWING, INTERVIEW, HIRED, REJECTED)
+     * @param reason        lý do (tuỳ chọn)
+     * @throws ForbiddenException  nếu employer không sở hữu bài đăng này
+     * @throws BadRequestException nếu trạng thái không hợp lệ
+     */
+    void updateApplicationStatus(UUID applicationId, ApplicationStatus newStatus, String reason);
 }

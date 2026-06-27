@@ -53,6 +53,7 @@ public interface CompanyMapper {
     @Mapping(target = "reviewReason", ignore = true)
     Company toEntity(CompanyRegisterRequest request);
 
+    @Mapping(target = "isApproved", source = "approved")
     CompanyResponse toResponse(Company company);
 
     List<CompanyResponse> toResponseList(List<Company> company);

@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.EmployerJobApi;
-import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.dtos.job.JobListResponse;
 import com.yoedu.job_board_platform.dtos.job.JobRequest;
 import com.yoedu.job_board_platform.dtos.job.JobResponse;
 import com.yoedu.job_board_platform.models.JobStatus;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.JobService;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 

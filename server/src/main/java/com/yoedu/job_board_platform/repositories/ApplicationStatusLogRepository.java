@@ -1,7 +1,5 @@
 package com.yoedu.job_board_platform.repositories;
 
-import java.util.UUID;
-
 import java.util.List;
 import java.util.UUID;
 

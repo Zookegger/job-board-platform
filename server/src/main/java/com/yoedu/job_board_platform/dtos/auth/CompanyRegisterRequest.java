@@ -26,7 +26,6 @@ public record CompanyRegisterRequest(
 
         // =========================
         // Thông tin người đại diện
-        // TODO: email + companyPhone đã được chuyển sang form cập nhật trong Employer Dashboard
         // =========================
 
         @Schema(description = "Đại diện HR công ty", example = "Nguyễn Văn A")

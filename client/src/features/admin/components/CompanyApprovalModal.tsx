@@ -1,110 +1,153 @@
-import { useState } from "react";
+import { BaseDialog } from "@/components/shared/BaseDialog";
+import { Button } from "@/components/ui/button";
 import {
-  approveCompany,
-  rejectCompany,
-  suspendCompany,
-} from "@/api/admin";
-import type { PendingCompany } from "@/api/admin";
+	useApproveCompany,
+	useRejectCompany,
+	useSuspendCompany,
+} from "@/hooks/useAdminCompanies";
+import type { AdminPendingCompanyResponse, CompanyResponse } from "@/types/company";
+import getErrorMessage from "@/utils/getErrorMessage";
+import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 type ModalAction = "approve" | "reject" | "suspend";
 
 type CompanyApprovalModalProps = {
-  company: PendingCompany;
-  action: ModalAction;
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
+	company: AdminPendingCompanyResponse | CompanyResponse;
+	action: ModalAction;
+	isOpen: boolean;
+	onClose: () => void;
+};
+
+const TITLES: Record<ModalAction, string> = {
+	approve: "Xác nhận duyệt công ty",
+	reject: "Từ chối hồ sơ công ty",
+	suspend: "Tạm ngưng công ty",
+};
+
+const DESCRIPTIONS: Record<ModalAction, string> = {
+	approve: 'Bạn có chắc muốn duyệt công ty "{company}"?',
+	reject: 'Nhập lý do từ chối cho công ty "{company}".',
+	suspend: 'Nhập lý do tạm ngưng cho công ty "{company}".',
+};
+
+const SUCCESS_MESSAGES: Record<ModalAction, string> = {
+	approve: 'Đã duyệt công ty "{company}"',
+	reject: 'Đã từ chối công ty "{company}"',
+	suspend: 'Đã tạm ngưng công ty "{company}"',
+};
+
+const ERROR_MESSAGES: Record<ModalAction, string> = {
+	approve: "Không thể duyệt công ty",
+	reject: "Không thể từ chối công ty",
+	suspend: "Không thể tạm ngưng công ty",
 };
 
 export default function CompanyApprovalModal({
-  company,
-  action,
-  isOpen,
-  onClose,
-  onSuccess,
+	company,
+	action,
+	isOpen,
+	onClose,
 }: CompanyApprovalModalProps) {
-  const [reason, setReason] = useState("");
-  const [loading, setLoading] = useState(false);
+	const [reason, setReason] = useState("");
 
-  if (!isOpen) return null;
+	const approve = useApproveCompany();
+	const reject = useRejectCompany();
+	const suspend = useSuspendCompany();
 
-  const title =
-    action === "approve"
-      ? "Duyệt công ty"
-      : action === "reject"
-        ? "Từ chối công ty"
-        : "Tạm ngưng công ty";
+	const actionPending = approve.isPending || reject.isPending || suspend.isPending;
 
-  const handleConfirm = async () => {
-    try {
-      setLoading(true);
+	const needReason = action === "reject" || action === "suspend";
 
-      if (action === "approve") {
-        await approveCompany(company.id);
-      }
+	function handleConfirm() {
+		if (action === "approve") {
+			approve.mutate(company.id, {
+				onSuccess: () => {
+					toast.success(SUCCESS_MESSAGES.approve.replace("{company}", company.companyName));
+					onClose();
+				},
+				onError: (error) => toast.error(getErrorMessage(error, ERROR_MESSAGES.approve)),
+			});
+			return;
+		}
 
-      if (action === "reject") {
-        await rejectCompany(company.id, {
-          rejectionReason: reason,
-        });
-      }
+		if (!reason.trim()) {
+			toast.error(`Vui lòng nhập lý do ${action === "reject" ? "từ chối" : "tạm ngưng"}`);
+			return;
+		}
 
-      if (action === "suspend") {
-        await suspendCompany(company.id, {
-          suspensionReason: reason,
-        });
-      }
+		const input = { companyId: company.id, reason: reason.trim() };
 
-      onSuccess();
-    } catch (error) {
-      console.error(error);
-      alert("Có lỗi xảy ra khi xử lý công ty");
-    } finally {
-      setLoading(false);
-    }
-  };
+		if (action === "reject") {
+			reject.mutate(input, {
+				onSuccess: () => {
+					toast.success(SUCCESS_MESSAGES.reject.replace("{company}", company.companyName));
+					setReason("");
+					onClose();
+				},
+				onError: (error) => toast.error(getErrorMessage(error, ERROR_MESSAGES.reject)),
+			});
+		} else {
+			suspend.mutate(input, {
+				onSuccess: () => {
+					toast.success(SUCCESS_MESSAGES.suspend.replace("{company}", company.companyName));
+					setReason("");
+					onClose();
+				},
+				onError: (error) => toast.error(getErrorMessage(error, ERROR_MESSAGES.suspend)),
+			});
+		}
+	}
 
-  const needReason = action === "reject" || action === "suspend";
+	function handleClose() {
+		setReason("");
+		onClose();
+	}
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded bg-white p-6 shadow-lg">
-        <h2 className="mb-4 text-xl font-bold">{title}</h2>
+	const confirmVariant = action === "approve" ? "success" : "destructive";
+	const ConfirmIcon = action === "approve" ? CheckCircle2 : action === "reject" ? XCircle : AlertTriangle;
+	const confirmLabel =
+		action === "approve"
+			? "Xác nhận duyệt"
+			: action === "reject"
+				? "Xác nhận từ chối"
+				: "Xác nhận tạm ngưng";
 
-        <p className="mb-4 text-sm">
-          Công ty: <strong>{company.companyName}</strong>
-        </p>
-
-        {needReason && (
-          <textarea
-            className="mb-4 w-full rounded border p-2"
-            rows={4}
-            placeholder="Nhập lý do..."
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-        )}
-
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            className="rounded border px-4 py-2"
-            onClick={onClose}
-            disabled={loading}
-          >
-            Hủy
-          </button>
-
-          <button
-            type="button"
-            className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-            onClick={handleConfirm}
-            disabled={loading || (needReason && !reason.trim())}
-          >
-            {loading ? "Đang xử lý..." : "Xác nhận"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<BaseDialog
+			isOpen={isOpen}
+			onClose={handleClose}
+			title={TITLES[action]}
+			description={DESCRIPTIONS[action].replace("{company}", company.companyName)}
+			size='xl'
+			children={
+				needReason ? (
+					<div className='px-4'>
+						<textarea
+							value={reason}
+							onChange={(event) => setReason(event.target.value)}
+							rows={6}
+							placeholder={action === "reject" ? "Nhập lý do từ chối" : "Nhập lý do tạm ngưng"}
+							className='w-full resize-none rounded-md border border-input bg-background p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/50'
+						/>
+					</div>
+				) : undefined
+			}
+			footer={
+				<div className='flex justify-end gap-3'>
+					<Button variant='outline' onClick={handleClose} disabled={actionPending}>
+						Hủy
+					</Button>
+					<Button
+						variant={confirmVariant}
+						onClick={handleConfirm}
+						disabled={actionPending || (needReason && !reason.trim())}
+					>
+						<ConfirmIcon /> {confirmLabel}
+					</Button>
+				</div>
+			}
+		/>
+	);
 }

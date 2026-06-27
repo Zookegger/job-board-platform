@@ -2,7 +2,6 @@ package com.yoedu.job_board_platform.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.OffsetDateTime;
@@ -33,7 +32,6 @@ import com.yoedu.job_board_platform.models.JobCategory;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.LocationTypes;
 import com.yoedu.job_board_platform.models.Profile;
-import com.yoedu.job_board_platform.models.ReportReason;
 import com.yoedu.job_board_platform.models.ReportStatus;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
