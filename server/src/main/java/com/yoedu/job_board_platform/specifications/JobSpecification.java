@@ -11,7 +11,6 @@ import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.LocationTypes;
 
-import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Subquery;
 
 public final class JobSpecification {

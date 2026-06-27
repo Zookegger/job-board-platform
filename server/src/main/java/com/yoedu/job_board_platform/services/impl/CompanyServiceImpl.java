@@ -27,7 +27,6 @@ import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyReviewReason;
 import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.Job;
-import com.yoedu.job_board_platform.models.JobCategory;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;

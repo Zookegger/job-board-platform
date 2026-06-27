@@ -16,6 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ConflictException;
@@ -23,12 +27,14 @@ import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
+import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
 import com.yoedu.job_board_platform.mappers.ApplicationMapper;
 import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.models.ApplicationStatusLog;
 import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
@@ -36,27 +42,12 @@ import com.yoedu.job_board_platform.models.Resume;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
+import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.ResumeRepository;
+import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.services.impl.ApplicationServiceImpl;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
-
-import static org.mockito.ArgumentMatchers.eq;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
-import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
-import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
-import com.yoedu.job_board_platform.models.CandidateSkill;
-import com.yoedu.job_board_platform.models.CandidateSkillId;
-import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
-import com.yoedu.job_board_platform.models.ProficientLevel;
-import com.yoedu.job_board_platform.models.Skill;
-import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
-import com.yoedu.job_board_platform.repositories.SkillRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationServiceImplTest {

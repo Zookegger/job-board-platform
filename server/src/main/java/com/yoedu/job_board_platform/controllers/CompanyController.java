@@ -22,7 +22,6 @@ import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
 import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
 import com.yoedu.job_board_platform.dtos.company.PublicCompanyResponse;
 import com.yoedu.job_board_platform.mappers.CompanyMapper;
-import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.CompanyService;
 import com.yoedu.job_board_platform.utils.SecurityUtil;

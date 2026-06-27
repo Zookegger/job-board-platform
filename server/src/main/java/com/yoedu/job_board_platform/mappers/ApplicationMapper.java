@@ -1,12 +1,12 @@
 package com.yoedu.job_board_platform.mappers;
 
+import java.util.List;
+
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-
-import java.util.List;
 
 import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
@@ -41,6 +41,7 @@ public interface ApplicationMapper {
     @Mapping(target = "candidatePhone", source = "application.candidate.phone")
     @Mapping(target = "jobId", source = "application.job.id")
     @Mapping(target = "jobTitle", source = "application.job.title")
+    @Mapping(target = "skills", ignore = true)
     EmployerApplicationListResponse toEmployerListResponse(Application application);
 
     @Mapping(target = "candidateId", source = "application.candidate.id")

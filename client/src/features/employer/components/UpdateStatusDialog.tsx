@@ -1,21 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateApplicationStatus } from "@/hooks/useEmployerApplications";
 import { cn } from "@/lib/utils";
-import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type CandidateApplicationListResponse } from "@/types/application";
+import {
+	APPLICATION_STATUS_LABELS,
+	type ApplicationStatus,
+	type CandidateApplicationListResponse,
+} from "@/types/application";
 import getErrorMessage from "@/utils/getErrorMessage";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 // ─── Status config (token-aligned với ApplicationTimeline) ───────────────────
@@ -74,7 +72,7 @@ function getInitials(name: string): string {
 
 function pickAvatarPalette(name: string): string {
 	let hash = 0;
-	for (const ch of name) hash = ((hash * 31) + ch.charCodeAt(0)) >>> 0;
+	for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
 	return AVATAR_PALETTES[hash % AVATAR_PALETTES.length];
 }
 
@@ -83,12 +81,7 @@ function pickAvatarPalette(name: string): string {
 function StatusChip({ status }: { status: string }) {
 	const meta = STATUS_META[status] ?? STATUS_META.REVIEWING;
 	return (
-		<span
-			className={cn(
-				"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-				meta.chipClass,
-			)}
-		>
+		<span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", meta.chipClass)}>
 			{APPLICATION_STATUS_LABELS[status as ApplicationStatus] ?? status}
 		</span>
 	);
@@ -112,11 +105,11 @@ interface UpdateStatusDialogProps {
 export function UpdateStatusDialog({ application, open, onOpenChange }: UpdateStatusDialogProps) {
 	const { mutate, isPending } = useUpdateApplicationStatus();
 
-	const { register, handleSubmit, setValue, watch, reset } = useForm<FormValues>({
+	const { register, handleSubmit, setValue, control, reset } = useForm<FormValues>({
 		defaultValues: { status: "REVIEWING", reason: "" },
 	});
 
-	const selectedStatus = watch("status");
+	const selectedStatus = useWatch({ name: "status", control });
 
 	useEffect(() => {
 		if (open && application) {
@@ -151,61 +144,78 @@ export function UpdateStatusDialog({ application, open, onOpenChange }: UpdateSt
 	const btnMeta = STATUS_META[selectedStatus] ?? STATUS_META.REVIEWING;
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
+		<Dialog
+			open={open}
+			onOpenChange={onOpenChange}
+		>
+			<DialogContent className='gap-0 overflow-hidden p-0 sm:max-w-md'>
 				{/* ── Header ────────────────────────────────────────────────────── */}
-				<div className="border-b border-border px-6 py-4">
-					<DialogTitle className="text-base font-semibold leading-snug">
+				<div className='border-b border-border px-6 py-4'>
+					<DialogTitle className='text-base font-semibold leading-snug'>
 						Cập nhật trạng thái hồ sơ
 					</DialogTitle>
-					<DialogDescription className="sr-only">
+					<DialogDescription className='sr-only'>
 						Cập nhật trạng thái ứng tuyển cho {application.candidateName}
 					</DialogDescription>
 
-					<div className="mt-3 flex items-center gap-2.5">
+					<div className='mt-3 flex items-center gap-2.5'>
 						<div
 							className={cn(
 								"flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
 								avatarPalette,
 							)}
-							aria-hidden="true"
+							aria-hidden='true'
 						>
 							{initials}
 						</div>
-						<p className="text-sm text-muted-foreground">
-							Ứng viên:{" "}
-							<span className="font-semibold text-foreground">{application.candidateName}</span>
+						<p className='text-sm text-muted-foreground'>
+							Ứng viên: <span className='font-semibold text-foreground'>{application.candidateName}</span>
 						</p>
 					</div>
 				</div>
 
 				{/* ── Form body ─────────────────────────────────────────────────── */}
 				<form onSubmit={handleSubmit(onSubmit)}>
-					<div className="flex flex-col gap-5 px-6 py-5">
+					<div className='flex flex-col gap-5 px-6 py-5'>
 						{/* Transition preview */}
-						<div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
-							<span className="shrink-0 text-xs text-muted-foreground">Chuyển sang:</span>
+						<div className='flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2'>
+							<span className='shrink-0 text-xs text-muted-foreground'>Chuyển sang:</span>
 							<StatusChip status={application.status} />
-							<ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
+							<ArrowRight className='size-3.5 shrink-0 text-muted-foreground' />
 							<StatusChip status={selectedStatus} />
 						</div>
 
 						{/* Status select */}
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="status" className="text-sm font-medium">
+						<div className='flex flex-col gap-1.5'>
+							<Label
+								htmlFor='status'
+								className='text-sm font-medium'
+							>
 								Trạng thái mới{" "}
-								<span className="text-destructive" aria-hidden="true">*</span>
+								<span
+									className='text-destructive'
+									aria-hidden='true'
+								>
+									*
+								</span>
 							</Label>
 							<Select
 								value={selectedStatus}
 								onValueChange={(val) => setValue("status", val as ApplicationStatus)}
 							>
-								<SelectTrigger id="status" className="w-full">
+								<SelectTrigger
+									id='status'
+									className='w-full'
+								>
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
 									{EMPLOYER_STATUSES.map((s) => (
-										<SelectItem key={s} value={s} textValue={APPLICATION_STATUS_LABELS[s] ?? s}>
+										<SelectItem
+											key={s}
+											value={s}
+											textValue={APPLICATION_STATUS_LABELS[s] ?? s}
+										>
 											<StatusChip status={s} />
 										</SelectItem>
 									))}
@@ -214,40 +224,43 @@ export function UpdateStatusDialog({ application, open, onOpenChange }: UpdateSt
 						</div>
 
 						{/* Reason textarea */}
-						<div className="flex flex-col gap-1.5">
-							<Label htmlFor="reason" className="text-sm font-medium">
+						<div className='flex flex-col gap-1.5'>
+							<Label
+								htmlFor='reason'
+								className='text-sm font-medium'
+							>
 								Ghi chú / Lý do
 							</Label>
 							<Textarea
-								id="reason"
+								id='reason'
 								rows={3}
-								placeholder="Nhập lý do hoặc ghi chú (tuỳ chọn)..."
-								className="resize-none text-sm"
+								placeholder='Nhập lý do hoặc ghi chú (tuỳ chọn)...'
+								className='resize-none text-sm'
 								{...register("reason")}
 							/>
 						</div>
 					</div>
 
 					{/* ── Footer ──────────────────────────────────────────────────── */}
-					<div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+					<div className='flex items-center justify-end gap-2 border-t border-border px-6 py-4'>
 						<Button
-							type="button"
-							variant="outline"
+							type='button'
+							variant='outline'
 							onClick={() => onOpenChange(false)}
 							disabled={isPending}
-							className="min-w-[80px]"
+							className='min-w-[80px]'
 						>
 							Huỷ
 						</Button>
 						<Button
-							type="submit"
+							type='submit'
 							disabled={isPending}
 							className={cn("min-w-[130px] text-white", btnMeta.btnClass)}
 						>
 							{isPending ? (
-								<Loader2 className="mr-2 size-4 animate-spin" />
+								<Loader2 className='mr-2 size-4 animate-spin' />
 							) : (
-								<Check className="mr-2 size-4" />
+								<Check className='mr-2 size-4' />
 							)}
 							Lưu thay đổi
 						</Button>
