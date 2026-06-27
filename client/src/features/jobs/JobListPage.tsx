@@ -1,6 +1,4 @@
-import { useDeferredValue, useState } from "react";
-import { Link } from "react-router-dom";
-import { Briefcase, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
+import type { JobSearchParams } from "@/api/jobs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,21 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAllSkillsPublic } from "@/hooks/useSkills";
 import { useCategories } from "@/hooks/useCategories";
 import { usePublicJobSearch } from "@/hooks/usePublicJobs";
+import { useAllSkillsPublic } from "@/hooks/useSkills";
+import type { JobListResponse } from "@/types/job";
 import {
 	EMPLOYMENT_TYPE_LABELS,
+	EmploymentTypes,
 	EXPERIENCE_LEVEL_LABELS,
+	ExperienceLevels,
 	LOCATION_TYPES_LABELS,
+	LocationTypes,
 } from "@/types/job";
-import type { JobListResponse } from "@/types/job";
-import type { JobSearchParams } from "@/api/jobs";
 import RouterRoutes from "@/utils/RouterRoutes";
+import { Briefcase, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
+import { useDeferredValue, useState } from "react";
+import { Link } from "react-router-dom";
 
-const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"] as const;
-const EXPERIENCE_LEVELS = ["INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"] as const;
-const LOCATION_TYPES = ["ONSITE", "REMOTE", "HYBRID"] as const;
 
 const INITIAL_FILTERS: JobSearchParams = { page: 0, size: 12 };
 
@@ -101,22 +101,27 @@ function FilterSidebar({ filters, onChange, open, onToggle }: FilterSidebarProps
 	if (!open) return null;
 
 	return (
-		<aside className="w-full lg:w-64 shrink-0 space-y-5 bg-background border rounded-lg p-4">
-			<div className="flex items-center justify-between">
-				<span className="font-semibold text-sm flex items-center gap-1.5">
-					<Filter className="h-4 w-4" />
+		<aside className='w-full lg:w-64 shrink-0 space-y-5 bg-background border rounded-lg p-4'>
+			<div className='flex items-center justify-between'>
+				<span className='font-semibold text-sm flex items-center gap-1.5'>
+					<Filter className='h-4 w-4' />
 					Bộ lọc
 				</span>
-				<Button variant="ghost" size="icon" className="h-7 w-7 lg:hidden" onClick={onToggle}>
-					<X className="h-4 w-4" />
+				<Button
+					variant='ghost'
+					size='icon'
+					className='h-7 w-7 lg:hidden'
+					onClick={onToggle}
+				>
+					<X className='h-4 w-4' />
 				</Button>
 			</div>
 
 			{/* Keyword */}
 			<div>
-				<Label className="text-xs text-muted-foreground">Từ khóa</Label>
+				<Label className='text-xs text-muted-foreground'>Từ khóa</Label>
 				<Input
-					placeholder="Vị trí, kỹ năng..."
+					placeholder='Vị trí, kỹ năng...'
 					value={filters.keyword ?? ""}
 					onChange={(e) => set({ keyword: e.target.value || undefined })}
 				/>
@@ -126,13 +131,16 @@ function FilterSidebar({ filters, onChange, open, onToggle }: FilterSidebarProps
 
 			{/* Categories */}
 			<div>
-				<p className="text-sm font-medium mb-1.5">Ngành nghề</p>
-				<div className="space-y-1 max-h-44 overflow-y-auto">
+				<p className='text-sm font-medium mb-1.5'>Ngành nghề</p>
+				<div className='space-y-1 max-h-44 overflow-y-auto'>
 					{categories?.map((cat) => (
-						<label key={cat.id} className="flex items-center gap-2 cursor-pointer text-sm py-0.5">
+						<label
+							key={cat.id}
+							className='flex items-center gap-2 cursor-pointer text-sm py-0.5'
+						>
 							<input
-								type="checkbox"
-								className="size-4 accent-primary"
+								type='checkbox'
+								className='size-4 accent-primary'
 								checked={filters.categoryIds?.includes(cat.id) ?? false}
 								onChange={() => set({ categoryIds: toggleId(filters.categoryIds, cat.id) })}
 							/>
@@ -146,17 +154,20 @@ function FilterSidebar({ filters, onChange, open, onToggle }: FilterSidebarProps
 
 			{/* Location types */}
 			<div>
-				<p className="text-sm font-medium mb-1.5">Địa điểm</p>
-				<div className="space-y-1">
-					{LOCATION_TYPES.map((lt) => (
-						<label key={lt} className="flex items-center gap-2 cursor-pointer text-sm py-0.5">
+				<p className='text-sm font-medium mb-1.5'>Địa điểm</p>
+				<div className='space-y-1'>
+					{Object.entries(LocationTypes).map(([key, value]) => (
+						<label
+							key={key}
+							className='flex items-center gap-2 cursor-pointer text-sm py-0.5'
+						>
 							<input
-								type="checkbox"
-								className="size-4 accent-primary"
-								checked={filters.locationTypes?.includes(lt) ?? false}
-								onChange={() => set({ locationTypes: toggleString(filters.locationTypes, lt) })}
+								type='checkbox'
+								className='size-4 accent-primary'
+								checked={filters.locationTypes?.includes(value) ?? false}
+								onChange={() => set({ locationTypes: toggleString(filters.locationTypes, value) })}
 							/>
-							{LOCATION_TYPES_LABELS[lt]}
+							{LOCATION_TYPES_LABELS[value]}
 						</label>
 					))}
 				</div>
@@ -166,17 +177,20 @@ function FilterSidebar({ filters, onChange, open, onToggle }: FilterSidebarProps
 
 			{/* Employment types */}
 			<div>
-				<p className="text-sm font-medium mb-1.5">Hình thức</p>
-				<div className="space-y-1">
-					{EMPLOYMENT_TYPES.map((et) => (
-						<label key={et} className="flex items-center gap-2 cursor-pointer text-sm py-0.5">
+				<p className='text-sm font-medium mb-1.5'>Hình thức</p>
+				<div className='space-y-1'>
+					{Object.entries(EmploymentTypes).map(([key, value]) => (
+						<label
+							key={key}
+							className='flex items-center gap-2 cursor-pointer text-sm py-0.5'
+						>
 							<input
-								type="checkbox"
-								className="size-4 accent-primary"
-								checked={filters.employmentTypes?.includes(et) ?? false}
-								onChange={() => set({ employmentTypes: toggleString(filters.employmentTypes, et) })}
+								type='checkbox'
+								className='size-4 accent-primary'
+								checked={filters.employmentTypes?.includes(value) ?? false}
+								onChange={() => set({ employmentTypes: toggleString(filters.employmentTypes, value) })}
 							/>
-							{EMPLOYMENT_TYPE_LABELS[et]}
+							{EMPLOYMENT_TYPE_LABELS[value]}
 						</label>
 					))}
 				</div>
@@ -186,17 +200,20 @@ function FilterSidebar({ filters, onChange, open, onToggle }: FilterSidebarProps
 
 			{/* Experience levels */}
 			<div>
-				<p className="text-sm font-medium mb-1.5">Cấp độ</p>
-				<div className="space-y-1">
-					{EXPERIENCE_LEVELS.map((el) => (
-						<label key={el} className="flex items-center gap-2 cursor-pointer text-sm py-0.5">
+				<p className='text-sm font-medium mb-1.5'>Cấp độ</p>
+				<div className='space-y-1'>
+					{Object.entries(ExperienceLevels).map(([key, value]) => (
+						<label
+							key={key}
+							className='flex items-center gap-2 cursor-pointer text-sm py-0.5'
+						>
 							<input
-								type="checkbox"
-								className="size-4 accent-primary"
-								checked={filters.experienceLevels?.includes(el) ?? false}
-								onChange={() => set({ experienceLevels: toggleString(filters.experienceLevels, el) })}
+								type='checkbox'
+								className='size-4 accent-primary'
+								checked={filters.experienceLevels?.includes(value) ?? false}
+								onChange={() => set({ experienceLevels: toggleString(filters.experienceLevels, value) })}
 							/>
-							{EXPERIENCE_LEVEL_LABELS[el]}
+							{EXPERIENCE_LEVEL_LABELS[value]}
 						</label>
 					))}
 				</div>
@@ -206,18 +223,18 @@ function FilterSidebar({ filters, onChange, open, onToggle }: FilterSidebarProps
 
 			{/* Salary range */}
 			<div>
-				<p className="text-sm font-medium mb-1.5">Mức lương</p>
-				<div className="flex gap-2">
+				<p className='text-sm font-medium mb-1.5'>Mức lương</p>
+				<div className='flex gap-2'>
 					<Input
-						placeholder="Tối thiểu"
-						type="number"
+						placeholder='Tối thiểu'
+						type='number'
 						min={0}
 						value={filters.minSalary ?? ""}
 						onChange={(e) => set({ minSalary: e.target.value ? Number(e.target.value) : undefined })}
 					/>
 					<Input
-						placeholder="Tối đa"
-						type="number"
+						placeholder='Tối đa'
+						type='number'
 						min={0}
 						value={filters.maxSalary ?? ""}
 						onChange={(e) => set({ maxSalary: e.target.value ? Number(e.target.value) : undefined })}
@@ -229,13 +246,16 @@ function FilterSidebar({ filters, onChange, open, onToggle }: FilterSidebarProps
 
 			{/* Skills */}
 			<div>
-				<p className="text-sm font-medium mb-1.5">Kỹ năng</p>
-				<div className="space-y-1 max-h-44 overflow-y-auto">
+				<p className='text-sm font-medium mb-1.5'>Kỹ năng</p>
+				<div className='space-y-1 max-h-44 overflow-y-auto'>
 					{skills?.map((skill) => (
-						<label key={skill.id} className="flex items-center gap-2 cursor-pointer text-sm py-0.5">
+						<label
+							key={skill.id}
+							className='flex items-center gap-2 cursor-pointer text-sm py-0.5'
+						>
 							<input
-								type="checkbox"
-								className="size-4 accent-primary"
+								type='checkbox'
+								className='size-4 accent-primary'
 								checked={filters.skillIds?.includes(skill.id) ?? false}
 								onChange={() => set({ skillIds: toggleId(filters.skillIds, skill.id) })}
 							/>
@@ -246,9 +266,9 @@ function FilterSidebar({ filters, onChange, open, onToggle }: FilterSidebarProps
 			</div>
 
 			<Button
-				variant="outline"
-				size="sm"
-				className="w-full"
+				variant='outline'
+				size='sm'
+				className='w-full'
 				onClick={() => onChange(INITIAL_FILTERS)}
 			>
 				Xóa bộ lọc

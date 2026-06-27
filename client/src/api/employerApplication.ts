@@ -1,4 +1,4 @@
-import type { EmployerApplicationListResponse, EmployerApplicationParams } from "@/types/application";
+import type { CandidateApplicationListResponse, CandidateApplicationParams } from "@/types/application";
 import type { PageResponse } from "@/types/pagination";
 import ApiError from "@/utils/ApiError";
 import { withoutEmptyParams } from "@/utils/ApiUtils";
@@ -6,8 +6,8 @@ import client from "./client";
 
 export const employerApplicationApi = {
 	getEmployerApplications: (
-		params: EmployerApplicationParams,
-	): Promise<PageResponse<EmployerApplicationListResponse>> =>
+		params: CandidateApplicationParams,
+	): Promise<PageResponse<CandidateApplicationListResponse>> =>
 		client
 			.get("/employer/applications", { params: withoutEmptyParams(params as Record<string, unknown>) })
 			.then((r) => r.data)

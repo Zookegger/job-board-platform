@@ -1,23 +1,31 @@
 import { ApplicationStatusBadge } from "@/components/shared/ApplicationTimeline";
+import { DataTable, type DataTableActions } from "@/components/shared/DataTable";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/shared/DataTable";
 import { useEmployerApplications } from "@/hooks/useEmployerApplications";
-import type { EmployerApplicationListResponse, EmployerApplicationParams } from "@/types/application";
+import {
+	APPLICATION_STATUS_LABELS,
+	type CandidateApplicationListResponse,
+	type CandidateApplicationParams,
+} from "@/types/application";
 import { formatDate } from "@/utils/DateUtils";
 import { Eye, RefreshCw, User, UserCog } from "lucide-react";
 import { useMemo, useState } from "react";
-import { CvPreviewModal } from "./CvPreviewModal";
+import { CandidateProfileModal } from "./CandidateProfileModal";
 import { UpdateStatusDialog } from "./UpdateStatusDialog";
 
 interface CandidateTableProps {
 	jobId?: string;
 }
 
-function CandidateAvatar({ application }: { application: EmployerApplicationListResponse }) {
+function CandidateAvatar({ application }: { application: CandidateApplicationListResponse }) {
 	return (
 		<div className='flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted/50'>
 			{application.candidateAvatarUrl ? (
-				<img src={application.candidateAvatarUrl} alt={application.candidateName} className='h-full w-full object-cover' />
+				<img
+					src={application.candidateAvatarUrl}
+					alt={application.candidateName}
+					className='h-full w-full object-cover'
+				/>
 			) : (
 				<User className='size-4 text-muted-foreground/70' />
 			)}
@@ -29,12 +37,12 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 	const [page, setPage] = useState(0);
 	const [pageSize, setPageSize] = useState(10);
 	const [statusFilter, setStatusFilter] = useState<string>("all");
-	const [selected, setSelected] = useState<EmployerApplicationListResponse | null>(null);
+	const [selected, setSelected] = useState<CandidateApplicationListResponse | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
-	const [cvTarget, setCvTarget] = useState<EmployerApplicationListResponse | null>(null);
+	const [cvTarget, setCvTarget] = useState<CandidateApplicationListResponse | null>(null);
 	const [cvOpen, setCvOpen] = useState(false);
 
-	const params: EmployerApplicationParams = useMemo(
+	const params: CandidateApplicationParams = useMemo(
 		() => ({
 			page,
 			size: pageSize,
@@ -49,44 +57,85 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 	const applications = data?.content ?? [];
 	const totalElements = data?.totalElements ?? 0;
 
-	function openDialog(application: EmployerApplicationListResponse) {
+	function openDialog(application: CandidateApplicationListResponse) {
 		setSelected(application);
 		setDialogOpen(true);
 	}
 
-	function openCvPreview(application: EmployerApplicationListResponse) {
+	function openCvPreview(application: CandidateApplicationListResponse) {
 		setCvTarget(application);
 		setCvOpen(true);
 	}
+
+	const tableActions: DataTableActions<CandidateApplicationListResponse>[] = [
+		{
+			header: "Thao tác",
+			items: [
+				{
+					label: "Xem chi tiết ứng viên",
+					icon: Eye,
+					variant: "ghost",
+					onClick: (app) => openCvPreview(app),
+				},
+				{
+					label: "Cập nhật trạng thái",
+					icon: UserCog,
+					variant: "ghost",
+					onClick: (app) => openDialog(app),
+				},
+			],
+		},
+	];
 
 	return (
 		<div className='flex flex-col gap-4'>
 			{/* Toolbar */}
 			<div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-				<p className='text-sm text-muted-foreground'>
-					{totalElements.toLocaleString("vi-VN")} ứng viên
-				</p>
+				<p className='text-sm text-muted-foreground'>{totalElements.toLocaleString("vi-VN")} ứng viên</p>
 				<div className='flex items-center gap-2'>
 					<div className='relative'>
 						<select
 							value={statusFilter}
-							onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
+							onChange={(e) => {
+								setStatusFilter(e.target.value);
+								setPage(0);
+							}}
 							className='h-9 appearance-none rounded-lg border border-input bg-background pl-3 pr-8 text-sm shadow-sm outline-none hover:bg-accent focus:border-primary focus:ring-2 focus:ring-primary/20'
 						>
 							<option value='all'>Tất cả trạng thái</option>
-							<option value='PENDING'>Chờ xử lý</option>
-							<option value='REVIEWING'>Đang xem xét</option>
-							<option value='INTERVIEW'>Phỏng vấn</option>
-							<option value='HIRED'>Đã tuyển</option>
-							<option value='REJECTED'>Từ chối</option>
+							{Object.entries(APPLICATION_STATUS_LABELS).map(([key, status]) => (
+								<option
+									key={key}
+									value={key}
+								>
+									{status}
+								</option>
+							))}
 						</select>
 						<div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground'>
-							<svg className='size-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-								<path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M19 9l-7 7-7-7' />
+							<svg
+								className='size-3.5'
+								fill='none'
+								stroke='currentColor'
+								viewBox='0 0 24 24'
+							>
+								<path
+									strokeLinecap='round'
+									strokeLinejoin='round'
+									strokeWidth='2'
+									d='M19 9l-7 7-7-7'
+								/>
 							</svg>
 						</div>
 					</div>
-					<Button variant='outline' size='icon' className='h-9 w-9' onClick={() => refetch()} disabled={isFetching} title='Làm mới'>
+					<Button
+						variant='outline'
+						size='icon'
+						className='h-9 w-9'
+						onClick={() => refetch()}
+						disabled={isFetching}
+						title='Làm mới'
+					>
 						<RefreshCw className={`size-4 ${isFetching ? "animate-spin text-primary" : ""}`} />
 					</Button>
 				</div>
@@ -94,7 +143,7 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 
 			{/* Table */}
 			<div className='overflow-hidden rounded-xl border bg-card shadow-sm'>
-				<DataTable<EmployerApplicationListResponse>
+				<DataTable<CandidateApplicationListResponse>
 					columns={[
 						{
 							key: "candidate",
@@ -104,18 +153,12 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 								<div className='flex items-center gap-3 py-1'>
 									<CandidateAvatar application={app} />
 									<div className='flex flex-col min-w-0'>
-										<p className='truncate text-sm font-semibold text-foreground'>{app.candidateName}</p>
+										<p className='truncate text-sm font-semibold text-foreground'>
+											{app.candidateName}
+										</p>
 										<p className='truncate text-xs text-muted-foreground'>{app.candidateEmail}</p>
 									</div>
 								</div>
-							),
-						},
-						{
-							key: "job",
-							header: "Vị trí",
-							className: "align-middle hidden md:table-cell",
-							render: (app) => (
-								<span className='text-sm text-muted-foreground'>{app.jobTitle}</span>
 							),
 						},
 						{
@@ -132,35 +175,6 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 							className: "align-middle",
 							render: (app) => <ApplicationStatusBadge status={app.status} />,
 						},
-						{
-							key: "actions",
-							header: "Thao tác",
-							className: "align-middle text-right",
-							render: (app) => (
-								<div className='flex items-center justify-end gap-1'>
-									<Button
-										variant='ghost'
-										size='icon'
-										className='h-8 w-8 hover:bg-primary/10 hover:text-primary disabled:opacity-40'
-										onClick={() => openCvPreview(app)}
-										disabled={!app.resumeUrl}
-										title={app.resumeUrl ? 'Xem CV' : 'Ứng viên chưa tải CV'}
-										aria-label='Xem CV'
-									>
-										<Eye className='size-4' />
-									</Button>
-									<Button
-										variant='ghost'
-										size='sm'
-										className='h-8 gap-1.5 px-3 hover:bg-primary/10 hover:text-primary'
-										onClick={() => openDialog(app)}
-									>
-										<UserCog className='size-4' />
-										<span className='hidden sm:inline'>Cập nhật</span>
-									</Button>
-								</div>
-							),
-						},
 					]}
 					data={applications}
 					isLoading={isLoading}
@@ -173,11 +187,15 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 						subtitle: "Chưa có đơn ứng tuyển nào khớp với bộ lọc.",
 					}}
 					pageResponse={data}
+					actions={tableActions}
 					pageable={{
 						page,
 						pageSize,
 						onPageChange: setPage,
-						onPageSizeChange: (newSize) => { setPageSize(newSize); setPage(0); },
+						onPageSizeChange: (newSize) => {
+							setPageSize(newSize);
+							setPage(0);
+						},
 						isFetching,
 					}}
 				/>
@@ -189,11 +207,14 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 				onOpenChange={setDialogOpen}
 			/>
 
-			<CvPreviewModal
-				candidateName={cvTarget?.candidateName ?? ""}
+			<CandidateProfileModal
+				candidate={cvTarget ?? undefined}
 				resumeUrl={cvTarget?.resumeUrl ?? null}
 				open={cvOpen}
-				onClose={() => setCvOpen(false)}
+				onClose={() => {
+					setCvTarget(null);
+					setCvOpen(false);
+				}}
 			/>
 		</div>
 	);
