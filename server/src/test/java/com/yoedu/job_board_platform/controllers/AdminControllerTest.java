@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.hasItem;
+import java.time.LocalDate;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -828,4 +830,95 @@ class AdminControllerTest {
                         .andExpect(jsonPath("$.pendingJobs").value(1))
                         .andExpect(jsonPath("$.pendingCompanies").value(1));
         }
+
+        @Test
+        void admin_canGetApplicationChartStats() throws Exception {
+        OffsetDateTime now = OffsetDateTime.now();
+        LocalDate today = now.toLocalDate();
+
+        Company company = createPendingCompany(
+                        "Chart Dashboard Corp",
+                        "456789123",
+                        "chart-dashboard@example.com",
+                        "0900000022");
+
+        company.setStatus(CompanyStatus.APPROVED);
+        company.setApproved(true);
+        company = companyRepository.save(company);
+
+        Job jobTwoDaysAgo = createPendingJob(company, "Chart Job Two Days Ago");
+        jobTwoDaysAgo.setStatus(JobStatus.ACTIVE);
+        jobTwoDaysAgo = jobRepository.save(jobTwoDaysAgo);
+
+        Job jobYesterdayOne = createPendingJob(company, "Chart Job Yesterday One");
+        jobYesterdayOne.setStatus(JobStatus.ACTIVE);
+        jobYesterdayOne = jobRepository.save(jobYesterdayOne);
+
+        Job jobYesterdayTwo = createPendingJob(company, "Chart Job Yesterday Two");
+        jobYesterdayTwo.setStatus(JobStatus.ACTIVE);
+        jobYesterdayTwo = jobRepository.save(jobYesterdayTwo);
+
+        Job jobToday = createPendingJob(company, "Chart Job Today");
+        jobToday.setStatus(JobStatus.ACTIVE);
+        jobToday = jobRepository.save(jobToday);
+
+        Profile candidateProfile = createCandidateProfile("candidate-chart@example.com");
+
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(jobTwoDaysAgo)
+                        .status(ApplicationStatus.PENDING)
+                        .coverLetter("Ứng tuyển ngày trước đó 2 ngày")
+                        .appliedAt(today.minusDays(2).atTime(10, 0).atOffset(now.getOffset()))
+                        .build());
+
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(jobYesterdayOne)
+                        .status(ApplicationStatus.REVIEWING)
+                        .coverLetter("Ứng tuyển hôm qua lần 1")
+                        .appliedAt(today.minusDays(1).atTime(9, 0).atOffset(now.getOffset()))
+                        .build());
+
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(jobYesterdayTwo)
+                        .status(ApplicationStatus.REVIEWING)
+                        .coverLetter("Ứng tuyển hôm qua lần 2")
+                        .appliedAt(today.minusDays(1).atTime(15, 0).atOffset(now.getOffset()))
+                        .build());
+
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(jobToday)
+                        .status(ApplicationStatus.HIRED)
+                        .coverLetter("Ứng tuyển hôm nay")
+                        .appliedAt(today.atTime(11, 0).atOffset(now.getOffset()))
+                        .build());
+
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(get("/api/admin/statistics/applications-chart")
+                        .cookie(adminCookie)
+                        .param("days", "7"))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.days").value(7))
+                        .andExpect(jsonPath("$.fromDate").value(today.minusDays(6).toString()))
+                        .andExpect(jsonPath("$.toDate").value(today.toString()))
+                        .andExpect(jsonPath("$.totalApplications").value(4))
+                        .andExpect(jsonPath("$.dailyApplications.length()").value(7))
+                        .andExpect(jsonPath("$.dailyApplications[4].date").value(today.minusDays(2).toString()))
+                        .andExpect(jsonPath("$.dailyApplications[4].total").value(1))
+                        .andExpect(jsonPath("$.dailyApplications[5].date").value(today.minusDays(1).toString()))
+                        .andExpect(jsonPath("$.dailyApplications[5].total").value(2))
+                        .andExpect(jsonPath("$.dailyApplications[6].date").value(today.toString()))
+                        .andExpect(jsonPath("$.dailyApplications[6].total").value(1))
+                        .andExpect(jsonPath("$.statusDistribution.length()").value(3))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'PENDING')].total").value(hasItem(1)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'PENDING')].percentage").value(hasItem(25.0)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'REVIEWING')].total").value(hasItem(2)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'REVIEWING')].percentage").value(hasItem(50.0)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].total").value(hasItem(1)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].percentage").value(hasItem(25.0)));
+}
 }

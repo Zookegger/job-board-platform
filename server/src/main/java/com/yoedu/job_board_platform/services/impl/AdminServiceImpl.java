@@ -6,7 +6,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.time.OffsetDateTime;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +55,8 @@ import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
+import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
+import com.yoedu.job_board_platform.models.ApplicationStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -379,5 +384,86 @@ public class AdminServiceImpl implements AdminService {
                 jobRepository.countByStatus(JobStatus.PENDING_APPROVAL),
                 companyRepository.countByStatus(CompanyStatus.PENDING)
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminApplicationChartResponse getApplicationChartStats(int days) {
+        int normalizedDays = days == 30 ? 30 : 7;
+
+        OffsetDateTime now = OffsetDateTime.now();
+        LocalDate toDate = now.toLocalDate();
+        LocalDate fromDate = toDate.minusDays(normalizedDays - 1L);
+
+        OffsetDateTime fromDateTime = fromDate.atStartOfDay().atOffset(now.getOffset());
+        OffsetDateTime toDateTime = toDate.plusDays(1).atStartOfDay().atOffset(now.getOffset());
+
+        Map<LocalDate, Long> dailyTotals = new HashMap<>();
+
+        for (Object[] row : applicationRepository.countApplicationsByAppliedDateBetween(fromDateTime, toDateTime)) {
+            LocalDate date = toLocalDate(row[0]);
+            long total = toLong(row[1]);
+
+            dailyTotals.put(date, total);
+        }
+
+        List<AdminApplicationChartResponse.DailyApplicationPoint> dailyApplications = new ArrayList<>();
+
+        for (int i = 0; i < normalizedDays; i++) {
+            LocalDate date = fromDate.plusDays(i);
+
+            dailyApplications.add(new AdminApplicationChartResponse.DailyApplicationPoint(
+                    date,
+                    dailyTotals.getOrDefault(date, 0L)));
+        }
+
+        List<Object[]> statusRows = applicationRepository.countApplicationsByStatusBetween(fromDateTime, toDateTime);
+
+        long totalApplications = statusRows.stream()
+                .mapToLong(row -> toLong(row[1]))
+                .sum();
+
+        List<AdminApplicationChartResponse.StatusDistributionPoint> statusDistribution = statusRows.stream()
+                .map(row -> {
+                    ApplicationStatus status = ApplicationStatus.valueOf(row[0].toString());
+                    long total = toLong(row[1]);
+                    double percentage = totalApplications == 0
+                            ? 0
+                            : Math.round((total * 10000.0) / totalApplications) / 100.0;
+
+                    return new AdminApplicationChartResponse.StatusDistributionPoint(
+                            status,
+                            total,
+                            percentage);
+                })
+                .toList();
+
+        return new AdminApplicationChartResponse(
+                normalizedDays,
+                fromDate,
+                toDate,
+                totalApplications,
+                dailyApplications,
+                statusDistribution);
+    }
+
+    private LocalDate toLocalDate(Object value) {
+        if (value instanceof LocalDate localDate) {
+            return localDate;
+        }
+
+        if (value instanceof java.sql.Date sqlDate) {
+            return sqlDate.toLocalDate();
+        }
+
+        return LocalDate.parse(value.toString());
+    }
+
+    private long toLong(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+
+        return Long.parseLong(value.toString());
     }
 }

@@ -25,6 +25,7 @@ import EmployerJobsPage from "@/features/employer/JobsPage";
 
 import AdminCompaniesPage from "@/features/admin/CompaniesPage";
 import AdminDashboardPage from "@/features/admin/DashboardPage";
+import AdminStatisticsPage from "@/features/admin/StatisticsPage";
 import AdminJobsPage from "@/features/admin/JobsPage";
 import AdminReportsPage from "@/features/admin/ReportsPage";
 import AdminSkillPage from "@/features/admin/SkillsPage";
@@ -125,6 +126,7 @@ export const router = createBrowserRouter([
 								),
 							},
 							{ path: RouterRoutes.ADMIN_DASHBOARD, element: <AdminDashboardPage /> },
+							{ path: RouterRoutes.ADMIN_STATISTICS, element: <AdminStatisticsPage /> },
 							{ path: RouterRoutes.ADMIN_USERS, element: <AdminUsersPage /> },
 							{ path: RouterRoutes.ADMIN_COMPANIES, element: <AdminCompaniesPage /> },
 							{ path: RouterRoutes.ADMIN_JOBS, element: <AdminJobsPage /> },

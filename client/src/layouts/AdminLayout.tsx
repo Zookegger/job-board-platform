@@ -2,16 +2,26 @@ import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import RouterRoutes from "@/utils/RouterRoutes";
-import { BarChart3, Briefcase, Building2, GraduationCap, LayoutDashboard, Menu, Users } from "lucide-react";
+import {
+	BarChart3,
+	Briefcase,
+	Building2,
+	FileWarning,
+	GraduationCap,
+	LayoutDashboard,
+	Menu,
+	Users,
+} from "lucide-react";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 
 const navItems = [
 	{ to: RouterRoutes.ADMIN_DASHBOARD, label: "Bảng điều khiển", icon: LayoutDashboard },
+	{ to: RouterRoutes.ADMIN_STATISTICS, label: "Thống kê", icon: BarChart3 },
 	{ to: RouterRoutes.ADMIN_USERS, label: "Người dùng", icon: Users },
 	{ to: RouterRoutes.ADMIN_COMPANIES, label: "Công ty", icon: Building2 },
 	{ to: RouterRoutes.ADMIN_JOBS, label: "Việc làm", icon: Briefcase },
-	{ to: RouterRoutes.ADMIN_REPORTS, label: "Báo cáo", icon: BarChart3 },
+	{ to: RouterRoutes.ADMIN_REPORTS, label: "Báo cáo", icon: FileWarning },
 	{ to: RouterRoutes.ADMIN_SKILLS, label: "Kỹ năng", icon: GraduationCap },
 ];
 
