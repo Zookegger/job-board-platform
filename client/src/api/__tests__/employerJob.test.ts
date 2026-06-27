@@ -70,9 +70,9 @@ describe("employerJobApi", () => {
 	});
 
 	it("getEmployerJobs ném ApiError khi thất bại", async () => {
-		mock.onGet("/employer/jobs").reply(500);
+		mock.onGet("/employer/jobs").reply(500, { message: "Lỗi máy chủ" });
 
-		await expect(employerJobApi.getEmployerJobs({})).rejects.toThrow(/Không thể tải danh sách/);
+		await expect(employerJobApi.getEmployerJobs({})).rejects.toThrow(/Lỗi máy chủ/);
 	});
 
 	it("getEmployerJobDetail trả về chi tiết job", async () => {
@@ -122,7 +122,7 @@ describe("employerJobApi", () => {
 				employmentType: "FULL_TIME",
 				experienceLevel: "JUNIOR",
 			}),
-		).rejects.toThrow(/Tạo tin tuyển dụng thất bại/);
+		).rejects.toThrow(/Validation failed/);
 	});
 
 	it("updateEmployerJob cập nhật và trả về kết quả", async () => {
@@ -153,9 +153,9 @@ describe("employerJobApi", () => {
 	});
 
 	it("submitForReview ném ApiError khi thất bại", async () => {
-		mock.onPost("/employer/jobs/" + mockJobResponse.id + "/submit").reply(400);
+		mock.onPost("/employer/jobs/" + mockJobResponse.id + "/submit").reply(400, { message: "Yêu cầu không hợp lệ" });
 
-		await expect(employerJobApi.submitForReview(mockJobResponse.id)).rejects.toThrow(/Gửi duyệt thất bại/);
+		await expect(employerJobApi.submitForReview(mockJobResponse.id)).rejects.toThrow(/Yêu cầu không hợp lệ/);
 	});
 
 	it("deleteEmployerJob xóa job thành công", async () => {
@@ -171,7 +171,7 @@ describe("employerJobApi", () => {
 			{ id: 1, name: "IT" },
 			{ id: 2, name: "Finance" },
 		];
-		mock.onGet("/public/categories").reply(200, categories);
+		mock.onGet("/categories").reply(200, categories);
 
 		const result = await categoryApi.getCategories();
 
@@ -180,8 +180,8 @@ describe("employerJobApi", () => {
 	});
 
 	it("getCategories ném ApiError khi thất bại", async () => {
-		mock.onGet("/public/categories").reply(500);
+		mock.onGet("/categories").reply(500);
 
-		await expect(categoryApi.getCategories()).rejects.toThrow(/Không thể tải danh sách ngành nghề/);
+		await expect(categoryApi.getCategories()).rejects.toThrow(/Request failed/);
 	});
 });

@@ -39,7 +39,8 @@ public class SecurityConfig {
 			"/api/company", "/api/company/job-post",
 			"/api/jobs/public/**",
 			"/api/companies/public/**",
-			"/api/skills/**"
+			"/api/skills/**",
+			"/api/categories"
 	};
 
 	private static final String[] SWAGGER_WHITELIST = {
