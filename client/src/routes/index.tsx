@@ -18,7 +18,6 @@ import CandidateApplicationsPage from "@/features/candidate/ApplicationsPage";
 import CandidateApplicationDetailPage from "@/features/candidate/ApplicationDetailPage";
 
 
-import EmployerApplicationsPage from "@/features/employer/ApplicationsPage";
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
 import EmployerDashboardPage from "@/features/employer/DashboardPage";
 import EmployerJobDetailPage from "@/features/employer/JobDetailPage";
@@ -106,7 +105,6 @@ export const router = createBrowserRouter([
 							{ path: RouterRoutes.EMPLOYER_DASHBOARD, element: <EmployerDashboardPage /> },
 							{ path: RouterRoutes.EMPLOYER_JOBS, element: <EmployerJobsPage /> },
 							{ path: RouterRoutes.EMPLOYER_JOB_DETAIL(":slug"), element: <EmployerJobDetailPage /> },
-							{ path: RouterRoutes.EMPLOYER_APPLICATIONS, element: <EmployerApplicationsPage /> },
 							{ path: RouterRoutes.EMPLOYER_COMPANY, element: <EmployerCompanyPage /> },
 							{ path: RouterRoutes.EMPLOYER_SETTINGS, element: <EmployerSettingsPage /> },
 						],

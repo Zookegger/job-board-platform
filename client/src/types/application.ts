@@ -49,21 +49,25 @@ export interface ApplicationTimelineResponse {
 	changedAt: string;
 }
 
-export interface EmployerApplicationListResponse {
+import type { CandidateSkillResponse } from "./skill";
+
+export interface CandidateApplicationListResponse {
 	id: string;
 	candidateId: string;
 	candidateName: string;
 	candidateAvatarUrl: string | null;
 	candidateEmail: string;
+	candidatePhone: string | null;
 	jobId: string;
 	jobTitle: string;
 	status: ApplicationStatus;
 	coverLetter: string | null;
 	resumeUrl: string | null;
 	appliedAt: string;
+	skills: CandidateSkillResponse[];
 }
 
-export interface EmployerApplicationParams {
+export interface CandidateApplicationParams {
 	jobId?: string;
 	status?: string;
 	page?: number;

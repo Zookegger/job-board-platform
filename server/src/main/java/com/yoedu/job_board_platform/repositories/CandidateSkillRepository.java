@@ -15,6 +15,7 @@ import com.yoedu.job_board_platform.models.CandidateSkillId;
 @Repository
 public interface CandidateSkillRepository extends JpaRepository<CandidateSkill, CandidateSkillId> {
     List<CandidateSkill> findAllByIdCandidateId(UUID candidateId);
+    List<CandidateSkill> findAllByIdCandidateIdIn(List<UUID> candidateIds);
 
     void deleteAllByIdCandidateId(UUID candidateId);
 

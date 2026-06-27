@@ -3,8 +3,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { PageResponse } from "@/types/pagination";
 import getErrorMessage from "@/utils/getErrorMessage";
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 export interface Column<T> {
 	key: string;
@@ -57,8 +58,24 @@ export interface DataTableProps<T> {
 	/** Legacy: manual pagination config (kept for backward compat) */
 	pagination?: PaginationConfig;
 
+	actions?: DataTableActions<T>[];
 	minWidth?: string;
 	skeletonRows?: number;
+
+	rowTitle?: string | undefined;
+	onRowClick?: (item: T) => void | undefined;
+}
+
+export interface DataTableActions<T> {
+	header?: string;
+	items: {
+		label: string;
+		icon: React.ElementType;
+		onClick: (item: T) => void;
+		disabled?: (item: T) => boolean;
+		show?: (item: T) => boolean;
+		variant?: "default" | "destructive" | "outline" | "ghost" | "link" | "secondary" | "primary";
+	}[];
 }
 
 function TableSkeleton({ columns }: { columns: number }) {
@@ -130,13 +147,22 @@ function EmptyRow({
 	);
 }
 
-function PaginationFooter({ page, pageSize, totalPages, totalElements, isFetching, onPageChange, onPageSizeChange, label }: PaginationConfig) {
+function PaginationFooter({
+	page,
+	pageSize,
+	totalPages,
+	totalElements,
+	isFetching,
+	onPageChange,
+	onPageSizeChange,
+	label,
+}: PaginationConfig) {
 	const currentPageLabel = totalPages > 0 ? page + 1 : 0;
 
 	return (
 		<div className='flex flex-col items-center justify-between gap-4 border-t px-4 py-3 sm:flex-row'>
 			{/* Trái: Thông tin tổng số & Dropdown số lượng */}
-			<div className='flex flex-col items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8'>
+			<div className='flex items-center gap-4 sm:gap-6 lg:gap-8'>
 				<div className='text-sm text-muted-foreground'>
 					Tổng số: <span className='font-medium text-foreground'>{totalElements}</span> {label || "bản ghi"}
 				</div>
@@ -159,7 +185,7 @@ function PaginationFooter({ page, pageSize, totalPages, totalElements, isFetchin
 			</div>
 
 			{/* Phải: Trạng thái trang & Nút điều hướng */}
-			<div className='flex flex-col items-center gap-4 sm:flex-row sm:gap-6'>
+			<div className='flex items-center gap-4 sm:gap-6'>
 				<div className='text-sm text-muted-foreground'>
 					Trang <span className='font-medium text-foreground'>{currentPageLabel}</span> / {totalPages}
 				</div>
@@ -189,6 +215,55 @@ function PaginationFooter({ page, pageSize, totalPages, totalElements, isFetchin
 	);
 }
 
+function ActionColumn<T>({ actions, item }: { actions: DataTableActions<T>; item: T }) {
+	const visibleItems = actions.items.filter((action) => !action.show || action.show(item));
+	if (visibleItems.length === 0) return null;
+
+	return (
+		<>
+			<div className='flex flex-wrap gap-2 md:hidden'>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							variant='outline'
+							size='sm'
+						>
+							<MoreHorizontal />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align='end' className="min-w-40">
+						{visibleItems.map((act, i) => (
+							<DropdownMenuItem
+								key={i}
+								onClick={() => act.onClick(item)}
+								disabled={act.disabled?.(item)}
+							>
+								{act.icon && <act.icon className='mr-2 size-4' />}
+								{act.label}
+							</DropdownMenuItem>
+						))}
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</div>
+
+			<div className='hidden md:block'>
+				{visibleItems.map((act, i) => (
+					<Button
+						key={i}
+						variant={act.variant ?? "outline"}
+						size='sm'
+						disabled={act.disabled?.(item)}
+						onClick={() => act.onClick(item)}
+						title={act.label}
+					>
+						{act.icon && <act.icon className='size-4' />}
+					</Button>
+				))}
+			</div>
+		</>
+	);
+}
+
 export function DataTable<T>({
 	columns,
 	data,
@@ -200,16 +275,19 @@ export function DataTable<T>({
 	pageResponse,
 	pageable,
 	pagination,
+	actions,
 	minWidth = "min-w-[640px]",
 	skeletonRows = 5,
+	onRowClick = undefined,
+	rowTitle,
 }: DataTableProps<T>) {
 	const resolvedPagination: PaginationConfig | undefined = useMemo(() => {
 		if (pageResponse && pageable) {
 			return {
 				page: pageable.page,
 				pageSize: pageable.pageSize,
-			totalPages: pageResponse.totalPages ?? pageable.totalPages ?? 0,
-			totalElements: pageResponse.totalElements ?? pageable.totalElements ?? 0,
+				totalPages: pageResponse.totalPages ?? pageable.totalPages ?? 0,
+				totalElements: pageResponse.totalElements ?? pageable.totalElements ?? 0,
 				isFetching: pageable.isFetching,
 				onPageChange: pageable.onPageChange,
 				onPageSizeChange: pageable.onPageSizeChange,
@@ -219,13 +297,31 @@ export function DataTable<T>({
 		return pagination;
 	}, [pageResponse, pageable, pagination]);
 
+	const columnsWithActions = useMemo(() => {
+		if (!actions || actions.length === 0) return columns;
+		return [
+			...columns,
+			{
+				key: "actions",
+				header: "Hành động",
+				className: "w-[1%] whitespace-nowrap text-right",
+				render: (item: T) => (
+					<ActionColumn
+						actions={actions[0]}
+						item={item}
+					/>
+				),
+			},
+		];
+	}, [columns, actions]);
+
 	return (
 		<div className='overflow-hidden rounded-lg border bg-card'>
 			<div className='overflow-x-auto'>
 				<table className={cn("w-full border-collapse text-left text-sm", minWidth)}>
 					<thead className='border-b bg-muted/60 text-xs uppercase text-muted-foreground'>
 						<tr>
-							{columns.map((col) => (
+							{columnsWithActions.map((col) => (
 								<th
 									key={col.key}
 									className={cn("px-4 py-3 font-medium", col.className)}
@@ -237,16 +333,16 @@ export function DataTable<T>({
 					</thead>
 					<tbody>
 						{isLoading ? (
-							<TableSkeleton columns={skeletonRows} />
+							<TableSkeleton columns={columnsWithActions.length || skeletonRows} />
 						) : isError ? (
 							<ErrorRow
-								colSpan={columns.length}
+								colSpan={columnsWithActions.length}
 								error={error}
 								onRetry={onRetry}
 							/>
 						) : data.length === 0 ? (
 							<EmptyRow
-								colSpan={columns.length}
+								colSpan={columnsWithActions.length}
 								icon={emptyState.icon}
 								title={emptyState.title}
 								subtitle={emptyState.subtitle}
@@ -255,12 +351,22 @@ export function DataTable<T>({
 							data.map((item, index) => (
 								<tr
 									key={index}
-									className='border-b last:border-0 hover:bg-muted/30'
+									className={cn(
+										"border-b last:border-0 hover:bg-muted/30 transition-colors",
+										typeof onRowClick === "function" && "cursor-pointer",
+									)}
+									onClick={() => onRowClick?.(item)}
+									title={rowTitle}
 								>
-									{columns.map((col) => (
+									{columnsWithActions.map((col) => (
 										<td
 											key={col.key}
 											className={cn("px-4 py-4", col.className)}
+											onClick={(e) => {
+												if (col.key === "actions") {
+													e.stopPropagation();
+												}
+											}}
 										>
 											{col.render(item)}
 										</td>

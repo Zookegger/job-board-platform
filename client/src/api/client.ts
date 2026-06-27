@@ -12,28 +12,55 @@ const client = axios.create({
 	withCredentials: true,
 });
 
+let isRefreshing = false;
+let failedQueue: Array<{
+	resolve: (value: unknown) => void;
+	reject: (reason?: unknown) => void;
+}> = [];
+
+function processQueue(error: unknown) {
+	failedQueue.forEach(({ resolve, reject }) => {
+		if (error) {
+			reject(error);
+		} else {
+			resolve(undefined);
+		}
+	});
+	failedQueue = [];
+}
+
 client.interceptors.response.use(
 	(response) => response,
 	async (error) => {
-		// Nếu nhận được lỗi 401 Unauthorized, thử làm mới token
+		const originalConfig = error.config;
+
 		if (
 			error.response?.status === 401 &&
-			!error.config._retry &&
-			!error.config.url?.includes(ApiRoutes.REFRESH_TOKEN) &&
-			!error.config.url?.includes(ApiRoutes.ME)
+			!originalConfig._retry &&
+			!originalConfig.url?.includes(ApiRoutes.REFRESH_TOKEN)
 		) {
-			error.config._retry = true;
+			if (isRefreshing) {
+				return new Promise((resolve, reject) => {
+					failedQueue.push({ resolve, reject });
+				}).then(() => client(originalConfig));
+			}
+
+			originalConfig._retry = true;
+			isRefreshing = true;
+
 			try {
 				await AuthApi.refreshToken();
-				return client(error.config); // Thử lại request ban đầu sau khi làm mới token
+				processQueue(null);
+				return client(originalConfig);
 			} catch (refreshError) {
-				// Nếu làm mới token thất bại, chuyển hướng người dùng đến trang đăng nhập
+				processQueue(refreshError);
 				navigateTo(RouterRoutes.LOGIN, { replace: true });
 				return Promise.reject(refreshError);
+			} finally {
+				isRefreshing = false;
 			}
 		}
 
-		// Hiển thị toast cho các lỗi phổ biến (bỏ qua 401 đã xử lý ở trên)
 		const status = error.response?.status;
 		const message = error.response?.data?.message;
 		if (status === 403) {

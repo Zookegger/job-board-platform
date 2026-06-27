@@ -38,7 +38,7 @@ import {
 import { useAllSkills } from "@/hooks/useSkills";
 import { jobSchema, type JobFormData } from "@/lib/schemas/job";
 import type { CategoryResponse, JobRequest, JobResponse, JobStatus, SkillResponse } from "@/types/job";
-import { EMPLOYMENT_TYPE_LABELS, EXPERIENCE_LEVEL_LABELS, JOB_STATUS_LABELS, LOCATION_TYPES_LABELS } from "@/types/job";
+import { EMPLOYMENT_TYPE_LABELS, EmploymentTypes, EXPERIENCE_LEVEL_LABELS, ExperienceLevels, JOB_STATUS_LABELS, LOCATION_TYPES_LABELS, LocationTypes } from "@/types/job";
 import { formatDate } from "@/utils/DateUtils";
 import getErrorMessage from "@/utils/getErrorMessage";
 import { formatSalary, formatSalaryDisplay } from "@/utils/StringUtil";
@@ -56,9 +56,9 @@ const DEFAULT_VALUES: JobFormData = {
 	salaryMax: null,
 	currency: "VND",
 	location: "",
-	locationTypes: "ONSITE",
-	employmentType: "FULL_TIME",
-	experienceLevel: "JUNIOR",
+	locationTypes: LocationTypes.ONSITE,
+	employmentType: EmploymentTypes.FULL_TIME,
+	experienceLevel: ExperienceLevels.JUNIOR,
 	skillIds: [],
 };
 
@@ -442,12 +442,13 @@ function FormMode({
 				>
 					<FieldGroup>
 						<Field>
-							<FieldLabel htmlFor='title'>Tiêu đề *</FieldLabel>
+							<FieldLabel htmlFor='title'>Tiêu đề</FieldLabel>
 							<FieldContent>
 								<Input
 									id='title'
 									className='h-10'
 									placeholder='Nhập tiêu đề việc làm'
+									required
 									{...register("title")}
 								/>
 							</FieldContent>
@@ -455,7 +456,7 @@ function FormMode({
 						</Field>
 
 						<div className='grid grid-cols-3 gap-4'>
-							<Field>
+							<Field >
 								<FieldLabel htmlFor='categoryId'>Ngành nghề *</FieldLabel>
 								<FieldContent>
 									<select
@@ -492,10 +493,14 @@ function FormMode({
 										{...register("employmentType")}
 										className='h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
 									>
-										<option value='FULL_TIME'>Toàn thời gian</option>
-										<option value='PART_TIME'>Bán thời gian</option>
-										<option value='CONTRACT'>Hợp đồng</option>
-										<option value='INTERNSHIP'>Thực tập</option>
+										{Object.entries(EMPLOYMENT_TYPE_LABELS).map(([value, label]) => (
+											<option
+												key={value}
+												value={value}
+											>
+												{label}
+											</option>
+										))}
 									</select>
 								</FieldContent>
 								<FieldError
@@ -853,7 +858,7 @@ export default function JobFormDialog({
 				toast.error(getErrorMessage(err, "Không thể lưu tin tuyển dụng"));
 			}
 		},
-		[isCreate, createJob, onCreated, updateJob, queryClient],
+		[isCreate, createJob, onCreated, updateJob, queryClient, onCancelEdit],
 	);
 
 	const onFormSubmit = handleSubmit(rawSubmit);

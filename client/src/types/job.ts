@@ -1,7 +1,39 @@
-export type JobStatus = "DRAFT" | "PENDING_APPROVAL" | "ACTIVE" | "EXPIRED" | "REJECTED";
-export type LocationTypes = "ONSITE" | "REMOTE" | "HYBRID";
-export type EmploymentType = "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERNSHIP";
-export type ExperienceLevel = "INTERN" | "JUNIOR" | "MID" | "SENIOR" | "LEAD";
+export const JobStatus = {
+	DRAFT: "DRAFT",
+	PENDING_APPROVAL: "PENDING_APPROVAL",
+	ACTIVE: "ACTIVE",
+	EXPIRED: "EXPIRED",
+	REJECTED: "REJECTED",
+} as const;
+
+export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
+
+export const LocationTypes = {
+	ONSITE: "ONSITE",
+	REMOTE: "REMOTE",
+	HYBRID: "HYBRID",
+} as const;
+
+export type LocationTypes = (typeof LocationTypes)[keyof typeof LocationTypes];
+
+export const EmploymentTypes = {
+	FULL_TIME: "FULL_TIME",
+	PART_TIME: "PART_TIME",
+	CONTRACT: "CONTRACT",
+} as const;
+
+export type EmploymentTypes = (typeof EmploymentTypes)[keyof typeof EmploymentTypes];
+
+export const ExperienceLevels = {
+	NOT_REQUIRED: "NOT_REQUIRED",
+	INTERN: "INTERN",
+	JUNIOR: "JUNIOR",
+	MID: "MID",
+	SENIOR: "SENIOR",
+	LEAD: "LEAD",
+} as const;
+
+export type ExperienceLevels = (typeof ExperienceLevels)[keyof typeof ExperienceLevels];
 
 export interface AdminPendingJobResponse {
 	id: string;
@@ -12,8 +44,8 @@ export interface AdminPendingJobResponse {
 	benefits: string | null;
 	location: string | null;
 	locationTypes: LocationTypes;
-	employmentType: EmploymentType;
-	experienceLevel: ExperienceLevel;
+	employmentType: EmploymentTypes;
+	experienceLevel: ExperienceLevels;
 	salaryMin: number | null;
 	salaryMax: number | null;
 	currency: string;
@@ -33,11 +65,10 @@ export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
 	REJECTED: "Bị từ chối",
 };
 
-export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
+export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentTypes, string> = {
 	FULL_TIME: "Toàn thời gian",
 	PART_TIME: "Bán thời gian",
 	CONTRACT: "Hợp đồng",
-	INTERNSHIP: "Thực tập",
 };
 
 export const LOCATION_TYPES_LABELS: Record<LocationTypes, string> = {
@@ -46,7 +77,8 @@ export const LOCATION_TYPES_LABELS: Record<LocationTypes, string> = {
 	HYBRID: "Hybrid",
 };
 
-export const EXPERIENCE_LEVEL_LABELS: Record<ExperienceLevel, string> = {
+export const EXPERIENCE_LEVEL_LABELS: Record<ExperienceLevels, string> = {
+	NOT_REQUIRED: "Không yêu cầu",
 	INTERN: "Thực tập sinh",
 	JUNIOR: "Junior",
 	MID: "Mid-level",
@@ -66,8 +98,8 @@ export interface JobRequest {
 	currency?: string | null;
 	location?: string | null;
 	locationTypes: LocationTypes;
-	employmentType: EmploymentType;
-	experienceLevel: ExperienceLevel;
+	employmentType: EmploymentTypes;
+	experienceLevel: ExperienceLevels;
 	skillIds?: number[] | null;
 }
 
@@ -77,8 +109,8 @@ export interface JobListResponse {
 	title: string;
 	status: JobStatus;
 	locationTypes: LocationTypes;
-	employmentType: EmploymentType;
-	experienceLevel: ExperienceLevel;
+	employmentType: EmploymentTypes;
+	experienceLevel: ExperienceLevels;
 	salaryMin: number | null;
 	salaryMax: number | null;
 	currency: string | null;
@@ -103,6 +135,7 @@ export interface JobResponse extends JobListResponse {
 	expirationDate?: string | null;
 	updatedAt: string;
 	companyId: string;
+	companySlug: string;
 	categoryId: number;
 	categoryName: string;
 	skills: SkillResponse[];

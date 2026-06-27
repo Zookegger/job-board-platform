@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateApplicationStatus } from "@/hooks/useEmployerApplications";
 import { cn } from "@/lib/utils";
-import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type EmployerApplicationListResponse } from "@/types/application";
+import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type CandidateApplicationListResponse } from "@/types/application";
 import getErrorMessage from "@/utils/getErrorMessage";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { useEffect } from "react";
@@ -102,7 +102,7 @@ interface FormValues {
 }
 
 interface UpdateStatusDialogProps {
-	application: EmployerApplicationListResponse | null;
+	application: CandidateApplicationListResponse | null;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }

@@ -2,7 +2,10 @@ package com.yoedu.job_board_platform.services.impl;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -20,22 +23,27 @@ import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
 import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
 import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
 import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
+import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
 import com.yoedu.job_board_platform.mappers.ApplicationMapper;
 import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.models.ApplicationStatusLog;
+import com.yoedu.job_board_platform.models.CandidateSkill;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
 import com.yoedu.job_board_platform.models.Profile;
 import com.yoedu.job_board_platform.models.Resume;
+import com.yoedu.job_board_platform.models.Skill;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
+import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.ResumeRepository;
+import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.services.ApplicationService;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 
@@ -49,6 +57,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationStatusLogRepository applicationStatusLogRepository;
     private final JobRepository jobRepository;
     private final ResumeRepository resumeRepository;
+    private final CandidateSkillRepository candidateSkillRepository;
+    private final SkillRepository skillRepository;
     private final SecurityUtil securityUtil;
     private final ApplicationMapper applicationMapper;
     private final ApplicationStatusLogMapper applicationStatusLogMapper;
@@ -79,9 +89,18 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .orElseThrow(
                         () -> new BadRequestException("Bạn chưa upload CV. Vui lòng upload CV trước khi ứng tuyển."));
 
-        Application application = applicationMapper.toEntity(request);
-        application.setCandidate(profile);
-        application.setJob(job);
+        Optional<Application> existingWithdrawnApp = applicationRepository.findByCandidateIdAndJobId(profile.getId(), job.getId());
+        
+        Application application;
+        if (existingWithdrawnApp.isPresent()) {
+            application = existingWithdrawnApp.get();
+            applicationMapper.updateEntity(request, application);
+        } else {
+            application = applicationMapper.toEntity(request);
+            application.setCandidate(profile);
+            application.setJob(job);
+        }
+
         application.setStatus(ApplicationStatus.PENDING);
         application.setResumeUrl(resume.getFilePath());
         application.setAppliedAt(OffsetDateTime.now());
@@ -224,7 +243,35 @@ public class ApplicationServiceImpl implements ApplicationService {
             applications = applicationRepository.findByJobCompanyId(companyId, pageable);
         }
 
-        return applications.map(applicationMapper::toEmployerListResponse);
+        List<Application> content = applications.getContent();
+        if (content.isEmpty()) {
+            return applications.map(applicationMapper::toEmployerListResponse);
+        }
+
+        List<UUID> candidateIds = content.stream()
+                .map(app -> app.getCandidate().getId())
+                .distinct()
+                .toList();
+
+        List<CandidateSkill> allSkills = candidateSkillRepository.findAllByIdCandidateIdIn(candidateIds);
+        Map<UUID, List<CandidateSkill>> skillsByCandidate = allSkills.stream()
+                .collect(Collectors.groupingBy(cs -> cs.getId().getCandidateId()));
+
+        Map<Integer, String> skillNameMap = skillRepository.findAllById(
+                allSkills.stream().map(cs -> cs.getId().getSkillId()).toList()).stream()
+                .collect(Collectors.toMap(Skill::getId, Skill::getName));
+
+        return applications.map(app -> {
+            List<CandidateSkillResponse> skills = skillsByCandidate
+                    .getOrDefault(app.getCandidate().getId(), List.of())
+                    .stream()
+                    .map(cs -> new CandidateSkillResponse(
+                            cs.getId().getSkillId(),
+                            skillNameMap.getOrDefault(cs.getId().getSkillId(), ""),
+                            cs.getProficientLevel()))
+                    .toList();
+            return applicationMapper.toEmployerListResponse(app, skills);
+        });
     }
 
     @Override

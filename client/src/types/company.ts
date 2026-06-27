@@ -22,6 +22,8 @@ export interface CompanyResponse {
 	taxCode: string | null;
 	status: CompanyStatus;
 	isApproved: boolean;
+	rejectionReason: string | null;
+	reviewReason: string | null;
 	createdAt: string;
 	approvedAt: string | null;
 }
