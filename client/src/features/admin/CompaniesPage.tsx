@@ -1,16 +1,13 @@
-import { BaseDialog } from "@/components/shared/BaseDialog";
 import { DataTable } from "@/components/shared/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CompanyApprovalModal from "@/features/admin/components/CompanyApprovalModal";
 import {
 	useAllCompanies,
-	useApproveCompany,
 	usePendingCompanies,
-	useRejectCompany,
-	useSuspendCompany,
 	useUnsuspendCompany,
 } from "@/hooks/useAdminCompanies";
 import {
@@ -165,18 +162,10 @@ export default function AdminCompaniesPage() {
 	const allDeferredSearch = useDeferredValue(allSearchTerm.trim());
 
 	// ── Shared dialog state ──
-	const [approveDialog, setApproveDialog] = useState<{
-		open: boolean;
-		company: CompanyResponse | null;
-	}>({ open: false, company: null });
-
-	const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-	const [selectedCompanyToReject, setSelectedCompanyToReject] = useState<CompanyResponse | null>(null);
-	const [rejectReason, setRejectReason] = useState("");
-
-	const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
-	const [selectedCompanyToSuspend, setSelectedCompanyToSuspend] = useState<CompanyResponse | null>(null);
-	const [suspendReason, setSuspendReason] = useState("");
+	const [approvalAction, setApprovalAction] = useState<{
+		company: AdminPendingCompanyResponse | CompanyResponse;
+		action: "approve" | "reject" | "suspend";
+	} | null>(null);
 
 	// ── Queries ──
 	const pendingQueryParams = useMemo(() => {
@@ -219,9 +208,6 @@ export default function AdminCompaniesPage() {
 		error: allError,
 	} = useAllCompanies(allQueryParams);
 
-	const approveCompany = useApproveCompany();
-	const rejectCompany = useRejectCompany();
-	const suspendCompany = useSuspendCompany();
 	const unsuspendCompany = useUnsuspendCompany();
 
 	const pendingCompanies = pendingData?.content ?? [];
@@ -232,77 +218,12 @@ export default function AdminCompaniesPage() {
 	const allTotalElements = allData?.totalElements ?? 0;
 	const allTotalPages = allData?.totalPages ?? 0;
 
-	const actionPending =
-		approveCompany.isPending || rejectCompany.isPending || suspendCompany.isPending || unsuspendCompany.isPending;
+	const actionPending = unsuspendCompany.isPending;
 
 	// ── Handlers ──
-	const handleApprove = (company: CompanyResponse) => {
-		setApproveDialog({ open: true, company });
-	};
-
-	const confirmApprove = () => {
-		if (!approveDialog.company) return;
-
-		approveCompany.mutate(approveDialog.company.id, {
-			onSuccess: () => {
-				toast.success(`Đã duyệt công ty "${approveDialog.company!.companyName}"`);
-				setApproveDialog({ open: false, company: null });
-			},
-			onError: (mutationError) => toast.error(getErrorMessage(mutationError, "Không thể duyệt công ty")),
-		});
-	};
-
-	const openRejectDialog = (company: CompanyResponse) => {
-		setSelectedCompanyToReject(company);
-		setRejectReason("");
-		setRejectDialogOpen(true);
-	};
-
-	const handleReject = () => {
-		if (!selectedCompanyToReject) return;
-
-		if (!rejectReason.trim()) {
-			toast.error("Vui lòng nhập lý do từ chối");
-			return;
-		}
-
-		rejectCompany.mutate(
-			{ companyId: selectedCompanyToReject.id, reason: rejectReason.trim() },
-			{
-				onSuccess: () => {
-					toast.success("Đã từ chối công ty");
-					setRejectDialogOpen(false);
-				},
-				onError: (mutationError) => toast.error(getErrorMessage(mutationError, "Không thể từ chối công ty")),
-			},
-		);
-	};
-
-	const openSuspendDialog = useCallback((company: CompanyResponse) => {
-		setSelectedCompanyToSuspend(company);
-		setSuspendReason("");
-		setSuspendDialogOpen(true);
-	}, []);
-
-	const handleSuspend = () => {
-		if (!selectedCompanyToSuspend) return;
-
-		if (!suspendReason.trim()) {
-			toast.error("Vui lòng nhập lý do tạm ngưng");
-			return;
-		}
-
-		suspendCompany.mutate(
-			{ companyId: selectedCompanyToSuspend.id, reason: suspendReason.trim() },
-			{
-				onSuccess: () => {
-					toast.success("Đã tạm ngưng công ty");
-					setSuspendDialogOpen(false);
-				},
-				onError: (mutationError) => toast.error(getErrorMessage(mutationError, "Không thể tạm ngưng công ty")),
-			},
-		);
-	};
+	function openApprovalAction(company: AdminPendingCompanyResponse | CompanyResponse, action: "approve" | "reject" | "suspend") {
+		setApprovalAction({ company, action });
+	}
 
 	const handleUnsuspend = useCallback(
 		(company: CompanyResponse) => {
@@ -409,7 +330,7 @@ export default function AdminCompaniesPage() {
 							variant='success'
 							size='sm'
 							disabled={actionPending}
-							onClick={() => handleApprove(c)}
+							onClick={() => openApprovalAction(c, "approve")}
 						>
 							<CheckCircle2 /> Duyệt
 						</Button>
@@ -417,7 +338,7 @@ export default function AdminCompaniesPage() {
 							variant='destructive'
 							size='sm'
 							disabled={actionPending}
-							onClick={() => openRejectDialog(c)}
+							onClick={() => openApprovalAction(c, "reject")}
 						>
 							<XCircle /> Từ chối
 						</Button>
@@ -506,7 +427,7 @@ export default function AdminCompaniesPage() {
 									variant='success'
 									size='sm'
 									disabled={actionPending}
-									onClick={() => handleApprove(c)}
+									onClick={() => openApprovalAction(c, "approve")}
 								>
 									<CheckCircle2 /> Duyệt
 								</Button>
@@ -514,7 +435,7 @@ export default function AdminCompaniesPage() {
 									variant='destructive'
 									size='sm'
 									disabled={actionPending}
-									onClick={() => openRejectDialog(c)}
+									onClick={() => openApprovalAction(c, "reject")}
 								>
 									<XCircle /> Từ chối
 								</Button>
@@ -525,7 +446,7 @@ export default function AdminCompaniesPage() {
 								variant='secondary'
 								size='sm'
 								disabled={actionPending}
-								onClick={() => openSuspendDialog(c)}
+								onClick={() => openApprovalAction(c, "suspend")}
 							>
 								<AlertTriangle /> Tạm ngưng
 							</Button>
@@ -549,7 +470,7 @@ export default function AdminCompaniesPage() {
 				),
 			},
 		],
-		[actionPending, handleUnsuspend, openSuspendDialog],
+		[actionPending, handleUnsuspend],
 	);
 
 	return (
@@ -746,119 +667,14 @@ export default function AdminCompaniesPage() {
 				/>
 			</TabsContent>
 
-			{/* Reject Dialog */}
-			<BaseDialog
-				isOpen={rejectDialogOpen}
-				onClose={() => {
-					setSelectedCompanyToReject(null);
-					setRejectReason("");
-					setRejectDialogOpen(false);
-				}}
-				title='Từ chối hồ sơ công ty'
-				description={`Nhập lý do từ chối cho công ty ${selectedCompanyToReject?.companyName ?? ""}.`}
-				children={
-					<div className='px-4'>
-						<textarea
-							value={rejectReason}
-							onChange={(event) => setRejectReason(event.target.value)}
-							rows={6}
-							placeholder='Nhập lý do từ chối'
-							className='w-full resize-none rounded-md border border-input bg-background p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/50'
-						/>
-					</div>
-				}
-				footer={
-					<div className='flex justify-end gap-3'>
-						<Button
-							variant='outline'
-							onClick={() => {
-								setSelectedCompanyToReject(null);
-								setRejectReason("");
-								setRejectDialogOpen(false);
-							}}
-						>
-							Hủy
-						</Button>
-						<Button
-							variant='destructive'
-							onClick={handleReject}
-							disabled={actionPending}
-						>
-							<XCircle /> Xác nhận từ chối
-						</Button>
-					</div>
-				}
-			/>
-
-			{/* Suspend Dialog */}
-			<BaseDialog
-				isOpen={suspendDialogOpen}
-				onClose={() => {
-					setSelectedCompanyToSuspend(null);
-					setSuspendReason("");
-					setSuspendDialogOpen(false);
-				}}
-				size='xl'
-				title='Tạm ngưng công ty'
-				description={`Nhập lý do tạm ngưng cho công ty ${selectedCompanyToSuspend?.companyName ?? ""}.`}
-				children={
-					<div className='px-4'>
-						<textarea
-							value={suspendReason}
-							onChange={(event) => setSuspendReason(event.target.value)}
-							rows={6}
-							placeholder='Nhập lý do tạm ngưng'
-							className='w-full resize-none rounded-md border border-input bg-background p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/50'
-						/>
-					</div>
-				}
-				footer={
-					<div className='flex justify-end gap-3'>
-						<Button
-							variant='outline'
-							onClick={() => {
-								setSelectedCompanyToSuspend(null);
-								setSuspendReason("");
-								setSuspendDialogOpen(false);
-							}}
-						>
-							Hủy
-						</Button>
-						<Button
-							variant='destructive'
-							onClick={handleSuspend}
-							disabled={actionPending}
-						>
-							<AlertTriangle /> Xác nhận
-						</Button>
-					</div>
-				}
-			/>
-
-			{/* Approve Confirm Dialog */}
-			<BaseDialog
-				isOpen={approveDialog.open}
-				onClose={() => setApproveDialog({ open: false, company: null })}
-				title='Xác nhận duyệt công ty'
-				description={`Bạn có chắc muốn duyệt công ty "${approveDialog.company?.companyName ?? ""}"?`}
-				footer={
-					<div className='flex gap-3'>
-						<Button
-							variant='outline'
-							onClick={() => setApproveDialog({ open: false, company: null })}
-						>
-							Hủy
-						</Button>
-						<Button
-							variant='success'
-							onClick={confirmApprove}
-							disabled={actionPending}
-						>
-							<CheckCircle2 /> Xác nhận duyệt
-						</Button>
-					</div>
-				}
-			/>
+			{approvalAction && (
+				<CompanyApprovalModal
+					company={approvalAction.company}
+					action={approvalAction.action}
+					isOpen
+					onClose={() => setApprovalAction(null)}
+				/>
+			)}
 		</Tabs>
 	);
 }

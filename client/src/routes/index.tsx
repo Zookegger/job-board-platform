@@ -14,21 +14,19 @@ import NotFoundPage from "@/features/home/NotFoundPage";
 import { JobDetailPage } from "@/features/jobs/JobDetailPage";
 import { JobListPage } from "@/features/jobs/JobListPage";
 
-import CandidateApplicationsPage from "@/features/candidate/ApplicationsPage";
 import CandidateApplicationDetailPage from "@/features/candidate/ApplicationDetailPage";
+import CandidateApplicationsPage from "@/features/candidate/ApplicationsPage";
 
 
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
 import EmployerDashboardPage from "@/features/employer/DashboardPage";
 import EmployerJobDetailPage from "@/features/employer/JobDetailPage";
 import EmployerJobsPage from "@/features/employer/JobsPage";
-import EmployerSettingsPage from "@/features/employer/SettingsPage";
 
 import AdminCompaniesPage from "@/features/admin/CompaniesPage";
 import AdminDashboardPage from "@/features/admin/DashboardPage";
 import AdminJobsPage from "@/features/admin/JobsPage";
 import AdminReportsPage from "@/features/admin/ReportsPage";
-import AdminSettingsPage from "@/features/admin/SettingsPage";
 import AdminSkillPage from "@/features/admin/SkillsPage";
 import AdminUsersPage from "@/features/admin/UsersPage";
 import UnauthorizedPage from "@/features/home/UnauthorizedPage";
@@ -106,7 +104,6 @@ export const router = createBrowserRouter([
 							{ path: RouterRoutes.EMPLOYER_JOBS, element: <EmployerJobsPage /> },
 							{ path: RouterRoutes.EMPLOYER_JOB_DETAIL(":slug"), element: <EmployerJobDetailPage /> },
 							{ path: RouterRoutes.EMPLOYER_COMPANY, element: <EmployerCompanyPage /> },
-							{ path: RouterRoutes.EMPLOYER_SETTINGS, element: <EmployerSettingsPage /> },
 						],
 					},
 				],
@@ -132,7 +129,6 @@ export const router = createBrowserRouter([
 							{ path: RouterRoutes.ADMIN_COMPANIES, element: <AdminCompaniesPage /> },
 							{ path: RouterRoutes.ADMIN_JOBS, element: <AdminJobsPage /> },
 							{ path: RouterRoutes.ADMIN_REPORTS, element: <AdminReportsPage /> },
-							{ path: RouterRoutes.ADMIN_SETTINGS, element: <AdminSettingsPage /> },
 							{ path: RouterRoutes.ADMIN_SKILLS, element: <AdminSkillPage /> },
 						],
 					},
