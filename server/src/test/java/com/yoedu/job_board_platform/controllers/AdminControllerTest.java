@@ -920,5 +920,83 @@ class AdminControllerTest {
                         .andExpect(jsonPath("$.statusDistribution[?(@.status == 'REVIEWING')].percentage").value(hasItem(50.0)))
                         .andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].total").value(hasItem(1)))
                         .andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].percentage").value(hasItem(25.0)));
-}
+        }
+
+        @Test
+        void admin_canGetUsers() throws Exception {
+                createPendingCompany(
+                                "User List Company",
+                                "111222333",
+                                "user-list-employer@example.com",
+                                "0900000101");
+
+                createCandidateProfile("user-list-candidate@example.com");
+
+                Cookie adminCookie = loginAsAdmin();
+
+                mockMvc.perform(get("/api/admin/users")
+                                .cookie(adminCookie)
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content.length()").value(3))
+                                .andExpect(jsonPath("$.totalElements").value(3))
+                                .andExpect(jsonPath("$.content[*].email").value(hasItem("employer.user-list-employer@example.com")))
+                                .andExpect(jsonPath("$.content[*].email").value(hasItem("user-list-candidate@example.com")))
+                                .andExpect(jsonPath("$.content[*].role").value(hasItem("EMPLOYER")))
+                                .andExpect(jsonPath("$.content[*].role").value(hasItem("CANDIDATE")))
+                                .andExpect(jsonPath("$.content[*].status").value(hasItem("ACTIVE")));
+        }
+
+        @Test
+        void admin_canFilterUsersByRole() throws Exception {
+                createPendingCompany(
+                                "Role Filter Company",
+                                "222333444",
+                                "role-filter-employer@example.com",
+                                "0900000102");
+
+                createCandidateProfile("role-filter-candidate@example.com");
+
+                Cookie adminCookie = loginAsAdmin();
+
+                mockMvc.perform(get("/api/admin/users")
+                                .cookie(adminCookie)
+                                .param("role", "CANDIDATE")
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content.length()").value(1))
+                                .andExpect(jsonPath("$.totalElements").value(1))
+                                .andExpect(jsonPath("$.content[0].email").value("role-filter-candidate@example.com"))
+                                .andExpect(jsonPath("$.content[0].role").value("CANDIDATE"));
+        }
+
+        @Test
+        void admin_canFilterUsersByStatus() throws Exception {
+                User inactiveUser = User.builder()
+                                .email("inactive-user@example.com")
+                                .password(passwordEncoder.encode("password123"))
+                                .role(UserRole.CANDIDATE)
+                                .isActive(false)
+                                .build();
+
+                userRepository.save(inactiveUser);
+
+                createCandidateProfile("active-user@example.com");
+
+                Cookie adminCookie = loginAsAdmin();
+
+                mockMvc.perform(get("/api/admin/users")
+                                .cookie(adminCookie)
+                                .param("status", "INACTIVE")
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content.length()").value(1))
+                                .andExpect(jsonPath("$.totalElements").value(1))
+                                .andExpect(jsonPath("$.content[0].email").value("inactive-user@example.com"))
+                                .andExpect(jsonPath("$.content[0].status").value("INACTIVE"))
+                                .andExpect(jsonPath("$.content[0].isActive").value(false));
+        }
 }

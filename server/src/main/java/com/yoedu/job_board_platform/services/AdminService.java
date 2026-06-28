@@ -15,11 +15,14 @@ import com.yoedu.job_board_platform.dtos.report.ReportResponse;
 import com.yoedu.job_board_platform.models.ReportStatus;
 import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminUserListResponse;
 
 public interface AdminService {
     AdminDashboardStatsResponse getDashboardStats(); //hiển thị dashboard
 
     AdminApplicationChartResponse getApplicationChartStats(int days);
+
+    Page<AdminUserListResponse> getUsers(String role, String status, Pageable pageable);
 
     /**
      * Lấy danh sách công ty đang chờ duyệt.

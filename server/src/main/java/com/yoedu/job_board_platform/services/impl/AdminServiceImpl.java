@@ -1,27 +1,30 @@
 package com.yoedu.job_board_platform.services.impl;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
+import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminUserListResponse;
 import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
 import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
@@ -30,6 +33,7 @@ import com.yoedu.job_board_platform.dtos.report.ReportResponse;
 import com.yoedu.job_board_platform.mappers.AdminMapper;
 import com.yoedu.job_board_platform.mappers.JobMapper;
 import com.yoedu.job_board_platform.mappers.ReportMapper;
+import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyApprovalLog;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
@@ -41,22 +45,20 @@ import com.yoedu.job_board_platform.models.NotificationStatus;
 import com.yoedu.job_board_platform.models.Report;
 import com.yoedu.job_board_platform.models.ReportStatus;
 import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 import com.yoedu.job_board_platform.repositories.CompanyApprovalLogRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ReportRepository;
+import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.NotificationService;
 import com.yoedu.job_board_platform.specifications.CompanySpecification;
 import com.yoedu.job_board_platform.specifications.JobSpecification;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
-import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
-import com.yoedu.job_board_platform.repositories.ApplicationRepository;
-import com.yoedu.job_board_platform.repositories.UserRepository;
-import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
-import com.yoedu.job_board_platform.models.ApplicationStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -77,7 +79,7 @@ public class AdminServiceImpl implements AdminService {
     private final SecurityUtil securityUtil;
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
-    
+
     @Override
     @Transactional(readOnly = true)
     public Page<PendingCompanyResponse> getPendingCompanies(
@@ -119,6 +121,7 @@ public class AdminServiceImpl implements AdminService {
         Specification<Company> spec = Specification
                 .where(CompanySpecification.hasKeyword(keyword))
                 .and(CompanySpecification.hasStatus(status));
+
         return companyRepository.findAll(spec, pageable)
                 .map(adminMapper::toAdminCompanyListResponse);
     }
@@ -137,7 +140,9 @@ public class AdminServiceImpl implements AdminService {
         Company savedCompany = companyRepository.save(company);
         saveApprovalLog(savedCompany, oldStatus, CompanyStatus.APPROVED, null);
 
-        notificationService.notifyCompanyStatusChange(savedCompany.getId(), "CompanyApproved",
+        notificationService.notifyCompanyStatusChange(
+                savedCompany.getId(),
+                "CompanyApproved",
                 "Công ty của bạn đã được phê duyệt và hiển thị trên nền tảng.");
     }
 
@@ -155,7 +160,9 @@ public class AdminServiceImpl implements AdminService {
         Company savedCompany = companyRepository.save(company);
         saveApprovalLog(savedCompany, oldStatus, CompanyStatus.REJECTED, request.reason().trim());
 
-        notificationService.notifyCompanyStatusChange(savedCompany.getId(), "CompanyRejected",
+        notificationService.notifyCompanyStatusChange(
+                savedCompany.getId(),
+                "CompanyRejected",
                 "Công ty của bạn đã bị từ chối.");
     }
 
@@ -168,13 +175,14 @@ public class AdminServiceImpl implements AdminService {
         company.setStatus(CompanyStatus.SUSPENDED);
         company.setApproved(false);
         company.setApprovedAt(null);
-
         company.setSuspensionReason(request.reason().trim());
 
         Company savedCompany = companyRepository.save(company);
         saveApprovalLog(savedCompany, oldStatus, CompanyStatus.SUSPENDED, request.reason().trim());
 
-        notificationService.notifyCompanyStatusChange(savedCompany.getId(), "CompanySuspended",
+        notificationService.notifyCompanyStatusChange(
+                savedCompany.getId(),
+                "CompanySuspended",
                 "Công ty của bạn đã bị tạm ngưng hoạt động.");
     }
 
@@ -194,39 +202,25 @@ public class AdminServiceImpl implements AdminService {
         Company savedCompany = companyRepository.save(company);
         saveApprovalLog(savedCompany, CompanyStatus.SUSPENDED, CompanyStatus.APPROVED, null);
 
-        notificationService.notifyCompanyStatusChange(company.getId(), "CompanyUnsuspended",
+        notificationService.notifyCompanyStatusChange(
+                savedCompany.getId(),
+                "CompanyUnsuspended",
                 "Công ty của bạn đã được mở tạm ngưng và hoạt động trở lại.");
-    }
-
-    private Company findCompany(UUID companyId) {
-        return companyRepository.findById(companyId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy công ty"));
-    }
-
-    private void saveApprovalLog(Company company, CompanyStatus oldStatus, CompanyStatus newStatus, String note) {
-        User actor = securityUtil.getCurrentUser();
-        CompanyApprovalLog log = CompanyApprovalLog.builder()
-                .company(company)
-                .actor(actor)
-                .oldStatus(oldStatus)
-                .newStatus(newStatus)
-                .note(note)
-                .build();
-        companyApprovalLogRepository.save(log);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<AdminJobListResponse> getAllJobs(String status, Pageable pageable) {
         Specification<Job> spec = Specification.where(JobSpecification.hasStatus(status));
-        return jobRepository.findAll(spec, pageable).map(jobMapper::toAdminJobListResponse);
+
+        return jobRepository.findAll(spec, pageable)
+                .map(jobMapper::toAdminJobListResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PendingJobResponse> getPendingJobs(Pageable pageable) {
-        return jobRepository.findByStatus(
-                JobStatus.PENDING_APPROVAL, pageable)
+        return jobRepository.findByStatus(JobStatus.PENDING_APPROVAL, pageable)
                 .map(this::toPendingJobResponse);
     }
 
@@ -234,12 +228,15 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public void approveJob(UUID jobId) {
         Job job = findJob(jobId);
+
         if (job.getStatus() != JobStatus.PENDING_APPROVAL) {
             throw new BadRequestException("Tin tuyển dụng không ở trạng thái chờ duyệt");
         }
+
         job.setStatus(JobStatus.ACTIVE);
         job.setRejectionReason(null);
         jobRepository.save(job);
+
         notifyEmployer(job, "Tin tuyển dụng \"" + job.getTitle() + "\" đã được phê duyệt và hiển thị công khai.");
     }
 
@@ -249,17 +246,19 @@ public class AdminServiceImpl implements AdminService {
         if (reason == null || reason.isBlank()) {
             throw new BadRequestException("Lý do từ chối là bắt buộc");
         }
+
         Job job = findJob(jobId);
+
         if (job.getStatus() != JobStatus.PENDING_APPROVAL) {
             throw new BadRequestException("Tin tuyển dụng không ở trạng thái chờ duyệt");
         }
+
         job.setStatus(JobStatus.REJECTED);
         job.setRejectionReason(reason.trim());
         jobRepository.save(job);
+
         notifyEmployer(job, "Tin tuyển dụng \"" + job.getTitle() + "\" đã bị từ chối. Lý do: " + reason.trim());
     }
-
-    // ================ Reports ================
 
     @Override
     @Transactional(readOnly = true)
@@ -268,6 +267,7 @@ public class AdminServiceImpl implements AdminService {
             return reportRepository.findByStatus(status, pageable)
                     .map(reportMapper::toResponse);
         }
+
         return reportRepository.findAll(pageable)
                 .map(reportMapper::toResponse);
     }
@@ -276,14 +276,18 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public void reviewReport(UUID reportId, String reviewNotes) {
         Report report = findReport(reportId);
+
         if (report.getStatus() != ReportStatus.PENDING) {
             throw new BadRequestException("Báo cáo không ở trạng thái chờ xử lý");
         }
+
         User currentUser = securityUtil.getCurrentUser();
+
         report.setStatus(ReportStatus.REVIEWED);
         report.setReviewedBy(currentUser);
         report.setReviewedAt(OffsetDateTime.now());
         report.setReviewNotes(reviewNotes);
+
         reportRepository.save(report);
     }
 
@@ -291,14 +295,18 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public void dismissReport(UUID reportId, String reviewNotes) {
         Report report = findReport(reportId);
+
         if (report.getStatus() == ReportStatus.DISMISSED || report.getStatus() == ReportStatus.RESOLVED) {
             throw new BadRequestException("Báo cáo đã được xử lý, không thể bác bỏ");
         }
+
         User currentUser = securityUtil.getCurrentUser();
+
         report.setStatus(ReportStatus.DISMISSED);
         report.setReviewedBy(currentUser);
         report.setReviewedAt(OffsetDateTime.now());
         report.setReviewNotes(reviewNotes);
+
         reportRepository.save(report);
     }
 
@@ -310,64 +318,15 @@ public class AdminServiceImpl implements AdminService {
         if (report.getStatus() != ReportStatus.REVIEWED) {
             throw new BadRequestException("Báo cáo phải ở trạng thái REVIEWED trước khi giải quyết");
         }
+
         User currentUser = securityUtil.getCurrentUser();
+
         report.setStatus(ReportStatus.RESOLVED);
         report.setReviewedBy(currentUser);
         report.setReviewedAt(OffsetDateTime.now());
         report.setReviewNotes(reviewNotes);
+
         reportRepository.save(report);
-    }
-
-    private Report findReport(UUID reportId) {
-        return reportRepository.findById(reportId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy báo cáo"));
-    }
-
-    private void notifyEmployer(Job job, String message) {
-        if (job.getCompany() == null)
-            return;
-        List<CompanyEmployerDetail> details = employerDetailRepository
-                .findByCompany_IdIn(List.of(job.getCompany().getId()));
-        for (CompanyEmployerDetail detail : details) {
-            if (detail.getProfile() != null && detail.getProfile().getUser() != null) {
-                notificationRepository.save(Notification.builder()
-                        .user(detail.getProfile().getUser())
-                        .type(NotificationStatus.JOB_STATUS_CHANGED)
-                        .entityId(job.getId())
-                        .message(message)
-                        .build());
-            }
-        }
-    }
-
-    private Job findJob(UUID jobId) {
-        return jobRepository.findById(jobId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tin tuyển dụng"));
-    }
-
-    private PendingJobResponse toPendingJobResponse(Job job) {
-        String companyName = job.getCompany() != null ? job.getCompany().getCompanyName() : null;
-        String logoUrl = job.getCompany() != null ? job.getCompany().getLogoUrl() : null;
-        String categoryName = job.getCategory() != null ? job.getCategory().getName() : null;
-        return new PendingJobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getStatus(),
-                job.getDescription(),
-                job.getRequirements(),
-                job.getBenefits(),
-                job.getLocation(),
-                job.getLocationTypes(),
-                job.getEmploymentType(),
-                job.getExperienceLevel(),
-                job.getSalaryMin(),
-                job.getSalaryMax(),
-                job.getCurrency(),
-                job.getNumberOfOpenings(),
-                companyName,
-                logoUrl,
-                categoryName,
-                job.getCreatedAt());
     }
 
     @Override
@@ -382,8 +341,28 @@ public class AdminServiceImpl implements AdminService {
                 applicationRepository.count(),
                 userRepository.countByCreatedAtAfter(sevenDaysAgo),
                 jobRepository.countByStatus(JobStatus.PENDING_APPROVAL),
-                companyRepository.countByStatus(CompanyStatus.PENDING)
-        );
+                companyRepository.countByStatus(CompanyStatus.PENDING));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminUserListResponse> getUsers(String role, String status, Pageable pageable) {
+        UserRole parsedRole = parseUserRole(role);
+        Boolean isActive = parseUserActiveStatus(status);
+
+        Page<User> users;
+
+        if (parsedRole != null && isActive != null) {
+            users = userRepository.findByRoleAndIsActive(parsedRole, isActive, pageable);
+        } else if (parsedRole != null) {
+            users = userRepository.findByRole(parsedRole, pageable);
+        } else if (isActive != null) {
+            users = userRepository.findByIsActive(isActive, pageable);
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+
+        return users.map(this::toAdminUserListResponse);
     }
 
     @Override
@@ -425,14 +404,14 @@ public class AdminServiceImpl implements AdminService {
 
         List<AdminApplicationChartResponse.StatusDistributionPoint> statusDistribution = statusRows.stream()
                 .map(row -> {
-                    ApplicationStatus status = ApplicationStatus.valueOf(row[0].toString());
+                    ApplicationStatus applicationStatus = ApplicationStatus.valueOf(row[0].toString());
                     long total = toLong(row[1]);
                     double percentage = totalApplications == 0
                             ? 0
                             : Math.round((total * 10000.0) / totalApplications) / 100.0;
 
                     return new AdminApplicationChartResponse.StatusDistributionPoint(
-                            status,
+                            applicationStatus,
                             total,
                             percentage);
                 })
@@ -445,6 +424,120 @@ public class AdminServiceImpl implements AdminService {
                 totalApplications,
                 dailyApplications,
                 statusDistribution);
+    }
+
+    private Company findCompany(UUID companyId) {
+        return companyRepository.findById(companyId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy công ty"));
+    }
+
+    private void saveApprovalLog(Company company, CompanyStatus oldStatus, CompanyStatus newStatus, String note) {
+        User actor = securityUtil.getCurrentUser();
+
+        CompanyApprovalLog log = CompanyApprovalLog.builder()
+                .company(company)
+                .actor(actor)
+                .oldStatus(oldStatus)
+                .newStatus(newStatus)
+                .note(note)
+                .build();
+
+        companyApprovalLogRepository.save(log);
+    }
+
+    private Job findJob(UUID jobId) {
+        return jobRepository.findById(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tin tuyển dụng"));
+    }
+
+    private Report findReport(UUID reportId) {
+        return reportRepository.findById(reportId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy báo cáo"));
+    }
+
+    private void notifyEmployer(Job job, String message) {
+        if (job.getCompany() == null) {
+            return;
+        }
+
+        List<CompanyEmployerDetail> details = employerDetailRepository
+                .findByCompany_IdIn(List.of(job.getCompany().getId()));
+
+        for (CompanyEmployerDetail detail : details) {
+            if (detail.getProfile() != null && detail.getProfile().getUser() != null) {
+                notificationRepository.save(Notification.builder()
+                        .user(detail.getProfile().getUser())
+                        .type(NotificationStatus.JOB_STATUS_CHANGED)
+                        .entityId(job.getId())
+                        .message(message)
+                        .build());
+            }
+        }
+    }
+
+    private PendingJobResponse toPendingJobResponse(Job job) {
+        String companyName = job.getCompany() != null ? job.getCompany().getCompanyName() : null;
+        String logoUrl = job.getCompany() != null ? job.getCompany().getLogoUrl() : null;
+        String categoryName = job.getCategory() != null ? job.getCategory().getName() : null;
+
+        return new PendingJobResponse(
+                job.getId(),
+                job.getTitle(),
+                job.getStatus(),
+                job.getDescription(),
+                job.getRequirements(),
+                job.getBenefits(),
+                job.getLocation(),
+                job.getLocationTypes(),
+                job.getEmploymentType(),
+                job.getExperienceLevel(),
+                job.getSalaryMin(),
+                job.getSalaryMax(),
+                job.getCurrency(),
+                job.getNumberOfOpenings(),
+                companyName,
+                logoUrl,
+                categoryName,
+                job.getCreatedAt());
+    }
+
+    private AdminUserListResponse toAdminUserListResponse(User user) {
+        String fullName = user.getProfile() != null
+                ? user.getProfile().getFullName()
+                : null;
+
+        return new AdminUserListResponse(
+                user.getId(),
+                user.getEmail(),
+                fullName,
+                user.getRole(),
+                user.isActive() ? "ACTIVE" : "INACTIVE",
+                user.isActive(),
+                user.getCreatedAt());
+    }
+
+    private UserRole parseUserRole(String role) {
+        if (!StringUtils.hasText(role) || "ALL".equalsIgnoreCase(role)) {
+            return null;
+        }
+
+        return UserRole.valueOf(role.trim().toUpperCase());
+    }
+
+    private Boolean parseUserActiveStatus(String status) {
+        if (!StringUtils.hasText(status) || "ALL".equalsIgnoreCase(status)) {
+            return null;
+        }
+
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            return true;
+        }
+
+        if ("INACTIVE".equalsIgnoreCase(status)) {
+            return false;
+        }
+
+        throw new IllegalArgumentException("Trạng thái tài khoản không hợp lệ: " + status);
     }
 
     private LocalDate toLocalDate(Object value) {

@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
@@ -43,6 +45,7 @@ import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.SkillService;
 import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminUserListResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -72,9 +75,11 @@ public class AdminController implements AdminApi {
     // ================ Users ================
 
     @GetMapping("/users")
-    public ResponseEntity<?> getUsers(
-            @RequestParam(required = false) UserRole role, Pageable pageable) {
-        return ResponseEntity.ok("Danh sách user");
+    public ResponseEntity<Page<AdminUserListResponse>> getUsers(
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(adminService.getUsers(role, status, pageable));
     }
 
     @GetMapping("/users/stats")

@@ -21,6 +21,7 @@ import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminUserListResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -56,23 +57,29 @@ public interface AdminApi {
                         content = @Content)
         ResponseEntity<AdminApplicationChartResponse> getApplicationChartStats(
                         @Parameter(description = "Số ngày thống kê, chỉ hỗ trợ 7 hoặc 30")
-                        int days);
+                        int days
+                );
 
-        @Operation(summary = "Danh sách người dùng", description = """
-                        Lấy danh sách tất cả người dùng trên hệ thống (CANDIDATE, EMPLOYER, ADMIN).
-                        Có thể lọc theo role và phân trang.
-                        """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Danh sách người dùng (có phân trang)", content = @Content),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
-        })
-        ResponseEntity<?> getUsers(
-                        @Parameter(description = "Lọc theo vai trò: CANDIDATE, EMPLOYER, ADMIN", example = "CANDIDATE") UserRole role,
-                        @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0") Pageable pageable);
+        @Operation(summary = "Danh sách tài khoản", description = """
+                Lấy danh sách tất cả tài khoản trong hệ thống cho Admin.
+                Hỗ trợ lọc theo role và trạng thái tài khoản, có phân trang.
+                role: ADMIN, EMPLOYER, CANDIDATE hoặc ALL.
+                status: ACTIVE, INACTIVE hoặc ALL.
+                """)
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Danh sách tài khoản",
+                        content = @Content)
+        ResponseEntity<Page<AdminUserListResponse>> getUsers(
+                        @Parameter(description = "Lọc theo vai trò: ADMIN, EMPLOYER, CANDIDATE hoặc ALL", example = "CANDIDATE")
+                        String role,
 
-        @Operation(summary = "Thống kê người dùng", description = "Thống kê số lượng user theo role, số user đăng ký mới theo ngày/tuần/tháng.")
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dữ liệu thống kê người dùng", content = @Content)
-        ResponseEntity<?> getUserStats();
+                        @Parameter(description = "Lọc theo trạng thái: ACTIVE, INACTIVE hoặc ALL", example = "ACTIVE")
+                        String status,
+
+                        @ParameterObject @PageableDefault(page = 0, size = 10)
+                        Pageable pageable
+                );
 
         @Operation(summary = "Khóa tài khoản", description = """
                         Khóa tài khoản người dùng. User bị khóa sẽ không thể đăng nhập hoặc sử dụng hệ thống.
