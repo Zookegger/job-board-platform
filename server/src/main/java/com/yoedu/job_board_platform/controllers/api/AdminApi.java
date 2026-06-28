@@ -20,6 +20,7 @@ import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,6 +44,19 @@ public interface AdminApi {
                         description = "Dữ liệu thống kê tổng quan dashboard",
                         content = @Content)
         ResponseEntity<AdminDashboardStatsResponse> getDashboardStats();
+
+        @Operation(summary = "Thống kê biểu đồ ứng tuyển", description = """
+                Lấy dữ liệu thống kê đơn ứng tuyển cho trang Statistics:
+                xu hướng số đơn ứng tuyển theo ngày và phân phối trạng thái ứng tuyển.
+                Hỗ trợ query days = 7 hoặc 30.
+                """)
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Dữ liệu thống kê biểu đồ ứng tuyển",
+                        content = @Content)
+        ResponseEntity<AdminApplicationChartResponse> getApplicationChartStats(
+                        @Parameter(description = "Số ngày thống kê, chỉ hỗ trợ 7 hoặc 30")
+                        int days);
 
         @Operation(summary = "Danh sách người dùng", description = """
                         Lấy danh sách tất cả người dùng trên hệ thống (CANDIDATE, EMPLOYER, ADMIN).

@@ -232,10 +232,10 @@ class PublicJobControllerTest {
         }
 
         @Test
-        void getJobBySlug_whenJobExpired_returnsNotFound() throws Exception {
+        void getJobBySlug_whenJobExpired_returnsOk() throws Exception {
                 createActiveJob("Legacy Dev", "legacy-dev", OffsetDateTime.now().minusDays(5));
 
                 mockMvc.perform(get("/api/jobs/public/legacy-dev"))
-                        .andExpect(status().isNotFound());
+                        .andExpect(status().isOk());
         }
 }

@@ -24,11 +24,13 @@ const RouterRoutes = {
 
 	// Admin
 	ADMIN_DASHBOARD: "/admin/dashboard",
+	ADMIN_STATISTICS: "/admin/statistics",
 	ADMIN_USERS: "/admin/users",
 	ADMIN_COMPANIES: "/admin/companies",
 	ADMIN_JOBS: "/admin/jobs",
 	ADMIN_REPORTS: "/admin/reports",
 	ADMIN_SKILLS: "/admin/skills",
+	
 };
 
 export default RouterRoutes;

@@ -1,10 +1,13 @@
+import type {
+	AdminApplicationChartResponse,
+	AdminDashboardStatsResponse,
+} from "@/types/admin";
 import type { AdminCompanyListResponse, AdminPendingCompanyResponse } from "@/types/company";
 import type { AdminPendingJobResponse } from "@/types/job";
 import { toPageableParams, type PageResponse, type PaginationParams } from "@/types/pagination";
 import type { SkillRequest, SkillResponse } from "@/types/skill";
 import ApiError from "@/utils/ApiError";
 import client from "./client";
-import type { AdminDashboardStatsResponse } from "@/types/admin";
 
 const adminApi = {
 	getDashboardStats: (): Promise<AdminDashboardStatsResponse> =>
@@ -17,7 +20,22 @@ const adminApi = {
 				error.response?.status || 500,
 			);
 		}),
-
+	
+	getApplicationChartStats: (
+		days: number,
+	): Promise<AdminApplicationChartResponse> =>
+		client
+			.get("/admin/statistics/applications-chart", { params: { days } })
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message ||
+						error.message ||
+						"Lỗi, Không thể tải thống kê ứng tuyển.",
+					error.response?.status || 500,
+				);
+			}),	
+		
 	// Companies Review
 	getAllCompanies: (
 		params: PaginationParams,

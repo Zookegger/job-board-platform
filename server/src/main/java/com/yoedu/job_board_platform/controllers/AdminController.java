@@ -42,6 +42,7 @@ import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.SkillService;
 import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,12 @@ public class AdminController implements AdminApi {
     @GetMapping("/dashboard/stats")
     public ResponseEntity<AdminDashboardStatsResponse> getDashboardStats() {
         return ResponseEntity.ok(adminService.getDashboardStats());
+    }
+
+    @GetMapping("/statistics/applications-chart")
+    public ResponseEntity<AdminApplicationChartResponse> getApplicationChartStats(
+            @RequestParam(defaultValue = "7") int days) {
+        return ResponseEntity.ok(adminService.getApplicationChartStats(days));
     }
 
     // ================ Users ================
