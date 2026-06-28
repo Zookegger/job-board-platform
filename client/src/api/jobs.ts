@@ -16,14 +16,15 @@ export interface JobSearchParams {
 	minSalary?: number;
 	maxSalary?: number;
 	skillIds?: number[];
+	sort?: string;
 	page?: number;
 	size?: number;
 }
 
 const publicJobApi = {
-	getJobs: (page = 0, size = 12): Promise<PageResponse<JobListResponse>> =>
+	getJobs: (page = 0, size = 12, sort?: string): Promise<PageResponse<JobListResponse>> =>
 		client
-			.get<PageResponse<JobListResponse>>(ApiRoutes.PUBLIC_JOBS, { params: { page, size } })
+			.get<PageResponse<JobListResponse>>(ApiRoutes.PUBLIC_JOBS, { params: { page, size, sort } })
 			.then((r) => r.data),
 
 	getRelatedJobs: (id: string, params: JobSearchParams): Promise<PageResponse<JobListResponse>> =>
