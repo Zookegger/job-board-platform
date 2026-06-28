@@ -1,6 +1,7 @@
 package com.yoedu.job_board_platform.specifications;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -38,9 +39,10 @@ public final class JobSpecification {
                 return cb.conjunction();
             }
             String pattern = "%" + keyword.trim().toLowerCase() + "%";
+            var companyJoin = root.join("company");
             return cb.or(
                     cb.like(cb.lower(root.get("title")), pattern),
-                    cb.like(cb.lower(root.get("description")), pattern));
+                    cb.like(cb.lower(companyJoin.get("companyName")), pattern));
         };
     }
 
@@ -80,6 +82,13 @@ public final class JobSpecification {
         };
     }
 
+    public static Specification<Job> hasNotExpired() {
+        return (root, query, cb) ->
+                cb.or(
+                        cb.isNull(root.get("expirationDate")),
+                        cb.greaterThanOrEqualTo(root.get("expirationDate"), OffsetDateTime.now()));
+    }
+
     public static Specification<Job> salaryOverlap(BigDecimal minSalary, BigDecimal maxSalary) {
         return (root, query, cb) -> {
             if (minSalary == null && maxSalary == null) {
@@ -87,20 +96,20 @@ public final class JobSpecification {
             }
             if (minSalary != null && maxSalary != null) {
                 return cb.and(
-                        cb.lessThanOrEqualTo(
-                                cb.coalesce(root.get("salaryMin"), BigDecimal.ZERO),
-                                maxSalary),
                         cb.greaterThanOrEqualTo(
-                                cb.coalesce(root.get("salaryMax"), minSalary),
-                                minSalary));
+                                cb.coalesce(root.get("salaryMin"), BigDecimal.ZERO),
+                                minSalary),
+                        cb.lessThanOrEqualTo(
+                                cb.coalesce(root.get("salaryMax"), maxSalary),
+                                maxSalary));
             }
             if (minSalary != null) {
                 return cb.greaterThanOrEqualTo(
-                        cb.coalesce(root.get("salaryMax"), minSalary),
+                        cb.coalesce(root.get("salaryMin"), BigDecimal.ZERO),
                         minSalary);
             }
             return cb.lessThanOrEqualTo(
-                    cb.coalesce(root.get("salaryMin"), BigDecimal.ZERO),
+                    cb.coalesce(root.get("salaryMax"), maxSalary),
                     maxSalary);
         };
     }

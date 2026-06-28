@@ -34,6 +34,8 @@ public interface JobMapper {
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "skills", ignore = true)
     @Mapping(target = "withSkills", ignore = true)
+    @Mapping(target = "companyLogoUrl", source = "company.logoUrl")
+    @Mapping(target = "companyAddress", source = "company.address")
     JobResponse toResponse(Job job);
 
     @Mapping(target = "companyName", source = "company.companyName")
@@ -42,6 +44,7 @@ public interface JobMapper {
     AdminJobListResponse toAdminJobListResponse(Job job);
 
     @Mapping(target = "companyName", source = "company.companyName")
+    @Mapping(target = "companyLogoUrl", source = "company.logoUrl")
     JobListResponse toSummary(Job job);
 
     @Mapping(target = "id", ignore = true)
