@@ -1,12 +1,15 @@
 package com.yoedu.job_board_platform.security;
 
-import java.util.List;
-
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -14,20 +17,17 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
 @EnableMethodSecurity
-/**
- * Cấu hình bảo mật Spring Security.
- * Thiết lập CORS, CSRF (tắt), session stateless, filter JWT,
- * và phân quyền cho các endpoint.
- */
 public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	@Value("${app.cors.allowed-origins}")
+	private List<String> configuredOrigins;
 
 	private static final String[] PUBLIC_WHITELIST = {
 			"/api/auth/login",
@@ -35,9 +35,10 @@ public class SecurityConfig {
 			"/api/auth/register/candidate",
 			"/api/auth/refresh-token",
 			"/api/auth/logout",
-			"/uploads/**", "/api/profile/resume/preview",
+			"/uploads/**",
 			"/api/company", "/api/company/job-post",
 			"/api/jobs/public/**",
+			"/api/jobs/*/related",
 			"/api/companies/public/**",
 			"/api/skills/**",
 			"/api/categories"
@@ -55,12 +56,16 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		var origins = List.of(
+		List<String> origins = new ArrayList<>(List.of(
 				"http://localhost:5173", // Vite dev server
 				"http://localhost:3000", // Docker nginx
 				"http://localhost:8080", // direct API access
 				"http://localhost:5000" // direct API access
-		);
+		));
+
+		if (configuredOrigins != null && !configuredOrigins.isEmpty()) {
+			origins.addAll(configuredOrigins);
+		}
 
 		config.setAllowedOrigins(origins);
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
@@ -74,17 +79,17 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable())
+		http.csrf(AbstractHttpConfigurer::disable)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+				.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(PUBLIC_WHITELIST).permitAll()
 						.requestMatchers(SWAGGER_WHITELIST).permitAll()
 						.anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter,
 						UsernamePasswordAuthenticationFilter.class)
-				.httpBasic(basic -> basic.disable()).formLogin(form -> form.disable())
+				.httpBasic(AbstractHttpConfigurer::disable).formLogin(AbstractHttpConfigurer::disable)
 				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, authException) -> {
 					res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 				}).accessDeniedHandler((req, res, accessDeniedException) -> {

@@ -24,5 +24,9 @@ public record JobListResponse(
         @Schema(description = "Loại tiền tệ") String currency,
         @Schema(description = "Số lượng tuyển") Integer numberOfOpenings,
         @Schema(description = "Tên công ty") String companyName,
+        @Schema(description = "URL logo công ty") String companyLogoUrl,
+        @Schema(description = "Ngày đăng") OffsetDateTime postedDate,
+        @Schema(description = "Ngày hết hạn") OffsetDateTime expirationDate,
+        @Schema(description = "Ngày cập nhật") OffsetDateTime updatedAt,
         @Schema(description = "Ngày tạo") OffsetDateTime createdAt) {
 }
