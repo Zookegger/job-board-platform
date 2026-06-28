@@ -41,6 +41,7 @@ import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.SkillService;
+import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -56,9 +57,9 @@ public class AdminController implements AdminApi {
     private final SkillMapper skillMapper;
     private final SkillRepository skillRepository;
 
-    @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboard() {
-        return ResponseEntity.ok("Dashboard thống kê");
+    @GetMapping("/dashboard/stats")
+    public ResponseEntity<AdminDashboardStatsResponse> getDashboardStats() {
+        return ResponseEntity.ok(adminService.getDashboardStats());
     }
 
     // ================ Users ================

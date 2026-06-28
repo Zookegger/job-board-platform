@@ -4,8 +4,20 @@ import { toPageableParams, type PageResponse, type PaginationParams } from "@/ty
 import type { SkillRequest, SkillResponse } from "@/types/skill";
 import ApiError from "@/utils/ApiError";
 import client from "./client";
+import type { AdminDashboardStatsResponse } from "@/types/admin";
 
 const adminApi = {
+	getDashboardStats: (): Promise<AdminDashboardStatsResponse> =>
+	client
+		.get("/admin/dashboard/stats")
+		.then((response) => response.data)
+		.catch((error) => {
+			throw new ApiError(
+				error.response?.data?.message || error.message || "Lỗi, Không thể tải thống kê dashboard.",
+				error.response?.status || 500,
+			);
+		}),
+
 	// Companies Review
 	getAllCompanies: (
 		params: PaginationParams,

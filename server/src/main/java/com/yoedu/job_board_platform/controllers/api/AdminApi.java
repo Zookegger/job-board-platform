@@ -19,6 +19,7 @@ import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,13 +32,17 @@ import jakarta.validation.Valid;
 @Tag(name = "Admin — Kiểm duyệt & Quản trị", description = "Quản trị hệ thống: thống kê, quản lý user/công ty/tin tuyển dụng, kiểm duyệt. Yêu cầu role ADMIN.")
 public interface AdminApi {
 
-        @Operation(summary = "Dashboard tổng quan", description = """
-                        Thống kê toàn nền tảng: tổng số user, tổng số công ty, tổng số tin tuyển dụng,
-                        số lượng user mới, số tin chờ duyệt, số công ty chờ duyệt, ...
-                        Dùng cho màn hình Admin Dashboard.
+        @Operation(summary = "Dashboard thống kê tổng quan", description = """
+                        Lấy các chỉ số tổng quan cho màn hình Admin Dashboard:
+                        tổng người dùng, tổng công ty, tổng tin tuyển dụng đã duyệt,
+                        tổng hồ sơ ứng tuyển, số người dùng mới, số tin chờ duyệt
+                        và số công ty chờ duyệt.
                         """)
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dữ liệu thống kê tổng quan nền tảng", content = @Content)
-        ResponseEntity<?> getDashboard();
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "Dữ liệu thống kê tổng quan dashboard",
+                        content = @Content)
+        ResponseEntity<AdminDashboardStatsResponse> getDashboardStats();
 
         @Operation(summary = "Danh sách người dùng", description = """
                         Lấy danh sách tất cả người dùng trên hệ thống (CANDIDATE, EMPLOYER, ADMIN).

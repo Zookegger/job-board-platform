@@ -31,6 +31,8 @@ public interface CompanyRepository extends JpaRepository<Company, UUID>, JpaSpec
 
     Page<Company> findByStatus(CompanyStatus status, Pageable pageable);
 
+    long countByStatus(CompanyStatus status);
+
     Optional<Company> findByIdAndIsApprovedTrue(UUID id);
 
     Optional<Company> findByIdAndStatusAndIsApprovedTrue(UUID id, CompanyStatus status);

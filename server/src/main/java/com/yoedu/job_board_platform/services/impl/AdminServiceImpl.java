@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.time.OffsetDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,6 +49,9 @@ import com.yoedu.job_board_platform.services.NotificationService;
 import com.yoedu.job_board_platform.specifications.CompanySpecification;
 import com.yoedu.job_board_platform.specifications.JobSpecification;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
+import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
+import com.yoedu.job_board_platform.repositories.ApplicationRepository;
+import com.yoedu.job_board_platform.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -66,7 +70,9 @@ public class AdminServiceImpl implements AdminService {
     private final ReportMapper reportMapper;
     private final NotificationService notificationService;
     private final SecurityUtil securityUtil;
-
+    private final UserRepository userRepository;
+    private final ApplicationRepository applicationRepository;
+    
     @Override
     @Transactional(readOnly = true)
     public Page<PendingCompanyResponse> getPendingCompanies(
@@ -357,5 +363,21 @@ public class AdminServiceImpl implements AdminService {
                 logoUrl,
                 categoryName,
                 job.getCreatedAt());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminDashboardStatsResponse getDashboardStats() {
+        OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
+
+        return new AdminDashboardStatsResponse(
+                userRepository.count(),
+                companyRepository.count(),
+                jobRepository.countByStatus(JobStatus.ACTIVE),
+                applicationRepository.count(),
+                userRepository.countByCreatedAtAfter(sevenDaysAgo),
+                jobRepository.countByStatus(JobStatus.PENDING_APPROVAL),
+                companyRepository.countByStatus(CompanyStatus.PENDING)
+        );
     }
 }

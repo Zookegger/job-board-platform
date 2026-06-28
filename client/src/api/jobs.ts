@@ -32,11 +32,6 @@ const publicJobApi = {
 			.get<PageResponse<JobListResponse>>(ApiRoutes.PUBLIC_RELATED_JOBS(id), { params })
 			.then((r) => r.data),
 
-	getRelatedJobs: (id: string, params: JobSearchParams): Promise<PageResponse<JobListResponse>> =>
-		client
-			.get<PageResponse<JobListResponse>>(ApiRoutes.PUBLIC_RELATED_JOBS(id), { params })
-			.then((r) => r.data),
-
 	searchJobs: (params: JobSearchParams): Promise<PageResponse<JobListResponse>> =>
 		client
 			.get<PageResponse<JobListResponse>>(ApiRoutes.PUBLIC_JOBS, { params })
