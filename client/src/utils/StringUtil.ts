@@ -5,7 +5,7 @@
  * @param currency ký hiệu tiền tệ (ví dụ: "VND", "USD")
  * @returns chuỗi định dạng mức lương phù hợp với ngôn ngữ Việt Nam
  */
-function formatSalary(min: number | null, max: number | null, currency: string): string {
+function formatSalary(min: number | null, max: number | null, currency: string | null): string {
 	if (!min && !max) return "Thương lượng";
 	const fmt = (v: number) =>
 		new Intl.NumberFormat("vi-VN", {

@@ -1,33 +1,16 @@
 package com.yoedu.job_board_platform.mappers;
 
-import java.util.List;
-
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-
 import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
-import com.yoedu.job_board_platform.dtos.company.ApprovalLogResponse;
-import com.yoedu.job_board_platform.dtos.company.CompanyRequest;
-import com.yoedu.job_board_platform.dtos.company.CompanyResponse;
-import com.yoedu.job_board_platform.dtos.company.CompanyStatusResponse;
-import com.yoedu.job_board_platform.dtos.company.PublicCompanyListResponse;
-import com.yoedu.job_board_platform.dtos.company.PublicCompanyResponse;
+import com.yoedu.job_board_platform.dtos.company.*;
 import com.yoedu.job_board_platform.dtos.job.JobCategoryResponse;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyApprovalLog;
 import com.yoedu.job_board_platform.models.User;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
-/**
- * MapStruct mapper cho Company entity.
- * Chuyển đổi CompanyRegisterRequest thành User và Company entity khi đăng ký
- * nhà tuyển dụng.
- * Chuyển đổi Company entity thành CompanyResponse và cập nhật từ
- * CompanyRequest.
- */
+import java.util.List;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CompanyMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -74,14 +57,6 @@ public interface CompanyMapper {
     PublicCompanyResponse toPublicResponse(Company company, long jobCount, List<JobCategoryResponse> categories);
 
     List<PublicCompanyResponse> toPublicResponseList(List<Company> company);
-
-    @Mapping(target = "categories", ignore = true)
-    @Mapping(target = "totalOpenJobs", ignore = true)
-    @Mapping(target = "name", source = "companyName")
-    @Mapping(target = "slug", source = "slug")
-    @Mapping(target = "logoUrl", source = "logoUrl")
-    @Mapping(target = "address", source = "address")
-    PublicCompanyListResponse toPublicListResponse(Company company);
 
     @Mapping(target = "name", source = "company.companyName")
     @Mapping(target = "totalOpenJobs", source = "jobCount")
