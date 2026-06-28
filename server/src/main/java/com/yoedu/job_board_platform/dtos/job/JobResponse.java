@@ -37,6 +37,8 @@ public record JobResponse(
                 @Schema(description = "Ngày cập nhật") OffsetDateTime updatedAt,
                 @Schema(description = "ID công ty") UUID companyId,
                 @Schema(description = "Tên công ty") String companyName,
+                @Schema(description = "URL logo công ty") String companyLogoUrl,
+                @Schema(description = "Địa chỉ công ty") String companyAddress,
                 @Schema(description = "Slug công ty") String companySlug,
                 @Schema(description = "ID ngành nghề") Integer categoryId,
                 @Schema(description = "Tên ngành nghề") String categoryName,
@@ -48,7 +50,8 @@ public record JobResponse(
                                 numberOfOpenings, salaryMin, salaryMax, currency,
                                 location, locationTypes, employmentType, experienceLevel,
                                 status, postedDate, expirationDate, createdAt, updatedAt,
-                                companyId, companyName, companySlug, categoryId, categoryName,
+                                companyId, companyName, companyLogoUrl, companyAddress,
+                                companySlug, categoryId, categoryName,
                                 skills);
         }
 }

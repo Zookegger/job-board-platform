@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import publicJobApi, { type JobSearchParams } from "@/api/jobs";
-import { keepPreviousData } from "@tanstack/react-query";
+import publicJobApi, { type JobRelatedSearchParams, type JobSearchParams } from "@/api/jobs";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 export const publicJobKeys = {
 	all: ["public", "jobs"] as const,
@@ -29,5 +28,13 @@ export function usePublicJobDetail(slug: string) {
 		queryKey: publicJobKeys.detail(slug),
 		queryFn: () => publicJobApi.getJobDetail(slug),
 		enabled: !!slug,
+	});
+}
+
+export function usePublicRelatedJobList(id: string, params: JobRelatedSearchParams) {
+	return useQuery({
+		queryKey: ["public", "jobs", "related", id, params],
+		queryFn: () => publicJobApi.getRelatedJobs(id, params),
+		enabled: !!id,
 	});
 }

@@ -71,7 +71,7 @@ public class ApplicationController implements ApplicationApi {
         return ResponseEntity.ok("Rút hồ sơ thành công");
     }
 
-    @GetMapping("/cv/application/{id}")
+    @GetMapping("/{id}/cv")
     @PreAuthorize(AuthorizationConstants.CANDIDATE_OR_EMPLOYER)
     public ResponseEntity<?> getApplicationCV(@PathVariable UUID id) {
         return ResponseEntity.ok("CV của đơn"); // TODO: Add CV view

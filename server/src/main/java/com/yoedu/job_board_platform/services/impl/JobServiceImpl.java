@@ -1,16 +1,5 @@
 package com.yoedu.job_board_platform.services.impl;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
@@ -20,26 +9,29 @@ import com.yoedu.job_board_platform.dtos.job.JobResponse;
 import com.yoedu.job_board_platform.dtos.job.JobSearchRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillResponse;
 import com.yoedu.job_board_platform.mappers.JobMapper;
-import com.yoedu.job_board_platform.models.Company;
-import com.yoedu.job_board_platform.models.Job;
-import com.yoedu.job_board_platform.models.JobCategory;
-import com.yoedu.job_board_platform.models.JobSkill;
-import com.yoedu.job_board_platform.models.JobStatus;
-import com.yoedu.job_board_platform.models.Skill;
-import com.yoedu.job_board_platform.models.User;
-import com.yoedu.job_board_platform.models.UserRole;
-import com.yoedu.job_board_platform.specifications.JobSpecification;
+import com.yoedu.job_board_platform.models.*;
 import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
 import com.yoedu.job_board_platform.repositories.JobSkillRepository;
 import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.services.JobService;
 import com.yoedu.job_board_platform.services.JobSkillService;
+import com.yoedu.job_board_platform.specifications.JobSpecification;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.utils.StringUtils;
-
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -106,13 +98,13 @@ public class JobServiceImpl implements JobService {
         job.setCompany(company);
         job.setCategory(category);
         job.setStatus(JobStatus.DRAFT);
-        job.setSlug(StringUtils.slugifyUnique(request.title(), slug -> jobRepository.existsBySlug(slug)));
+        job.setSlug(StringUtils.slugifyUnique(request.title(), jobRepository::existsBySlug));
 
         Job savedJob = jobRepository.save(job);
 
         if (request.skillIds() != null && !request.skillIds().isEmpty()) {
             List<Skill> skills = skillRepository.findAllById(request.skillIds());
-            skills.stream().forEach(skill -> jobSkillRepository.save(new JobSkill(savedJob.getId(), skill.getId())));
+            skills.forEach(skill -> jobSkillRepository.save(new JobSkill(savedJob.getId(), skill.getId())));
         }
 
         JobResponse response = jobMapper.toResponse(savedJob);
@@ -214,32 +206,9 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Page<JobListResponse> getActiveJobs(int page, int size) {
-        int safeSize = size > 0 ? Math.min(size, 100) : DEFAULT_PAGE_SIZE;
-        Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return jobRepository.findByStatus(JobStatus.ACTIVE, pageable).map(jobMapper::toSummary);
-    }
-
-    @Override
-    public JobResponse getActiveJobDetail(UUID jobId) {
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy tin tuyển dụng"));
-
-        if (job.getStatus() != JobStatus.ACTIVE) {
-            throw new NotFoundException("Không tìm thấy tin tuyển dụng");
-        }
-
-        JobResponse response = jobMapper.toResponse(job);
-        List<SkillResponse> skills = jobSkillService.getSkillsByJobId(job.getId());
-        if (!skills.isEmpty()) {
-            response = response.withSkills(skills);
-        }
-        return response;
-    }
-
-    @Override
     public Page<JobListResponse> searchPublicJobs(JobSearchRequest request, Pageable pageable) {
         Specification<Job> spec = Specification.where(JobSpecification.hasStatus("ACTIVE"))
+                .and(JobSpecification.hasNotExpired())
                 .and(JobSpecification.hasKeyword(request != null ? request.keyword() : null))
                 .and(JobSpecification.hasCategoryIds(request != null ? request.categoryIds() : null))
                 .and(JobSpecification.hasLocationTypes(request != null ? request.locationTypes() : null))
@@ -263,5 +232,25 @@ public class JobServiceImpl implements JobService {
             response = response.withSkills(skills);
         }
         return response;
+    }
+
+    @Override
+    public Page<JobListResponse> getRelatedJobs(UUID jobId, Pageable pageable) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy công việc"));
+
+        Integer categoryId = job.getCategory().getId();
+        List<SkillResponse> skills = jobSkillService.getSkillsByJobId(jobId);
+        Set<Integer> skillIds = skills.stream().map(SkillResponse::id).collect(Collectors.toSet());
+
+        List<Job> relatedJobs;
+        if (skillIds.isEmpty()) {
+            relatedJobs = jobRepository.findRelatedJobsNoSkills(categoryId, jobId, pageable);
+        } else {
+            relatedJobs = jobRepository.findRelatedJobsWithSkills(categoryId, skillIds, jobId, pageable);
+        }
+
+        List<JobListResponse> dtos = relatedJobs.stream().map(jobMapper::toSummary).toList();
+        return new org.springframework.data.domain.PageImpl<>(dtos, pageable, dtos.size());
     }
 }
