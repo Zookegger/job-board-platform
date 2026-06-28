@@ -1,10 +1,8 @@
 package com.yoedu.job_board_platform.repositories;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.yoedu.job_board_platform.models.Job;
+import com.yoedu.job_board_platform.models.JobCategory;
+import com.yoedu.job_board_platform.models.JobStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,9 +12,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.yoedu.job_board_platform.models.Job;
-import com.yoedu.job_board_platform.models.JobCategory;
-import com.yoedu.job_board_platform.models.JobStatus;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @Repository
 public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificationExecutor<Job> {
@@ -49,4 +49,33 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
                          @Param("newStatus") JobStatus newStatus,
                          @Param("now") OffsetDateTime now);
 
+    @Query("""
+        SELECT j FROM Job j
+        WHERE j.category.id = :categoryId
+        AND j.id != :currentJobId
+        AND j.status = 'ACTIVE'
+        AND (j.expirationDate IS NULL OR j.expirationDate >= CURRENT_TIMESTAMP)
+        AND (
+                    COALESCE(:skillIds, NULL) IS NULL
+                    OR NOT EXISTS (SELECT 1 FROM JobSkill js2 WHERE js2.jobId = j.id)
+                    OR EXISTS (SELECT 1 FROM JobSkill js WHERE js.jobId = j.id AND js.skillId IN :skillIds)
+        )
+        ORDER BY j.createdAt DESC
+    """)
+    List<Job> findRelatedJobsWithSkills(@Param("categoryId") Integer categoryId,
+                                        @Param("skillIds") Set<Integer> skillIds,
+                                        @Param("currentJobId") UUID currentJobId,
+                                        Pageable pageable);
+
+    @Query("""
+        SELECT j FROM Job j
+        WHERE j.category.id = :categoryId
+        AND j.id != :currentJobId
+        AND j.status = 'ACTIVE'
+        AND (j.expirationDate IS NULL OR j.expirationDate >= CURRENT_TIMESTAMP)
+        ORDER BY j.createdAt DESC
+    """)
+    List<Job> findRelatedJobsNoSkills(@Param("categoryId") Integer categoryId,
+                                      @Param("currentJobId") UUID currentJobId,
+                                      Pageable pageable);
 }

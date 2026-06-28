@@ -61,6 +61,9 @@ import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
+import com.yoedu.job_board_platform.models.Application;
+import com.yoedu.job_board_platform.models.ApplicationStatus;
+import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 
 import jakarta.servlet.http.Cookie;
 
@@ -118,6 +121,9 @@ class AdminControllerTest {
         @Autowired
         ApplicationRepository applicationRepository;
 
+        @Autowired
+        ApplicationRepository applicationRepository;
+
         private final ObjectMapper objectMapper = new ObjectMapper();
         private Skill savedSkillActive;
         private Skill savedSkillInactive;
@@ -129,6 +135,7 @@ class AdminControllerTest {
                 jobSkillRepository.deleteAll();
                 skillRepository.deleteAll();
                 reportRepository.deleteAll();
+                applicationRepository.deleteAll();
                 applicationRepository.deleteAll();
                 jobRepository.deleteAll();
                 jobCategoryRepository.deleteAll();
@@ -229,6 +236,25 @@ class AdminControllerTest {
                                 .build());
 
                 return company;
+        }
+
+        private Profile createCandidateProfile(String email) {
+                User candidate = User.builder()
+                                .email(email)
+                                .password(passwordEncoder.encode("password123"))
+                                .role(UserRole.CANDIDATE)
+                                .isActive(true)
+                                .build();
+
+                Profile profile = Profile.builder()
+                                .user(candidate)
+                                .fullName("Candidate Test")
+                                .phone("0900000099")
+                                .build();
+
+                candidate.setProfile(profile);
+                userRepository.save(candidate);
+                return profile;
         }
 
         private Profile createCandidateProfile(String email) {
@@ -921,4 +947,53 @@ class AdminControllerTest {
                         .andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].total").value(hasItem(1)))
                         .andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].percentage").value(hasItem(25.0)));
 }
+        }
+
+        @Test
+        void admin_canGetDashboardStats() throws Exception {
+        createPendingCompany(
+                        "Pending Dashboard Corp",
+                        "123456789",
+                        "pending-dashboard@example.com",
+                        "0900000011");
+
+        Company approvedCompany = createPendingCompany(
+                        "Approved Dashboard Corp",
+                        "987654321",
+                        "approved-dashboard@example.com",
+                        "0900000012");
+
+                approvedCompany.setStatus(CompanyStatus.APPROVED);
+                approvedCompany.setApproved(true);
+                approvedCompany = companyRepository.save(approvedCompany);
+
+                Job activeJob = createPendingJob(approvedCompany, "Dashboard Active Job");
+                activeJob.setStatus(JobStatus.ACTIVE);
+                activeJob = jobRepository.save(activeJob);
+
+                createPendingJob(approvedCompany, "Dashboard Pending Job");
+
+        Profile candidateProfile = createCandidateProfile("candidate-dashboard@example.com");
+
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(activeJob)
+                        .status(ApplicationStatus.PENDING)
+                        .coverLetter("Tôi muốn ứng tuyển")
+                        .appliedAt(OffsetDateTime.now())
+                        .build());
+
+        Cookie adminCookie = loginAsAdmin();
+
+        mockMvc.perform(get("/api/admin/dashboard/stats")
+                        .cookie(adminCookie))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.totalUsers").value(4))
+                        .andExpect(jsonPath("$.totalCompanies").value(2))
+                        .andExpect(jsonPath("$.totalJobs").value(1))
+                        .andExpect(jsonPath("$.totalApplications").value(1))
+                        .andExpect(jsonPath("$.newUsers").value(4))
+                        .andExpect(jsonPath("$.pendingJobs").value(1))
+                        .andExpect(jsonPath("$.pendingCompanies").value(1));
+        }
 }
