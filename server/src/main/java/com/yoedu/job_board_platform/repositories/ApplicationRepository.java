@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.yoedu.job_board_platform.mappers.DashboardMapper.DailyApplicationCount;
+import com.yoedu.job_board_platform.mappers.DashboardMapper.StatusApplicationCount;
 import com.yoedu.job_board_platform.models.Application;
 import com.yoedu.job_board_platform.models.ApplicationStatus;
 
@@ -48,7 +50,7 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
                 GROUP BY CAST(a.applied_at AS date)
                 ORDER BY application_date
                 """, nativeQuery = true)
-        List<Object[]> countApplicationsByAppliedDateBetween(
+        List<DailyApplicationCount> countApplicationsByAppliedDateBetween(
                 @Param("fromDateTime") OffsetDateTime fromDateTime,
                 @Param("toDateTime") OffsetDateTime toDateTime);
 
@@ -60,7 +62,7 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
                 GROUP BY a.status
                 ORDER BY a.status
                 """, nativeQuery = true)
-        List<Object[]> countApplicationsByStatusBetween(
+        List<StatusApplicationCount> countApplicationsByStatusBetween(
                 @Param("fromDateTime") OffsetDateTime fromDateTime,
                 @Param("toDateTime") OffsetDateTime toDateTime);
 }

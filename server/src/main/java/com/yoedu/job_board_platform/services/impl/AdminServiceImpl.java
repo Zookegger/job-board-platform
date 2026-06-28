@@ -6,6 +6,9 @@ import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.admin.*;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
 import com.yoedu.job_board_platform.mappers.AdminMapper;
+import com.yoedu.job_board_platform.mappers.DashboardMapper;
+import com.yoedu.job_board_platform.mappers.DashboardMapper.DailyApplicationCount;
+import com.yoedu.job_board_platform.mappers.DashboardMapper.StatusApplicationCount;
 import com.yoedu.job_board_platform.mappers.JobMapper;
 import com.yoedu.job_board_platform.mappers.ReportMapper;
 import com.yoedu.job_board_platform.models.*;
@@ -27,6 +30,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +43,7 @@ public class AdminServiceImpl implements AdminService {
     private final ReportRepository reportRepository;
     private final NotificationRepository notificationRepository;
     private final AdminMapper adminMapper;
+    private final DashboardMapper dashboardMapper;
     private final JobMapper jobMapper;
     private final ReportMapper reportMapper;
     private final NotificationService notificationService;
@@ -357,7 +362,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(readOnly = true)
     public AdminApplicationChartResponse getApplicationChartStats(int days) {
-        int normalizedDays = days == 30 ? 30 : 7;
+        int normalizedDays = (days >= 14) ? 30 : 7;
 
         OffsetDateTime now = OffsetDateTime.now();
         LocalDate toDate = now.toLocalDate();
@@ -366,44 +371,27 @@ public class AdminServiceImpl implements AdminService {
         OffsetDateTime fromDateTime = fromDate.atStartOfDay().atOffset(now.getOffset());
         OffsetDateTime toDateTime = toDate.plusDays(1).atStartOfDay().atOffset(now.getOffset());
 
-        Map<LocalDate, Long> dailyTotals = new HashMap<>();
+        List<DailyApplicationCount> dailyCounts =
+                applicationRepository.countApplicationsByAppliedDateBetween(fromDateTime, toDateTime);
 
-        for (Object[] row : applicationRepository.countApplicationsByAppliedDateBetween(fromDateTime, toDateTime)) {
-            LocalDate date = toLocalDate(row[0]);
-            long total = toLong(row[1]);
+        Map<LocalDate, Long> dailyMap = dailyCounts.stream()
+                .collect(Collectors.toMap(DailyApplicationCount::getApplicationDate, DailyApplicationCount::getTotal));
 
-            dailyTotals.put(date, total);
-        }
+        List<AdminApplicationChartResponse.DailyApplicationPoint> dailyApplications =
+                IntStream.range(0, normalizedDays)
+                        .mapToObj(fromDate::plusDays)
+                        .map(date -> dashboardMapper.toDailyPoint(date, dailyMap.getOrDefault(date, 0L)))
+                        .toList();
 
-        List<AdminApplicationChartResponse.DailyApplicationPoint> dailyApplications = new ArrayList<>();
-
-        for (int i = 0; i < normalizedDays; i++) {
-            LocalDate date = fromDate.plusDays(i);
-
-            dailyApplications.add(new AdminApplicationChartResponse.DailyApplicationPoint(
-                    date,
-                    dailyTotals.getOrDefault(date, 0L)));
-        }
-
-        List<Object[]> statusRows = applicationRepository.countApplicationsByStatusBetween(fromDateTime, toDateTime);
+        List<StatusApplicationCount> statusRows =
+                applicationRepository.countApplicationsByStatusBetween(fromDateTime, toDateTime);
 
         long totalApplications = statusRows.stream()
-                .mapToLong(row -> toLong(row[1]))
+                .mapToLong(StatusApplicationCount::getTotal)
                 .sum();
 
         List<AdminApplicationChartResponse.StatusDistributionPoint> statusDistribution = statusRows.stream()
-                .map(row -> {
-                    ApplicationStatus status = ApplicationStatus.valueOf(row[0].toString());
-                    long total = toLong(row[1]);
-                    double percentage = totalApplications == 0
-                            ? 0
-                            : Math.round((total * 10000.0) / totalApplications) / 100.0;
-
-                    return new AdminApplicationChartResponse.StatusDistributionPoint(
-                            status,
-                            total,
-                            percentage);
-                })
+                .map(row -> dashboardMapper.toStatusPoint(row, totalApplications))
                 .toList();
 
         return new AdminApplicationChartResponse(
@@ -413,25 +401,5 @@ public class AdminServiceImpl implements AdminService {
                 totalApplications,
                 dailyApplications,
                 statusDistribution);
-    }
-
-    private LocalDate toLocalDate(Object value) {
-        if (value instanceof LocalDate localDate) {
-            return localDate;
-        }
-
-        if (value instanceof java.sql.Date sqlDate) {
-            return sqlDate.toLocalDate();
-        }
-
-        return LocalDate.parse(value.toString());
-    }
-
-    private long toLong(Object value) {
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-
-        return Long.parseLong(value.toString());
     }
 }

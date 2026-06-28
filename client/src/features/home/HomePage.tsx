@@ -64,6 +64,9 @@ export default function HomePage() {
 								<input
 									type="text"
 									value={keyword}
+									required
+									title="Tìm kiếm việc"
+									onInvalid={(e) => { e.currentTarget.setCustomValidity("Vui lòng nhập từ khóa tìm kiếm"); }}
 									onChange={(e) => setKeyword(e.target.value)}
 									placeholder="Nhập từ khóa, vị trí..."
 									className="w-full rounded-lg bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
