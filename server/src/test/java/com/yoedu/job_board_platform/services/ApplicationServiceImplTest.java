@@ -1,26 +1,5 @@
 package com.yoedu.job_board_platform.services;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ConflictException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
@@ -30,24 +9,29 @@ import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
 import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
 import com.yoedu.job_board_platform.mappers.ApplicationMapper;
 import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
-import com.yoedu.job_board_platform.models.Application;
-import com.yoedu.job_board_platform.models.ApplicationStatus;
-import com.yoedu.job_board_platform.models.ApplicationStatusLog;
-import com.yoedu.job_board_platform.models.Company;
-import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
-import com.yoedu.job_board_platform.models.Job;
-import com.yoedu.job_board_platform.models.JobStatus;
-import com.yoedu.job_board_platform.models.Profile;
-import com.yoedu.job_board_platform.models.Resume;
-import com.yoedu.job_board_platform.models.User;
-import com.yoedu.job_board_platform.repositories.ApplicationRepository;
-import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
-import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
-import com.yoedu.job_board_platform.repositories.JobRepository;
-import com.yoedu.job_board_platform.repositories.ResumeRepository;
-import com.yoedu.job_board_platform.repositories.SkillRepository;
+import com.yoedu.job_board_platform.models.*;
+import com.yoedu.job_board_platform.repositories.*;
 import com.yoedu.job_board_platform.services.impl.ApplicationServiceImpl;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationServiceImplTest {
@@ -78,6 +62,9 @@ class ApplicationServiceImplTest {
 
     @Mock
     private SkillRepository skillRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ApplicationServiceImpl applicationService;
@@ -141,7 +128,9 @@ class ApplicationServiceImplTest {
                 .roleInCompany("HR Manager")
                 .build();
         profile.setEmployerDetail(detail);
-        return buildUser(profile);
+        User user = buildUser(profile);
+        user.setRole(UserRole.EMPLOYER);
+        return user;
     }
 
     private Application buildApplication(Profile candidate, Job job, ApplicationStatus status) {
@@ -156,7 +145,7 @@ class ApplicationServiceImplTest {
     // ─── submitApplication ──────────────────────────────────────────────────
 
     @Test
-    void TC_01_submitApplication_success_withCoverLetter() {
+    void submitApplication_success_withCoverLetter() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         Job job = buildActiveJob();
@@ -196,7 +185,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_02_submitApplication_success_withoutCoverLetter() {
+    void submitApplication_success_withoutCoverLetter() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         Job job = buildActiveJob();
@@ -233,7 +222,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_03_submitApplication_throwsNotFound_whenJobMissing() {
+    void submitApplication_throwsNotFound_whenJobMissing() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         UUID jobId = UUID.randomUUID();
@@ -248,7 +237,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_04_submitApplication_throwsBadRequest_whenJobNotActive() {
+    void submitApplication_throwsBadRequest_whenJobNotActive() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         Job job = buildActiveJob();
@@ -264,7 +253,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_05_submitApplication_throwsConflict_whenAlreadyApplied() {
+    void submitApplication_throwsConflict_whenAlreadyApplied() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         Job job = buildActiveJob();
@@ -282,7 +271,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_06_submitApplication_throwsBadRequest_whenNoCv() {
+    void submitApplication_throwsBadRequest_whenNoCv() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         Job job = buildActiveJob();
@@ -301,7 +290,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_07_submitApplication_throwsNotFound_whenNoProfile() {
+    void submitApplication_throwsNotFound_whenNoProfile() {
         User user = buildUser(null);
         UUID jobId = UUID.randomUUID();
         ApplicationRequest request = new ApplicationRequest(jobId, null);
@@ -318,7 +307,7 @@ class ApplicationServiceImplTest {
     // ─── checkApplied ───────────────────────────────────────────────────────
 
     @Test
-    void TC_08_checkApplied_returnsTrue_whenAlreadyApplied() {
+    void checkApplied_returnsTrue_whenAlreadyApplied() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         UUID jobId = UUID.randomUUID();
@@ -332,7 +321,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_09_checkApplied_returnsFalse_whenNotApplied() {
+    void checkApplied_returnsFalse_whenNotApplied() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         UUID jobId = UUID.randomUUID();
@@ -346,7 +335,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_10_checkApplied_returnsFalse_whenNoProfile() {
+    void checkApplied_returnsFalse_whenNoProfile() {
         User user = buildUser(null);
         UUID jobId = UUID.randomUUID();
 
@@ -361,7 +350,7 @@ class ApplicationServiceImplTest {
     // ─── withdrawApplication ───────────────────────────────────────────────
 
     @Test
-    void TC_11_withdrawApplication_success_whenPending() {
+    void withdrawApplication_success_whenPending() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         UUID appId = UUID.randomUUID();
@@ -383,7 +372,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_12_withdrawApplication_throwsBadRequest_whenNotPending() {
+    void withdrawApplication_throwsBadRequest_whenNotPending() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         UUID appId = UUID.randomUUID();
@@ -405,7 +394,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_13_withdrawApplication_throwsForbidden_whenNotOwner() {
+    void withdrawApplication_throwsForbidden_whenNotOwner() {
         Profile owner = buildProfile();
         Profile other = buildProfile();
         User user = buildUser(other);
@@ -429,7 +418,7 @@ class ApplicationServiceImplTest {
     // ─── getTimeline ──────────────────────────────────────────────────────
 
     @Test
-    void TC_14_getTimeline_success() {
+    void getTimeline_success() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         UUID appId = UUID.randomUUID();
@@ -460,7 +449,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_15_getTimeline_throwsForbidden_whenNotOwner() {
+    void getTimeline_throwsForbidden_whenNotOwner() {
         Profile owner = buildProfile();
         Profile other = buildProfile();
         User user = buildUser(other);
@@ -484,7 +473,7 @@ class ApplicationServiceImplTest {
     // ─── getEmployerApplications ──────────────────────────────────────────
 
     @Test
-    void TC_16_getEmployerApplications_success_allFilters() {
+    void getEmployerApplications_success_allFilters() {
         Company company = buildCompany();
         UUID companyId = company.getId();
         UUID jobId = UUID.randomUUID();
@@ -514,13 +503,13 @@ class ApplicationServiceImplTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).jobTitle()).isEqualTo("Backend Developer");
+        assertThat(result.getContent().getFirst().jobTitle()).isEqualTo("Backend Developer");
         verify(applicationRepository).findByJobCompanyIdAndJobIdAndStatus(
                 companyId, jobId, ApplicationStatus.REVIEWING, pageable);
     }
 
     @Test
-    void TC_17_getEmployerApplications_success_noFilters() {
+    void getEmployerApplications_success_noFilters() {
         Company company = buildCompany();
         UUID companyId = company.getId();
         Pageable pageable = PageRequest.of(0, 10);
@@ -553,7 +542,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_18_getEmployerApplications_emptyPage() {
+    void getEmployerApplications_emptyPage() {
         Company company = buildCompany();
         UUID companyId = company.getId();
         Pageable pageable = PageRequest.of(0, 10);
@@ -573,7 +562,7 @@ class ApplicationServiceImplTest {
     // ─── updateApplicationStatus ──────────────────────────────────────────
 
     @Test
-    void TC_19_updateApplicationStatus_success() {
+    void updateApplicationStatus_success() {
         Company company = buildCompany();
         User employer = buildEmployerUser(company);
         UUID appId = UUID.randomUUID();
@@ -597,7 +586,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_20_updateApplicationStatus_throwsForbidden_noCompany() {
+    void updateApplicationStatus_throwsForbidden_noCompany() {
         Profile profile = buildProfile();
         User user = buildUser(profile);
         UUID appId = UUID.randomUUID();
@@ -606,13 +595,13 @@ class ApplicationServiceImplTest {
 
         assertThatThrownBy(() -> applicationService.updateApplicationStatus(appId, ApplicationStatus.REVIEWING, null))
                 .isInstanceOf(ForbiddenException.class)
-                .hasMessageContaining("chưa có thông tin công ty");
+                .hasMessageContaining("không có quyền truy cập");
 
         verify(applicationRepository, never()).findById(any());
     }
 
     @Test
-    void TC_21_updateApplicationStatus_throwsForbidden_wrongCompany() {
+    void updateApplicationStatus_throwsForbidden_wrongCompany() {
         Company employerCompany = buildCompany();
         Company otherCompany = buildCompany();
         User employer = buildEmployerUser(employerCompany);
@@ -633,7 +622,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_22_updateApplicationStatus_throwsBadRequest_invalidStatus() {
+    void updateApplicationStatus_throwsBadRequest_invalidStatus() {
         Company company = buildCompany();
         User employer = buildEmployerUser(company);
         UUID appId = UUID.randomUUID();
@@ -653,7 +642,7 @@ class ApplicationServiceImplTest {
     }
 
     @Test
-    void TC_23_updateApplicationStatus_throwsNotFound() {
+    void updateApplicationStatus_throwsNotFound() {
         Company company = buildCompany();
         User employer = buildEmployerUser(company);
         UUID appId = UUID.randomUUID();

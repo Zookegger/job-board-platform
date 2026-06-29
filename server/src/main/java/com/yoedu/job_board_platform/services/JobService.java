@@ -113,11 +113,11 @@ public interface JobService {
     JobResponse getPublicJobDetail(String slug);
 
     /**
+     * Lấy danh sách công việc liên quan (gợi ý) dựa trên ID công việc hiện tại.
      *
-     * @param jobId
-     * @param pageable
-     *
-     * @return
+     * @param jobId    ID của công việc làm gốc để tìm kiếm dữ liệu liên quan
+     * @param pageable cấu hình phân trang và sắp xếp của Spring Data
+     * @return trang dữ liệu danh sách các công việc liên quan
      */
     Page<JobListResponse> getRelatedJobs(UUID jobId, Pageable pageable);
 }

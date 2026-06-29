@@ -1,29 +1,17 @@
 package com.yoedu.job_board_platform.models;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
-
+import jakarta.persistence.*;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
+/**
+ * Đối tượng User đại diện cho người dùng trong hệ thống, có thể là ứng viên,
+ * admin hoặc nhà tuyển dụng.
+ */
 @Entity
 @Table(name = "users")
 @Setter
@@ -32,10 +20,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-/**
- * Đối tượng User đại diện cho người dùng trong hệ thống, có thể là ứng viên,
- * admin hoặc nhà tuyển dụng.
- */
 public class User {
     @Id
     @Column(columnDefinition = "uuid")
@@ -60,6 +44,6 @@ public class User {
     @CreatedDate
     private OffsetDateTime createdAt;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Profile profile;
 }

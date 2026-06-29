@@ -26,3 +26,26 @@ export interface StatusDistributionPoint {
 	total: number;
 	percentage: number;
 }
+
+export type AdminUserRole = "ADMIN" | "EMPLOYER" | "CANDIDATE";
+
+export type AdminUserStatus = "ACTIVE" | "INACTIVE";
+
+export interface AdminUserListResponse {
+	id: string;
+	email: string;
+	fullName: string | null;
+	role: AdminUserRole;
+	status: AdminUserStatus;
+	isActive: boolean;
+	createdAt: string;
+}
+
+export interface AdminUsersQueryParams {
+	page?: number;
+	size?: number;
+	role?: string;
+	status?: string;
+	sortBy?: string;
+	direction?: "asc" | "desc";
+}

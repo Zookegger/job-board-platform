@@ -1,6 +1,8 @@
 import type {
 	AdminApplicationChartResponse,
 	AdminDashboardStatsResponse,
+	AdminUserListResponse,
+	AdminUsersQueryParams,
 } from "@/types/admin";
 import type { AdminCompanyListResponse, AdminPendingCompanyResponse } from "@/types/company";
 import type { AdminPendingJobResponse } from "@/types/job";
@@ -35,7 +37,28 @@ const adminApi = {
 					error.response?.status || 500,
 				);
 			}),	
-		
+	
+	getUsers: (
+		params: AdminUsersQueryParams,
+	): Promise<PageResponse<AdminUserListResponse>> =>
+		client
+			.get("/admin/users", {
+				params: {
+					...toPageableParams(params),
+					role: params.role,
+					status: params.status,
+				},
+			})
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message ||
+						error.message ||
+						"Lỗi, Không thể tải danh sách tài khoản.",
+					error.response?.status || 500,
+				);
+			}),		
+
 	// Companies Review
 	getAllCompanies: (
 		params: PaginationParams,

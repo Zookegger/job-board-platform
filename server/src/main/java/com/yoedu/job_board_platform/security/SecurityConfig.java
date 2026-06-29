@@ -78,7 +78,7 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain filterChain(HttpSecurity http) {
 		http.csrf(AbstractHttpConfigurer::disable)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -90,11 +90,8 @@ public class SecurityConfig {
 				.addFilterBefore(jwtAuthenticationFilter,
 						UsernamePasswordAuthenticationFilter.class)
 				.httpBasic(AbstractHttpConfigurer::disable).formLogin(AbstractHttpConfigurer::disable)
-				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, authException) -> {
-					res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-				}).accessDeniedHandler((req, res, accessDeniedException) -> {
-					res.sendError(HttpServletResponse.SC_FORBIDDEN);
-				}));
+				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, authException) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+						.accessDeniedHandler((req, res, accessDeniedException) -> res.sendError(HttpServletResponse.SC_FORBIDDEN)));
 		return http.build();
 	}
 

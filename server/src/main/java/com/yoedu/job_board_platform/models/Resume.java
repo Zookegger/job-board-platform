@@ -1,28 +1,23 @@
 package com.yoedu.job_board_platform.models;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
-
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
+
+/**
+ * CV / Hồ sơ xin việc của ứng viên. Mỗi ứng viên có thể có nhiều resume,
+ * nhưng chỉ một resume được gắn trực tiếp với CandidateDetail.
+ * Lưu trữ thông tin file (đường dẫn, kích thước, loại) và thời gian tạo/cập
+ * nhật.
+ */
 @Entity
 @Table(name = "resumes")
 @Setter
@@ -31,12 +26,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-/**
- * CV / Hồ sơ xin việc của ứng viên. Mỗi ứng viên có thể có nhiều resume,
- * nhưng chỉ một resume được gắn trực tiếp với CandidateDetail.
- * Lưu trữ thông tin file (đường dẫn, kích thước, loại) và thời gian tạo/cập
- * nhật.
- */
 public class Resume {
     @Id
     @Column(columnDefinition = "uuid")

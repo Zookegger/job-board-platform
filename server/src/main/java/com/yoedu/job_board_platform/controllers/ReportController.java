@@ -1,5 +1,6 @@
 package com.yoedu.job_board_platform.controllers;
 
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +30,7 @@ public class ReportController implements ReportApi {
 
     @Override
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(AuthorizationConstants.AUTHENTICATED)
     public ResponseEntity<ReportResponse> createReport(@Valid @RequestBody CreateReportRequest request) {
         ReportResponse response = reportService.createReport(request);
         return ResponseEntity.ok(response);

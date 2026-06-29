@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,6 +28,8 @@ import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
+import com.yoedu.job_board_platform.events.CompanyStatusChangeEvent;
+import com.yoedu.job_board_platform.events.JobStatusChangeEvent;
 import com.yoedu.job_board_platform.mappers.AdminMapper;
 import com.yoedu.job_board_platform.mappers.DashboardMapper;
 import com.yoedu.job_board_platform.mappers.DashboardMapper.DailyApplicationCount;
@@ -39,22 +42,21 @@ import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
-import com.yoedu.job_board_platform.models.Notification;
-import com.yoedu.job_board_platform.models.NotificationStatus;
 import com.yoedu.job_board_platform.models.Report;
 import com.yoedu.job_board_platform.models.ReportStatus;
 import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.ApplicationRepository;
 import com.yoedu.job_board_platform.repositories.CompanyApprovalLogRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
 import com.yoedu.job_board_platform.repositories.JobRepository;
-import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.ReportRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.specifications.CompanySpecification;
 import com.yoedu.job_board_platform.specifications.JobSpecification;
+import com.yoedu.job_board_platform.specifications.UserSpecification;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -63,357 +65,331 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
 
-    private final CompanyRepository companyRepository;
-    private final CompanyApprovalLogRepository companyApprovalLogRepository;
-    private final CompanyEmployerDetailRepository employerDetailRepository;
-    private final JobRepository jobRepository;
-    private final ReportRepository reportRepository;
-    private final NotificationRepository notificationRepository;
-    private final AdminMapper adminMapper;
-    private final DashboardMapper dashboardMapper;
-    private final JobMapper jobMapper;
-    private final ReportMapper reportMapper;
-    private final SecurityUtil securityUtil;
-    private final UserRepository userRepository;
-    private final ApplicationRepository applicationRepository;
-    
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PendingCompanyResponse> getPendingCompanies(
-            String keyword,
-            Boolean hasTaxCode,
-            Boolean hasContact,
-            Pageable pageable) {
-        Specification<Company> specification = Specification
-                .where(CompanySpecification.isPending())
-                .and(CompanySpecification.hasKeyword(keyword))
-                .and(CompanySpecification.hasTaxCode(hasTaxCode))
-                .and(CompanySpecification.hasContact(hasContact));
+	private final CompanyRepository companyRepository;
+	private final CompanyApprovalLogRepository companyApprovalLogRepository;
+	private final CompanyEmployerDetailRepository employerDetailRepository;
+	private final JobRepository jobRepository;
+	private final ReportRepository reportRepository;
+	private final AdminMapper adminMapper;
+	private final DashboardMapper dashboardMapper;
+	private final JobMapper jobMapper;
+	private final ReportMapper reportMapper;
+	private final SecurityUtil securityUtil;
+	private final UserRepository userRepository;
+	private final ApplicationRepository applicationRepository;
+	private final ApplicationEventPublisher eventPublisher;
 
-        Page<Company> companies = companyRepository.findAll(specification, pageable);
+	@Override
+	@Transactional(readOnly = true)
+	public Page<PendingCompanyResponse> getPendingCompanies(
+			String keyword,
+			Boolean hasTaxCode,
+			Boolean hasContact,
+			Pageable pageable) {
+		Specification<Company> specification = Specification
+				.where(CompanySpecification.isPending())
+				.and(CompanySpecification.hasKeyword(keyword))
+				.and(CompanySpecification.hasTaxCode(hasTaxCode))
+				.and(CompanySpecification.hasContact(hasContact));
 
-        List<UUID> companyIds = companies.getContent()
-                .stream()
-                .map(Company::getId)
-                .toList();
+		Page<Company> companies = companyRepository.findAll(specification, pageable);
 
-        Map<UUID, CompanyEmployerDetail> detailsByCompanyId = companyIds.isEmpty()
-                ? Map.of()
-                : employerDetailRepository.findByCompany_IdIn(companyIds)
-                        .stream()
-                        .filter(detail -> detail.getCompany() != null)
-                        .collect(Collectors.toMap(
-                                detail -> detail.getCompany().getId(),
-                                Function.identity(),
-                                (first, ignored) -> first));
+		List<UUID> companyIds = companies.getContent()
+				.stream()
+				.map(Company::getId)
+				.toList();
 
-        return companies.map(company -> adminMapper.toPendingCompanyResponseSafe(
-                company,
-                detailsByCompanyId.get(company.getId())));
-    }
+		Map<UUID, CompanyEmployerDetail> detailsByCompanyId = companyIds.isEmpty()
+				? Map.of()
+				: employerDetailRepository.findByCompanyIdIn(companyIds)
+				.stream()
+				.filter(detail -> detail.getCompany() != null)
+				.collect(Collectors.toMap(
+						detail -> detail.getCompany().getId(),
+						Function.identity(),
+						(first, ignored) -> first));
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AdminCompanyListResponse> getAllCompanies(String keyword, String status, Pageable pageable) {
-        Specification<Company> spec = Specification
-                .where(CompanySpecification.hasKeyword(keyword))
-                .and(CompanySpecification.hasStatus(status));
-        return companyRepository.findAll(spec, pageable)
-                .map(adminMapper::toAdminCompanyListResponse);
-    }
+		return companies.map(company -> adminMapper.toPendingCompanyResponseSafe(
+				company,
+				detailsByCompanyId.get(company.getId())));
+	}
 
-    @Override
-    @Transactional
-    public void approveCompany(UUID companyId) {
-        Company company = findCompany(companyId);
-        CompanyStatus oldStatus = company.getStatus();
+	@Override
+	@Transactional(readOnly = true)
+	public Page<AdminCompanyListResponse> getAllCompanies(String keyword, String status, Pageable pageable) {
+		Specification<Company> spec = Specification
+				.where(CompanySpecification.hasKeyword(keyword))
+				.and(CompanySpecification.hasStatus(status));
+		return companyRepository.findAll(spec, pageable)
+				.map(adminMapper::toAdminCompanyListResponse);
+	}
 
-        company.setStatus(CompanyStatus.APPROVED);
-        company.setApproved(true);
-        company.setRejectionReason(null);
-        company.setApprovedAt(OffsetDateTime.now());
+	@Override
+	@Transactional
+	public void approveCompany(UUID companyId) {
+		Company company = findCompany(companyId);
+		CompanyStatus oldStatus = company.getStatus();
 
-        Company savedCompany = companyRepository.save(company);
-        saveApprovalLog(savedCompany, oldStatus, CompanyStatus.APPROVED, null);
-    }
+		company.setStatus(CompanyStatus.APPROVED);
+		company.setApproved(true);
+		company.setRejectionReason(null);
+		company.setApprovedAt(OffsetDateTime.now());
 
-    @Override
-    @Transactional
-    public void rejectCompany(UUID companyId, CompanyRejectionRequest request) {
-        Company company = findCompany(companyId);
-        CompanyStatus oldStatus = company.getStatus();
+		Company savedCompany = companyRepository.save(company);
+		saveApprovalLog(savedCompany, oldStatus, CompanyStatus.APPROVED, null);
 
-        company.setStatus(CompanyStatus.REJECTED);
-        company.setApproved(false);
-        company.setApprovedAt(null);
-        company.setRejectionReason(request.reason().trim());
+		eventPublisher.publishEvent(new CompanyStatusChangeEvent(savedCompany, CompanyStatus.APPROVED));
+	}
 
-        Company savedCompany = companyRepository.save(company);
-        saveApprovalLog(savedCompany, oldStatus, CompanyStatus.REJECTED, request.reason().trim());
-    }
+	@Override
+	@Transactional
+	public void rejectCompany(UUID companyId, CompanyRejectionRequest request) {
+		Company company = findCompany(companyId);
+		CompanyStatus oldStatus = company.getStatus();
 
-    @Override
-    @Transactional
-    public void suspendCompany(UUID companyId, CompanySuspensionRequest request) {
-        Company company = findCompany(companyId);
-        CompanyStatus oldStatus = company.getStatus();
+		company.setStatus(CompanyStatus.REJECTED);
+		company.setApproved(false);
+		company.setApprovedAt(null);
+		company.setRejectionReason(request.reason().trim());
 
-        company.setStatus(CompanyStatus.SUSPENDED);
-        company.setApproved(false);
-        company.setApprovedAt(null);
+		Company savedCompany = companyRepository.save(company);
+		saveApprovalLog(savedCompany, oldStatus, CompanyStatus.REJECTED, request.reason().trim());
 
-        company.setSuspensionReason(request.reason().trim());
+		eventPublisher.publishEvent(new CompanyStatusChangeEvent(savedCompany, CompanyStatus.REJECTED));
+	}
 
-        Company savedCompany = companyRepository.save(company);
-        saveApprovalLog(savedCompany, oldStatus, CompanyStatus.SUSPENDED, request.reason().trim());
-    }
+	@Override
+	@Transactional
+	public void suspendCompany(UUID companyId, CompanySuspensionRequest request) {
+		Company company = findCompany(companyId);
+		CompanyStatus oldStatus = company.getStatus();
 
-    @Override
-    @Transactional
-    public void unsuspendCompany(UUID companyId) {
-        Company company = findCompany(companyId);
+		company.setStatus(CompanyStatus.SUSPENDED);
+		company.setApproved(false);
+		company.setApprovedAt(null);
 
-        if (company.getStatus() != CompanyStatus.SUSPENDED) {
-            throw new BadRequestException("Công ty không ở trạng thái tạm ngưng");
-        }
+		company.setSuspensionReason(request.reason().trim());
 
-        company.setStatus(CompanyStatus.APPROVED);
-        company.setApproved(true);
-        company.setSuspensionReason(null);
+		Company savedCompany = companyRepository.save(company);
+		saveApprovalLog(savedCompany, oldStatus, CompanyStatus.SUSPENDED, request.reason().trim());
 
-        Company savedCompany = companyRepository.save(company);
-        saveApprovalLog(savedCompany, CompanyStatus.SUSPENDED, CompanyStatus.APPROVED, null);
-    }
+		eventPublisher.publishEvent(new CompanyStatusChangeEvent(savedCompany, CompanyStatus.SUSPENDED));
+	}
 
-    private Company findCompany(UUID companyId) {
-        return companyRepository.findById(companyId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy công ty"));
-    }
+	@Override
+	@Transactional
+	public void unsuspendCompany(UUID companyId) {
+		Company company = findCompany(companyId);
 
-    private void saveApprovalLog(Company company, CompanyStatus oldStatus, CompanyStatus newStatus, String note) {
-        User actor = securityUtil.getCurrentUser();
-        CompanyApprovalLog log = CompanyApprovalLog.builder()
-                .company(company)
-                .actor(actor)
-                .oldStatus(oldStatus)
-                .newStatus(newStatus)
-                .note(note)
-                .build();
-        companyApprovalLogRepository.save(log);
-    }
+		if (company.getStatus() != CompanyStatus.SUSPENDED) {
+			throw new BadRequestException("Công ty không ở trạng thái tạm ngưng");
+		}
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AdminJobListResponse> getAllJobs(String status, Pageable pageable) {
-        Specification<Job> spec = Specification.where(JobSpecification.hasStatus(status));
-        return jobRepository.findAll(spec, pageable).map(jobMapper::toAdminJobListResponse);
-    }
+		company.setStatus(CompanyStatus.APPROVED);
+		company.setApproved(true);
+		company.setSuspensionReason(null);
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<PendingJobResponse> getPendingJobs(Pageable pageable) {
-        return jobRepository.findByStatus(
-                JobStatus.PENDING_APPROVAL, pageable)
-                .map(this::toPendingJobResponse);
-    }
+		Company savedCompany = companyRepository.save(company);
+		saveApprovalLog(savedCompany, CompanyStatus.SUSPENDED, CompanyStatus.APPROVED, null);
 
-    @Override
-    @Transactional
-    public void approveJob(UUID jobId) {
-        Job job = findJob(jobId);
-        if (job.getStatus() != JobStatus.PENDING_APPROVAL) {
-            throw new BadRequestException("Tin tuyển dụng không ở trạng thái chờ duyệt");
-        }
-        job.setStatus(JobStatus.ACTIVE);
-        job.setRejectionReason(null);
-        jobRepository.save(job);
-        notifyEmployer(job, "Tin tuyển dụng \"" + job.getTitle() + "\" đã được phê duyệt và hiển thị công khai.");
-    }
+		eventPublisher.publishEvent(new CompanyStatusChangeEvent(savedCompany, CompanyStatus.APPROVED));
+	}
+	private Company findCompany(UUID companyId) {
+		return companyRepository.findById(companyId)
+				.orElseThrow(() -> new NotFoundException("Không tìm thấy công ty"));
+	}
 
-    @Override
-    @Transactional
-    public void rejectJob(UUID jobId, String reason) {
-        if (reason == null || reason.isBlank()) {
-            throw new BadRequestException("Lý do từ chối là bắt buộc");
-        }
-        Job job = findJob(jobId);
-        if (job.getStatus() != JobStatus.PENDING_APPROVAL) {
-            throw new BadRequestException("Tin tuyển dụng không ở trạng thái chờ duyệt");
-        }
-        job.setStatus(JobStatus.REJECTED);
-        job.setRejectionReason(reason.trim());
-        jobRepository.save(job);
-        notifyEmployer(job, "Tin tuyển dụng \"" + job.getTitle() + "\" đã bị từ chối. Lý do: " + reason.trim());
-    }
+	private void saveApprovalLog(Company company, CompanyStatus oldStatus, CompanyStatus newStatus, String note) {
+		User actor = securityUtil.getCurrentUser();
+		CompanyApprovalLog log = CompanyApprovalLog.builder()
+				.company(company)
+				.actor(actor)
+				.oldStatus(oldStatus)
+				.newStatus(newStatus)
+				.note(note)
+				.build();
+		companyApprovalLogRepository.save(log);
+	}
 
-    // ================ Reports ================
+	@Override
+	@Transactional(readOnly = true)
+	public Page<AdminJobListResponse> getAllJobs(String status, Pageable pageable) {
+		Specification<Job> spec = Specification.where(JobSpecification.hasStatus(status));
+		return jobRepository.findAll(spec, pageable).map(jobMapper::toAdminJobListResponse);
+	}
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ReportResponse> getReports(ReportStatus status, Pageable pageable) {
-        if (status != null) {
-            return reportRepository.findByStatus(status, pageable)
-                    .map(reportMapper::toResponse);
-        }
-        return reportRepository.findAll(pageable)
-                .map(reportMapper::toResponse);
-    }
+	@Override
+	@Transactional(readOnly = true)
+	public Page<PendingJobResponse> getPendingJobs(Pageable pageable) {
+		return jobRepository.findByStatus(
+						JobStatus.PENDING_APPROVAL, pageable)
+				.map(jobMapper::toPendingJobResponse);
+	}
 
-    @Override
-    @Transactional
-    public void reviewReport(UUID reportId, String reviewNotes) {
-        Report report = findReport(reportId);
-        if (report.getStatus() != ReportStatus.PENDING) {
-            throw new BadRequestException("Báo cáo không ở trạng thái chờ xử lý");
-        }
-        User currentUser = securityUtil.getCurrentUser();
-        report.setStatus(ReportStatus.REVIEWED);
-        report.setReviewedBy(currentUser);
-        report.setReviewedAt(OffsetDateTime.now());
-        report.setReviewNotes(reviewNotes);
-        reportRepository.save(report);
-    }
+	@Override
+	@Transactional
+	public void approveJob(UUID jobId) {
+		Job job = jobRepository.findById(jobId)
+				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tin tuyển dụng"));
 
-    @Override
-    @Transactional
-    public void dismissReport(UUID reportId, String reviewNotes) {
-        Report report = findReport(reportId);
-        if (report.getStatus() == ReportStatus.DISMISSED || report.getStatus() == ReportStatus.RESOLVED) {
-            throw new BadRequestException("Báo cáo đã được xử lý, không thể bác bỏ");
-        }
-        User currentUser = securityUtil.getCurrentUser();
-        report.setStatus(ReportStatus.DISMISSED);
-        report.setReviewedBy(currentUser);
-        report.setReviewedAt(OffsetDateTime.now());
-        report.setReviewNotes(reviewNotes);
-        reportRepository.save(report);
-    }
+		if (job.getStatus() != JobStatus.PENDING_APPROVAL) {
+			throw new BadRequestException("Tin tuyển dụng không ở trạng thái chờ duyệt");
+		}
+		job.setStatus(JobStatus.ACTIVE);
+		job.setRejectionReason(null);
+		jobRepository.save(job);
 
-    @Override
-    @Transactional
-    public void resolveReport(UUID reportId, String reviewNotes) {
-        Report report = findReport(reportId);
+		eventPublisher.publishEvent(new JobStatusChangeEvent(job, JobStatus.ACTIVE));
+	}
 
-        if (report.getStatus() != ReportStatus.REVIEWED) {
-            throw new BadRequestException("Báo cáo phải ở trạng thái REVIEWED trước khi giải quyết");
-        }
-        User currentUser = securityUtil.getCurrentUser();
-        report.setStatus(ReportStatus.RESOLVED);
-        report.setReviewedBy(currentUser);
-        report.setReviewedAt(OffsetDateTime.now());
-        report.setReviewNotes(reviewNotes);
-        reportRepository.save(report);
-    }
+	@Override
+	@Transactional
+	public void rejectJob(UUID jobId, String reason) {
+		if (reason == null || reason.isBlank()) {
+			throw new BadRequestException("Lý do từ chối là bắt buộc");
+		}
+		Job job = jobRepository.findById(jobId)
+				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tin tuyển dụng"));
 
-    private Report findReport(UUID reportId) {
-        return reportRepository.findById(reportId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy báo cáo"));
-    }
+		if (job.getStatus() != JobStatus.PENDING_APPROVAL) {
+			throw new BadRequestException("Tin tuyển dụng không ở trạng thái chờ duyệt");
+		}
+		job.setStatus(JobStatus.REJECTED);
+		job.setRejectionReason(reason.trim());
+		jobRepository.save(job);
 
-    private void notifyEmployer(Job job, String message) {
-        if (job.getCompany() == null)
-            return;
-        List<CompanyEmployerDetail> details = employerDetailRepository
-                .findByCompany_IdIn(List.of(job.getCompany().getId()));
-        for (CompanyEmployerDetail detail : details) {
-            if (detail.getProfile() != null && detail.getProfile().getUser() != null) {
-                notificationRepository.save(Notification.builder()
-                        .user(detail.getProfile().getUser())
-                        .type(NotificationStatus.JOB_STATUS_CHANGED)
-                        .entityId(job.getId())
-                        .message(message)
-                        .build());
-            }
-        }
-    }
+		eventPublisher.publishEvent(new JobStatusChangeEvent(job, JobStatus.REJECTED));
+	}
 
-    private Job findJob(UUID jobId) {
-        return jobRepository.findById(jobId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tin tuyển dụng"));
-    }
+	// ================ Reports ================
 
-    private PendingJobResponse toPendingJobResponse(Job job) {
-        String companyName = job.getCompany() != null ? job.getCompany().getCompanyName() : null;
-        String logoUrl = job.getCompany() != null ? job.getCompany().getLogoUrl() : null;
-        String categoryName = job.getCategory() != null ? job.getCategory().getName() : null;
-        return new PendingJobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getStatus(),
-                job.getDescription(),
-                job.getRequirements(),
-                job.getBenefits(),
-                job.getLocation(),
-                job.getLocationTypes(),
-                job.getEmploymentType(),
-                job.getExperienceLevel(),
-                job.getSalaryMin(),
-                job.getSalaryMax(),
-                job.getCurrency(),
-                job.getNumberOfOpenings(),
-                companyName,
-                logoUrl,
-                categoryName,
-                job.getCreatedAt());
-    }
+	@Override
+	@Transactional(readOnly = true)
+	public Page<ReportResponse> getReports(ReportStatus status, Pageable pageable) {
+		if (status != null) {
+			return reportRepository.findByStatus(status, pageable)
+					.map(reportMapper::toResponse);
+		}
+		return reportRepository.findAll(pageable)
+				.map(reportMapper::toResponse);
+	}
 
-    @Override
-    @Transactional(readOnly = true)
-    public AdminDashboardStatsResponse getDashboardStats() {
-        OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
+	@Override
+	@Transactional
+	public void reviewReport(UUID reportId, String reviewNotes) {
+		Report report = reportRepository.findById(reportId)
+				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy báo cáo"));
 
-        return new AdminDashboardStatsResponse(
-                userRepository.count(),
-                companyRepository.count(),
-                jobRepository.countByStatus(JobStatus.ACTIVE),
-                applicationRepository.count(),
-                userRepository.countByCreatedAtAfter(sevenDaysAgo),
-                jobRepository.countByStatus(JobStatus.PENDING_APPROVAL),
-                companyRepository.countByStatus(CompanyStatus.PENDING)
-        );
-    }
+		if (report.getStatus() != ReportStatus.PENDING) {
+			throw new BadRequestException("Báo cáo không ở trạng thái chờ xử lý");
+		}
+		User currentUser = securityUtil.getCurrentUser();
+		report.setStatus(ReportStatus.REVIEWED);
+		report.setReviewedBy(currentUser);
+		report.setReviewedAt(OffsetDateTime.now());
+		report.setReviewNotes(reviewNotes);
+		reportRepository.save(report);
+	}
 
-    @Override
-    @Transactional(readOnly = true)
-    public AdminApplicationChartResponse getApplicationChartStats(int days) {
-        int normalizedDays = (days >= 14) ? 30 : 7;
+	@Override
+	@Transactional
+	public void dismissReport(UUID reportId, String reviewNotes) {
+		Report report = reportRepository.findById(reportId)
+				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy báo cáo"));
 
-        OffsetDateTime now = OffsetDateTime.now();
-        LocalDate toDate = now.toLocalDate();
-        LocalDate fromDate = toDate.minusDays(normalizedDays - 1L);
+		if (report.getStatus() == ReportStatus.DISMISSED || report.getStatus() == ReportStatus.RESOLVED) {
+			throw new BadRequestException("Báo cáo đã được xử lý, không thể bác bỏ");
+		}
+		User currentUser = securityUtil.getCurrentUser();
+		report.setStatus(ReportStatus.DISMISSED);
+		report.setReviewedBy(currentUser);
+		report.setReviewedAt(OffsetDateTime.now());
+		report.setReviewNotes(reviewNotes);
+		reportRepository.save(report);
+	}
 
-        OffsetDateTime fromDateTime = fromDate.atStartOfDay().atOffset(now.getOffset());
-        OffsetDateTime toDateTime = toDate.plusDays(1).atStartOfDay().atOffset(now.getOffset());
+	@Override
+	@Transactional
+	public void resolveReport(UUID reportId, String reviewNotes) {
+		Report report = reportRepository.findById(reportId)
+				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy báo cáo"));
 
-        List<DailyApplicationCount> dailyCounts =
-                applicationRepository.countApplicationsByAppliedDateBetween(fromDateTime, toDateTime);
 
-        Map<LocalDate, Long> dailyMap = dailyCounts.stream()
-                .collect(Collectors.toMap(DailyApplicationCount::getApplicationDate, DailyApplicationCount::getTotal));
+		if (report.getStatus() != ReportStatus.REVIEWED) {
+			throw new BadRequestException("Báo cáo phải ở trạng thái REVIEWED trước khi giải quyết");
+		}
+		User currentUser = securityUtil.getCurrentUser();
+		report.setStatus(ReportStatus.RESOLVED);
+		report.setReviewedBy(currentUser);
+		report.setReviewedAt(OffsetDateTime.now());
+		report.setReviewNotes(reviewNotes);
+		reportRepository.save(report);
+	}
 
-        List<AdminApplicationChartResponse.DailyApplicationPoint> dailyApplications =
-                IntStream.range(0, normalizedDays)
-                        .mapToObj(fromDate::plusDays)
-                        .map(date -> dashboardMapper.toDailyPoint(date, dailyMap.getOrDefault(date, 0L)))
-                        .toList();
+	@Override
+	@Transactional(readOnly = true)
+	public AdminDashboardStatsResponse getDashboardStats() {
+		OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
 
-        List<StatusApplicationCount> statusRows =
-                applicationRepository.countApplicationsByStatusBetween(fromDateTime, toDateTime);
+		return new AdminDashboardStatsResponse(
+				userRepository.count(),
+				companyRepository.count(),
+				jobRepository.countByStatus(JobStatus.ACTIVE),
+				applicationRepository.count(),
+				userRepository.countByCreatedAtAfter(sevenDaysAgo),
+				jobRepository.countByStatus(JobStatus.PENDING_APPROVAL),
+				companyRepository.countByStatus(CompanyStatus.PENDING)
+		);
+	}
 
-        long totalApplications = statusRows.stream()
-                .mapToLong(StatusApplicationCount::getTotal)
-                .sum();
+	@Override
+	@Transactional(readOnly = true)
+	public AdminApplicationChartResponse getApplicationChartStats(int days) {
+		int normalizedDays = (days >= 14) ? 30 : 7;
 
-        List<AdminApplicationChartResponse.StatusDistributionPoint> statusDistribution = statusRows.stream()
-                .map(row -> dashboardMapper.toStatusPoint(row, totalApplications))
-                .toList();
+		OffsetDateTime now = OffsetDateTime.now();
+		LocalDate toDate = now.toLocalDate();
+		LocalDate fromDate = toDate.minusDays(normalizedDays - 1L);
 
-        return new AdminApplicationChartResponse(
-                normalizedDays,
-                fromDate,
-                toDate,
-                totalApplications,
-                dailyApplications,
-                statusDistribution);
-    }
+		OffsetDateTime fromDateTime = fromDate.atStartOfDay().atOffset(now.getOffset());
+		OffsetDateTime toDateTime = toDate.plusDays(1).atStartOfDay().atOffset(now.getOffset());
+
+		List<DailyApplicationCount> dailyCounts =
+				applicationRepository.countApplicationsByAppliedDateBetween(fromDateTime, toDateTime);
+
+		Map<LocalDate, Long> dailyMap = dailyCounts.stream()
+				.collect(Collectors.toMap(DailyApplicationCount::getApplicationDate, DailyApplicationCount::getTotal));
+
+		List<AdminApplicationChartResponse.DailyApplicationPoint> dailyApplications =
+				IntStream.range(0, normalizedDays)
+						.mapToObj(fromDate::plusDays)
+						.map(date -> dashboardMapper.toDailyPoint(date, dailyMap.getOrDefault(date, 0L)))
+						.toList();
+
+		List<StatusApplicationCount> statusRows =
+				applicationRepository.countApplicationsByStatusBetween(fromDateTime, toDateTime);
+
+		long totalApplications = statusRows.stream()
+				.mapToLong(StatusApplicationCount::getTotal)
+				.sum();
+
+		List<AdminApplicationChartResponse.StatusDistributionPoint> statusDistribution = statusRows.stream()
+				.map(row -> dashboardMapper.toStatusPoint(row, totalApplications))
+				.toList();
+
+		return new AdminApplicationChartResponse(
+				normalizedDays,
+				fromDate,
+				toDate,
+				totalApplications,
+				dailyApplications,
+				statusDistribution);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<User> getUsers(UserRole role, Boolean isActive, Pageable pageable) {
+		Specification<User> specification = Specification.where(UserSpecification.hasRole(role)).and(UserSpecification.isActive(isActive));
+		return userRepository.findAll(specification, pageable);
+	}
 }
