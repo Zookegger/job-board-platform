@@ -81,12 +81,10 @@ public class NotificationServiceImpl implements NotificationService {
 	public void markAsRead(UUID userId, UUID notificationId) {
 		OffsetDateTime now = OffsetDateTime.now();
 
-		notificationRepository.findById(notificationId).ifPresent(notification -> {
+		notificationRepository.findByIdAndUserId(notificationId, userId).ifPresent(notification -> {
 			if (notification.getReadAt() != null) return;
 
-			if (notification.getUser().getId().equals(userId)) {
-				notification.setReadAt(now);
-			}
+			notification.setReadAt(now);
 		});
 	}
 

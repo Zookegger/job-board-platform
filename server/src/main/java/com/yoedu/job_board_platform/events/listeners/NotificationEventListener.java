@@ -27,9 +27,7 @@ public class NotificationEventListener {
 		String message = event.newStatus().equals(ApplicationStatus.PENDING) ? "Ứng viên mới đã nộp đơn cho vị trí " + application.getJob().getTitle() : "Đơn ứng tuyển của bạn cho vị trí " + application.getJob().getTitle() + " đã được cập nhật sang trạng thái " + event.newStatus();
 
 		if (event.newStatus().equals(ApplicationStatus.PENDING)) {
-			employerDetails.forEach(employerDetail -> {
-				notificationService.createNotification(employerDetail.getProfile().getUser().getId(), NotificationStatus.APPLICATION_STATUS_CHANGED, application.getId(), message);
-			});
+			employerDetails.forEach(employerDetail -> notificationService.createNotification(employerDetail.getProfile().getUser().getId(), NotificationStatus.APPLICATION_STATUS_CHANGED, application.getId(), message));
 		} else {
 			notificationService.createNotification(application.getCandidate().getUser().getId(), NotificationStatus.APPLICATION_STATUS_CHANGED, application.getId(), message);
 		}
@@ -45,12 +43,9 @@ public class NotificationEventListener {
 			case SUSPENDED -> "Công ty bị tạm ngưng hoạt động. Vui lòng liên hệ hỗ trợ.";
 			case PENDING -> "Hồ sơ công ty đang chờ kiểm duyệt.";
 			case REJECTED -> "Hồ sơ công ty bị từ chối. Vui lòng cập nhật lại thông tin.";
-			default -> String.format("Trạng thái công ty cập nhật thành: %s", event.newStatus().name());
 		};
 
-		employerDetails.forEach(employerDetail -> {
-			notificationService.createNotification(employerDetail.getProfile().getUser().getId(), NotificationStatus.COMPANY_STATUS_CHANGED, company.getId(), message);
-		});
+		employerDetails.forEach(employerDetail -> notificationService.createNotification(employerDetail.getProfile().getUser().getId(), NotificationStatus.COMPANY_STATUS_CHANGED, company.getId(), message));
 	}
 
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -60,17 +55,17 @@ public class NotificationEventListener {
 
 		String message = switch (event.newStatus()) {
 			case JobStatus.ACTIVE -> "Tin tuyển dụng " + job.getTitle() + " đã được phê duyệt và hiển thị công khai.";
-			case JobStatus.REJECTED -> "Tin tuyển dụng " + job.getTitle() + " đã bị từ chối. Lý do: " + job.getRejectionReason();
+			case JobStatus.REJECTED ->
+					"Tin tuyển dụng " + job.getTitle() + " đã bị từ chối. Lý do: " + job.getRejectionReason();
 			default -> "Trạng thái tin tuyển dụng đã thay đổi.";
 		};
 
-		employerDetails.forEach(employerDetail -> {
-			notificationService.createNotification(
-					employerDetail.getProfile().getUser().getId(),
-					NotificationStatus.JOB_STATUS_CHANGED,
-					job.getId(),
-					message
-			);
-		});
+		employerDetails.forEach(employerDetail ->
+				notificationService.createNotification(
+						employerDetail.getProfile().getUser().getId(),
+						NotificationStatus.JOB_STATUS_CHANGED,
+						job.getId(),
+						message
+				));
 	}
 }

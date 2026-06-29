@@ -22,8 +22,7 @@ public interface ApplicationService {
      *
      * @param candidateId UUID của ứng viên
      * @param status      lọc theo trạng thái (có thể null để lấy tất cả)
-     * @param page        số trang (bắt đầu từ 0)
-     * @param size        số phần tử mỗi trang
+     * @param pageable – thông tin phân trang
      * @return trang dữ liệu ApplicationListResponse
      */
     Page<ApplicationListResponse> getCandidateApplications(

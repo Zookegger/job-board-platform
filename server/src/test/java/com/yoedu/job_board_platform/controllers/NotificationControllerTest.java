@@ -1,16 +1,15 @@
 package com.yoedu.job_board_platform.controllers;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yoedu.job_board_platform.TestcontainersConfiguration;
+import com.yoedu.job_board_platform.models.Notification;
+import com.yoedu.job_board_platform.models.NotificationStatus;
+import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.repositories.NotificationRepository;
+import com.yoedu.job_board_platform.repositories.UserRepository;
+import com.yoedu.job_board_platform.utils.DatabaseCleaner;
+import jakarta.persistence.EntityManager;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,17 +22,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yoedu.job_board_platform.TestcontainersConfiguration;
-import com.yoedu.job_board_platform.models.Notification;
-import com.yoedu.job_board_platform.models.NotificationStatus;
-import com.yoedu.job_board_platform.models.User;
-import com.yoedu.job_board_platform.repositories.NotificationRepository;
-import com.yoedu.job_board_platform.repositories.UserRepository;
-import com.yoedu.job_board_platform.utils.DatabaseCleaner;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.UUID;
 
-import jakarta.persistence.EntityManager;
-import jakarta.servlet.http.Cookie;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -68,22 +64,22 @@ class NotificationControllerTest {
 
 		entityId = UUID.randomUUID();
 
-		authCookie = registerAndLogin("notif-test@test.com", "password123");
+		authCookie = registerAndLogin();
 		currentUser = userRepository.findByEmail("notif-test@test.com").orElseThrow();
 	}
 
-	private Cookie registerAndLogin(String email, String password) throws Exception {
+	private Cookie registerAndLogin() throws Exception {
 		var registerPayload = objectMapper.writeValueAsString(Map.of(
-				"email", email,
+				"email", "notif-test@test.com",
 				"fullName", "Nguyễn Văn A",
-				"password", password,
-				"confirmPassword", password));
+				"password", "password123",
+				"confirmPassword", "password123"));
 		mockMvc.perform(post("/api/auth/register/candidate")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(registerPayload))
 				.andExpect(status().isCreated());
 
-		var loginPayload = objectMapper.writeValueAsString(Map.of("email", email, "password", password));
+		var loginPayload = objectMapper.writeValueAsString(Map.of("email", "notif-test@test.com", "password", "password123"));
 		MvcResult loginRes = mockMvc.perform(post("/api/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(loginPayload))

@@ -1,9 +1,32 @@
 package com.yoedu.job_board_platform.services.impl;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
-import com.yoedu.job_board_platform.dtos.admin.*;
+import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
+import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
+import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
+import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
+import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
 import com.yoedu.job_board_platform.events.CompanyStatusChangeEvent;
 import com.yoedu.job_board_platform.events.JobStatusChangeEvent;
@@ -13,28 +36,30 @@ import com.yoedu.job_board_platform.mappers.DashboardMapper.DailyApplicationCoun
 import com.yoedu.job_board_platform.mappers.DashboardMapper.StatusApplicationCount;
 import com.yoedu.job_board_platform.mappers.JobMapper;
 import com.yoedu.job_board_platform.mappers.ReportMapper;
-import com.yoedu.job_board_platform.models.*;
-import com.yoedu.job_board_platform.repositories.*;
+import com.yoedu.job_board_platform.models.Company;
+import com.yoedu.job_board_platform.models.CompanyApprovalLog;
+import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
+import com.yoedu.job_board_platform.models.CompanyStatus;
+import com.yoedu.job_board_platform.models.Job;
+import com.yoedu.job_board_platform.models.JobStatus;
+import com.yoedu.job_board_platform.models.Report;
+import com.yoedu.job_board_platform.models.ReportStatus;
+import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.models.UserRole;
+import com.yoedu.job_board_platform.repositories.ApplicationRepository;
+import com.yoedu.job_board_platform.repositories.CompanyApprovalLogRepository;
+import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
+import com.yoedu.job_board_platform.repositories.CompanyRepository;
+import com.yoedu.job_board_platform.repositories.JobRepository;
+import com.yoedu.job_board_platform.repositories.ReportRepository;
+import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.specifications.CompanySpecification;
 import com.yoedu.job_board_platform.specifications.JobSpecification;
+import com.yoedu.job_board_platform.specifications.UserSpecification;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -169,7 +194,6 @@ public class AdminServiceImpl implements AdminService {
 
 		eventPublisher.publishEvent(new CompanyStatusChangeEvent(savedCompany, CompanyStatus.APPROVED));
 	}
-
 	private Company findCompany(UUID companyId) {
 		return companyRepository.findById(companyId)
 				.orElseThrow(() -> new NotFoundException("Không tìm thấy công ty"));
@@ -360,5 +384,12 @@ public class AdminServiceImpl implements AdminService {
 				totalApplications,
 				dailyApplications,
 				statusDistribution);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<User> getUsers(UserRole role, Boolean isActive, Pageable pageable) {
+		Specification<User> specification = Specification.where(UserSpecification.hasRole(role)).and(UserSpecification.isActive(isActive));
+		return userRepository.findAll(specification, pageable);
 	}
 }

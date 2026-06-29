@@ -14,11 +14,11 @@ import com.yoedu.job_board_platform.repositories.*;
 import com.yoedu.job_board_platform.services.impl.ApplicationServiceImpl;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -503,7 +503,7 @@ class ApplicationServiceImplTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).jobTitle()).isEqualTo("Backend Developer");
+        assertThat(result.getContent().getFirst().jobTitle()).isEqualTo("Backend Developer");
         verify(applicationRepository).findByJobCompanyIdAndJobIdAndStatus(
                 companyId, jobId, ApplicationStatus.REVIEWING, pageable);
     }

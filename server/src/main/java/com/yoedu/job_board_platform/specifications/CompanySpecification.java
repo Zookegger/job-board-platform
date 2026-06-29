@@ -1,21 +1,19 @@
 package com.yoedu.job_board_platform.specifications;
 
-import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
-
-import org.springframework.data.jpa.domain.Specification;
-
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyStatus;
 import com.yoedu.job_board_platform.models.Job;
 import com.yoedu.job_board_platform.models.JobStatus;
-
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 public final class CompanySpecification {
@@ -111,7 +109,7 @@ public final class CompanySpecification {
             Root<Company> root,
             String field,
             String pattern) {
-        return cb.like(cb.lower(root.<String>get(field)), pattern);
+        return cb.like(cb.lower(root.get(field)), pattern);
     }
 
     private static Predicate hasValue(
@@ -120,7 +118,7 @@ public final class CompanySpecification {
             String field) {
         return cb.and(
                 cb.isNotNull(root.get(field)),
-                cb.notEqual(cb.trim(root.<String>get(field)), ""));
+                cb.notEqual(cb.trim(root.get(field)), ""));
     }
 
     private static Predicate missingValue(
@@ -129,7 +127,7 @@ public final class CompanySpecification {
             String field) {
         return cb.or(
                 cb.isNull(root.get(field)),
-                cb.equal(cb.trim(root.<String>get(field)), ""));
+                cb.equal(cb.trim(root.get(field)), ""));
     }
 
     private static String normalizeKeyword(String keyword) {
