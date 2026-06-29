@@ -1,29 +1,17 @@
 package com.yoedu.job_board_platform.models;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
-
+import jakarta.persistence.*;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
+/**
+ * Thông báo gửi đến người dùng. Mỗi thông báo thuộc một loại (NotificationStatus)
+ * và liên kết với một thực thể cụ thể (entityId).
+ */
 @Entity
 @Table(name = "notifications")
 @Getter
@@ -32,11 +20,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-
-/**
- * Thông báo gửi đến người dùng. Mỗi thông báo thuộc một loại (NotificationStatus)
- * và liên kết với một thực thể cụ thể (entityId).
- */
 public class Notification {
     @Id
     @Column(columnDefinition = "uuid")

@@ -1,53 +1,32 @@
 package com.yoedu.job_board_platform.services.impl;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
+import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
+import com.yoedu.job_board_platform.common.exceptions.ConflictException;
+import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
+import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
+import com.yoedu.job_board_platform.dtos.application.*;
+import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
+import com.yoedu.job_board_platform.events.ApplicationStatusChangeEvent;
+import com.yoedu.job_board_platform.mappers.ApplicationMapper;
+import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
+import com.yoedu.job_board_platform.models.*;
+import com.yoedu.job_board_platform.repositories.*;
+import com.yoedu.job_board_platform.services.ApplicationService;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
-import com.yoedu.job_board_platform.common.exceptions.ConflictException;
-import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
-import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
-import com.yoedu.job_board_platform.dtos.application.ApplicationCheckResponse;
-import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
-import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
-import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
-import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
-import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
-import com.yoedu.job_board_platform.dtos.skill.CandidateSkillResponse;
-import com.yoedu.job_board_platform.mappers.ApplicationMapper;
-import com.yoedu.job_board_platform.mappers.ApplicationStatusLogMapper;
-import com.yoedu.job_board_platform.models.Application;
-import com.yoedu.job_board_platform.models.ApplicationStatus;
-import com.yoedu.job_board_platform.models.ApplicationStatusLog;
-import com.yoedu.job_board_platform.models.CandidateSkill;
-import com.yoedu.job_board_platform.models.Company;
-import com.yoedu.job_board_platform.models.Job;
-import com.yoedu.job_board_platform.models.JobStatus;
-import com.yoedu.job_board_platform.models.Profile;
-import com.yoedu.job_board_platform.models.Resume;
-import com.yoedu.job_board_platform.models.Skill;
-import com.yoedu.job_board_platform.models.User;
-import com.yoedu.job_board_platform.models.UserRole;
-import com.yoedu.job_board_platform.repositories.ApplicationRepository;
-import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
-import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
-import com.yoedu.job_board_platform.repositories.JobRepository;
-import com.yoedu.job_board_platform.repositories.ResumeRepository;
-import com.yoedu.job_board_platform.repositories.SkillRepository;
-import com.yoedu.job_board_platform.services.ApplicationService;
-import com.yoedu.job_board_platform.utils.SecurityUtil;
-
-import lombok.RequiredArgsConstructor;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +41,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final SecurityUtil securityUtil;
     private final ApplicationMapper applicationMapper;
     private final ApplicationStatusLogMapper applicationStatusLogMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -109,6 +89,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         applicationStatusLogRepository.save(
                 applicationStatusLogMapper.createLog(saved, ApplicationStatus.PENDING, user, "Đơn ứng tuyển đã được gửi"));
+
+        eventPublisher.publishEvent(new ApplicationStatusChangeEvent(saved, ApplicationStatus.PENDING));
 
         return applicationMapper.toDetailResponse(saved);
     }
@@ -280,8 +262,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         User employer = securityUtil.getCurrentUser();
         Profile profile = employer.getProfile();
 
-        if (profile == null || profile.getEmployerDetail() == null) {
-            throw new ForbiddenException("Bạn chưa có thông tin công ty");
+        if (profile == null || profile.getEmployerDetail() == null || !employer.getRole().equals(UserRole.EMPLOYER)) {
+            throw new ForbiddenException("Bạn không có quyền truy cập tài nguyên");
         }
 
         Company company = profile.getEmployerDetail().getCompany();
@@ -304,7 +286,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Ghi lịch sử thay đổi trạng thái
         String note = (reason != null && !reason.isBlank()) ? reason : null;
-        applicationStatusLogRepository.save(
-                applicationStatusLogMapper.createLog(application, newStatus, employer, note));
+        applicationStatusLogRepository.save(applicationStatusLogMapper.createLog(application, newStatus, employer, note));
+
+        eventPublisher.publishEvent(new ApplicationStatusChangeEvent(application, newStatus));
     }
 }
