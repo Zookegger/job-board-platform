@@ -12,6 +12,10 @@ const ApiRoutes = {
     APPLICATION_TIMELINE: (id: string) => `/applications/${id}/timeline`,
     APPLICATION_CV: (id: string) => `/applications/${id}/cv`,
     APPLICATION_BY_JOB: (jobId: string) => `/applications/by-job/${jobId}`,
+    NOTIFICATIONS: "/notifications",
+    NOTIFICATIONS_UNREAD_COUNT: "/notifications/unread-count",
+    NOTIFICATION_READ: (id: string) => `/notifications/${id}/read`,
+    NOTIFICATIONS_READ_ALL: "/notifications/read-all",
 };
 
 export default ApiRoutes;

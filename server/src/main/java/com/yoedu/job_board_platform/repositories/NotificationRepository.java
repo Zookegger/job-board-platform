@@ -9,4 +9,7 @@ import com.yoedu.job_board_platform.models.Notification;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+
+    long countByUserIdAndReadAtIsNull(UUID userId);
 }
+
