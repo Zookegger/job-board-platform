@@ -1,21 +1,5 @@
 package com.yoedu.job_board_platform.services.impl;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.profile.ResumeRequest;
@@ -28,17 +12,32 @@ import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
 import com.yoedu.job_board_platform.repositories.ResumeRepository;
 import com.yoedu.job_board_platform.services.AuthService;
 import com.yoedu.job_board_platform.services.ResumeService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-@Service
-@RequiredArgsConstructor
-@Slf4j
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
+
 /**
  * Triển khai ResumeService. Xử lý upload, cập nhật, xóa, tải xuống CV
  * và danh sách CV. File được lưu trên disk tại thư mục uploads/resumes.
  */
+@Service
+@RequiredArgsConstructor
+@Slf4j
 public class ResumeServiceImpl implements ResumeService {
     private final ResumeRepository resumeRepository;
     private final CandidateDetailRepository candidateDetailRepository;
@@ -89,7 +88,12 @@ public class ResumeServiceImpl implements ResumeService {
         Resume existingResume = getCurrentResumeEntity();
         OffsetDateTime now = OffsetDateTime.now();
 
+        var fileId = existingResume != null ? existingResume.getId() : UUID.randomUUID();
+        var fileName = fileId + ".pdf";
         var resumeDir = Paths.get(uploadDir, "resumes");
+        var targetPath = resumeDir.resolve(fileName);
+        var urlPath = "/uploads/resumes/" + fileName;
+
         try {
             Files.createDirectories(resumeDir);
         } catch (IOException e) {
@@ -97,19 +101,12 @@ public class ResumeServiceImpl implements ResumeService {
             throw new RuntimeException("Lỗi tạo thư mục upload", e);
         }
 
-        var fileId = existingResume != null ? existingResume.getId() : UUID.randomUUID();
-        var fileName = fileId + ".pdf";
-        var targetPath = resumeDir.resolve(fileName);
-
         try {
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             log.error("Lỗi lưu file CV", e);
             throw new RuntimeException("Lỗi lưu file CV", e);
         }
-
-        // Lưu URL path (không phải OS path) để dùng được trực tiếp trên frontend
-        var urlPath = "/uploads/resumes/" + fileName;
 
         Resume resume;
         if (existingResume != null) {
@@ -198,7 +195,7 @@ public class ResumeServiceImpl implements ResumeService {
      * Chuyển URL path ("/uploads/resumes/x.pdf") hoặc OS path cũ ("uploads\resumes\x.pdf")
      * thành java.nio.Path có thể dùng để đọc/xóa file trên disk.
      */
-    private java.nio.file.Path resolveOsPath(String filePath) {
+    private Path resolveOsPath(String filePath) {
         if (filePath.startsWith("/uploads/")) {
             return Paths.get(uploadDir, filePath.substring("/uploads/".length()));
         }

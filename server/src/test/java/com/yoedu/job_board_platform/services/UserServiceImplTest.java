@@ -1,24 +1,5 @@
 package com.yoedu.job_board_platform.services;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.OffsetDateTime;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import com.yoedu.job_board_platform.common.exceptions.ConflictException;
 import com.yoedu.job_board_platform.dtos.user.CreateUserRequest;
 import com.yoedu.job_board_platform.dtos.user.UserResponse;
@@ -27,6 +8,21 @@ import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.services.impl.UserServiceImpl;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
@@ -47,7 +43,7 @@ public class UserServiceImplTest {
     private UserServiceImpl userService;
 
     @Test
-    void TC_01_createSuccessWithNewEmail() {
+    void createSuccessWithNewEmail() {
         // Arrange
         CreateUserRequest request = new CreateUserRequest("newuser@example.com", "Password123", UserRole.CANDIDATE,
                 "New User", "0123456789", "");
@@ -86,7 +82,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void TC_02_createFailsWithDuplicateEmail() {
+    void createFailsWithDuplicateEmail() {
         // Arrange
         CreateUserRequest request = new CreateUserRequest("existing@example.com", "Password123", UserRole.CANDIDATE,
                 "Existing User", "0123456789", "");

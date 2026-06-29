@@ -1,28 +1,20 @@
 package com.yoedu.job_board_platform.models;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
-
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
+import lombok.*;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
+/**
+ * Hồ sơ người dùng, liên kết 1-1 với User.
+ * Chứa thông tin cá nhân như họ tên, số điện thoại, avatar.
+ * Có thể mở rộng thành CandidateDetail (ứng viên) hoặc CompanyEmployerDetail
+ * (nhà tuyển dụng).
+ */
 @Entity
 @Table(name = "profiles")
 @Setter
@@ -31,12 +23,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-/**
- * Hồ sơ người dùng, liên kết 1-1 với User.
- * Chứa thông tin cá nhân như họ tên, số điện thoại, avatar.
- * Có thể mở rộng thành CandidateDetail (ứng viên) hoặc CompanyEmployerDetail
- * (nhà tuyển dụng).
- */
 public class Profile {
     @Id
     @Column(columnDefinition = "uuid")
@@ -50,17 +36,17 @@ public class Profile {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-    @Pattern(regexp = "^(|(\\+84|84|0)(3|5|7|8|9)[0-9]{8,9})$", message = "Số điện thoại không hợp lệ")
+    @Pattern(regexp = "^(|(\\+84|84|0)([35789])[0-9]{8,9})$", message = "Số điện thoại không hợp lệ")
     @Column(nullable = false, length = 15)
     private String phone;
 
     @Column(name = "avatar_url", columnDefinition = "text")
     private String avatarUrl;
 
-    @OneToOne(mappedBy = "profile", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL)
     private CandidateDetail candidateDetail;
 
-    @OneToOne(mappedBy = "profile", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL)
     private CompanyEmployerDetail employerDetail;
 
     @Column(name = "updated_at", nullable = false)

@@ -1,10 +1,5 @@
 package com.yoedu.job_board_platform.services;
 
-import java.util.UUID;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
@@ -13,6 +8,10 @@ import com.yoedu.job_board_platform.dtos.job.JobRequest;
 import com.yoedu.job_board_platform.dtos.job.JobResponse;
 import com.yoedu.job_board_platform.dtos.job.JobSearchRequest;
 import com.yoedu.job_board_platform.models.JobStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.UUID;
 
 /**
  * Service quản lý tin tuyển dụng.
@@ -95,24 +94,6 @@ public interface JobService {
     void submitForReview(UUID jobId, UUID employerId);
 
     /**
-     * Lấy danh sách tin tuyển dụng đang ACTIVE (công khai).
-     *
-     * @param page số trang (bắt đầu từ 0)
-     * @param size số phần tử mỗi trang
-     * @return trang dữ liệu JobListResponse
-     */
-    Page<JobListResponse> getActiveJobs(int page, int size);
-
-    /**
-     * Lấy chi tiết một tin tuyển dụng ACTIVE (công khai).
-     *
-     * @param jobId UUID của tin tuyển dụng
-     * @return JobResponse thông tin chi tiết
-     * @throws NotFoundException nếu tin không tồn tại hoặc không ở trạng thái ACTIVE
-     */
-    JobResponse getActiveJobDetail(UUID jobId);
-
-    /**
      * Tìm kiếm việc làm công khai với bộ lọc và phân trang.
      * Chỉ trả về các job ở trạng thái ACTIVE.
      *
@@ -130,4 +111,13 @@ public interface JobService {
      * @throws NotFoundException nếu không tìm thấy
      */
     JobResponse getPublicJobDetail(String slug);
+
+    /**
+     * Lấy danh sách công việc liên quan (gợi ý) dựa trên ID công việc hiện tại.
+     *
+     * @param jobId    ID của công việc làm gốc để tìm kiếm dữ liệu liên quan
+     * @param pageable cấu hình phân trang và sắp xếp của Spring Data
+     * @return trang dữ liệu danh sách các công việc liên quan
+     */
+    Page<JobListResponse> getRelatedJobs(UUID jobId, Pageable pageable);
 }

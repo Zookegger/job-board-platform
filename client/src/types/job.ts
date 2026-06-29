@@ -116,6 +116,10 @@ export interface JobListResponse {
 	currency: string | null;
 	numberOfOpenings: number | null;
 	companyName: string;
+	companyLogoUrl: string | null;
+	postedDate: string | null;
+	expirationDate: string | null;
+	updatedAt: string;
 	createdAt: string;
 }
 
@@ -126,16 +130,13 @@ export interface SkillResponse {
 }
 
 export interface JobResponse extends JobListResponse {
-	slug: string;
 	description: string;
 	requirements?: string | null;
 	benefits?: string | null;
 	location?: string | null;
-	postedDate?: string | null;
-	expirationDate?: string | null;
-	updatedAt: string;
 	companyId: string;
 	companySlug: string;
+	companyAddress?: string | null;
 	categoryId: number;
 	categoryName: string;
 	skills: SkillResponse[];

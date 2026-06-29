@@ -21,7 +21,7 @@ import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.models.UserRole;
 import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
-import com.yoedu.job_board_platform.dtos.admin.AdminUserListResponse;
+import com.yoedu.job_board_platform.dtos.admin.AdminUserResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -70,12 +70,12 @@ public interface AdminApi {
                         responseCode = "200",
                         description = "Danh sách tài khoản",
                         content = @Content)
-        ResponseEntity<Page<AdminUserListResponse>> getUsers(
+        ResponseEntity<Page<AdminUserResponse>> getUserStats(
                         @Parameter(description = "Lọc theo vai trò: ADMIN, EMPLOYER, CANDIDATE hoặc ALL", example = "CANDIDATE")
-                        String role,
+                        UserRole role,
 
                         @Parameter(description = "Lọc theo trạng thái: ACTIVE, INACTIVE hoặc ALL", example = "ACTIVE")
-                        String status,
+                        Boolean isActive,
 
                         @ParameterObject @PageableDefault(page = 0, size = 10)
                         Pageable pageable

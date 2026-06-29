@@ -1,34 +1,38 @@
 import { AuthRequiredDialog } from "@/components/shared/AuthRequiredDialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApplicationByJob, useWithdrawApplication } from "@/hooks/useApplications";
 import { useAuth } from "@/hooks/useAuth";
-import { usePublicJobDetail } from "@/hooks/usePublicJobs";
+import { usePublicJobDetail, usePublicRelatedJobList } from "@/hooks/usePublicJobs";
 import { useToast } from "@/providers/ToastProvider";
 import { EMPLOYMENT_TYPE_LABELS, EXPERIENCE_LEVEL_LABELS, LOCATION_TYPES_LABELS } from "@/types/job";
-import { formatDate } from "@/utils/DateUtils";
+import { formatDate, TimeFromNow } from "@/utils/DateUtils";
 import RouterRoutes from "@/utils/RouterRoutes";
 import { formatSalary } from "@/utils/StringUtil";
 import {
 	Briefcase,
 	Calendar,
+	ChartBarStacked,
 	CheckCircle2,
 	ChevronLeft,
-	Clock,
 	DollarSign,
 	Loader2,
 	MapPin,
+	TrendingUp,
 	Users,
+	Wrench
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { JobCardPublic } from "./JobCardPublic";
 import { ApplyDialog } from "./components/ApplyDialog";
 
 export function JobDetailPage() {
 	const { slug } = useParams<{ slug: string }>();
 	const { data: job, isLoading, isError } = usePublicJobDetail(slug ?? "");
+	const isJobExpired = job?.expirationDate && new Date(job.expirationDate) < new Date() ? true : false;
+	const { data: relatedJobs } = usePublicRelatedJobList(job?.id ?? "", { related: true });
 
 	if (isLoading) {
 		return (
@@ -56,7 +60,7 @@ export function JobDetailPage() {
 	}
 
 	return (
-		<div className='container mx-auto px-4 py-8 max-w-3xl'>
+		<div className='container mx-auto px-4 pt-4 pb-8 max-w-6xl'>
 			<Button
 				variant='ghost'
 				size='sm'
@@ -69,117 +73,262 @@ export function JobDetailPage() {
 				</Link>
 			</Button>
 
-			<div className='space-y-6'>
-				{/* Header */}
-				<div>
-					<h1 className='text-2xl font-bold'>{job.title}</h1>
-					<p className='mt-1 text-muted-foreground flex items-center gap-1.5'>
-						<Briefcase className='h-4 w-4' />
-						{job.companyName}
-					</p>
-				</div>
+			<div className='grid grid-cols-1 lg:grid-cols-3 gap-8 items-start'>
+				{/* Main Content Area */}
+				<div className='lg:col-span-2 space-y-8 '>
+					<div className='bg-card shadow-sm rounded-xl p-6 space-y-6 border border-border'>
+						{/* Header Section */}
+						<div className='space-y-4'>
+							<div className='flex flex-col gap-2'>
+								<h1 className='text-3xl font-extrabold'>{job.title}</h1>
+								<div className='flex items-center text-green-700 font-semibold text-lg gap-1'>
+									<DollarSign className='h-5 w-5 shrink-0' />
+									{job.salaryMin && job.salaryMax
+										? formatSalary(job.salaryMin, job.salaryMax, job.currency ?? "VND")
+										: "Thương lượng"}
+								</div>
+							</div>
 
-				{/* Meta badges */}
-				<div className='flex flex-wrap gap-2'>
-					<Badge variant='secondary'>{EMPLOYMENT_TYPE_LABELS[job.employmentType]}</Badge>
-					<Badge variant='secondary'>{LOCATION_TYPES_LABELS[job.locationTypes]}</Badge>
-					<Badge variant='outline'>{EXPERIENCE_LEVEL_LABELS[job.experienceLevel]}</Badge>
-					{job.categoryName && <Badge variant='outline'>{job.categoryName}</Badge>}
-				</div>
+							{/* Info grid */}
+							<div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground bg-muted/30 p-4 rounded-xl border border-border/50'>
+								{job.location && (
+									<div className='flex items-center gap-2'>
+										<MapPin className='h-4 w-4 shrink-0' />
+										<span className='truncate'>{job.location}</span>
+									</div>
+								)}
+								{job.numberOfOpenings && (
+									<div className='flex items-center gap-2'>
+										<Users className='h-4 w-4 shrink-0' />
+										<span>{job.numberOfOpenings} vị trí tuyển dụng</span>
+									</div>
+								)}
+								{job.expirationDate && (
+									<div className='flex items-center gap-2'>
+										<Calendar className='h-4 w-4 shrink-0' />
+										<span>
+											Hết hạn: {isJobExpired ? "Đã hết hạn" : TimeFromNow(job.expirationDate)}
+										</span>
+									</div>
+								)}
+							</div>
+						</div>
 
-				{/* Info grid */}
-				<div className='grid grid-cols-2 gap-3 text-sm'>
-					<div className='flex items-center gap-2 text-green-700 font-medium'>
-						<DollarSign className='h-4 w-4' />
-						{formatSalary(job.salaryMin, job.salaryMax, job.currency ?? "VND")}
+						<ApplySection
+							jobId={job.id}
+							jobTitle={job.title}
+							companyName={job.companyName}
+							isJobExpired={isJobExpired}
+						/>
+
+						<Separator />
+
+						{/* Content Blocks (Descriptions, Requirements, Benefits) */}
+						<div className='space-y-8'>
+							{job.description && (
+								<section>
+									<h2 className='text-lg font-bold mb-4 tracking-tight'>Mô tả công việc</h2>
+									<div className='prose prose-sm sm:prose-base max-w-none whitespace-pre-wrap text-muted-foreground'>
+										{job.description}
+									</div>
+								</section>
+							)}
+
+							{job.requirements && (
+								<section>
+									<h2 className='text-lg font-bold mb-4 tracking-tight'>Yêu cầu ứng viên</h2>
+									<div className='prose prose-sm sm:prose-base max-w-none whitespace-pre-wrap text-muted-foreground'>
+										{job.requirements}
+									</div>
+								</section>
+							)}
+
+							{job.benefits && (
+								<section>
+									<h2 className='text-lg font-bold mb-4 tracking-tight'>Phúc lợi</h2>
+									<div className='prose prose-sm sm:prose-base max-w-none whitespace-pre-wrap text-muted-foreground bg-primary/5 p-6 rounded-xl border border-primary/10'>
+										{job.benefits}
+									</div>
+								</section>
+							)}
+
+							<section>
+								<h2 className='text-lg font-bold mb-4 tracking-tight'>Thông tin công việc</h2>
+
+								<div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
+									<section className='flex items-start gap-3'>
+										<div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
+											<Calendar className='h-5 w-5 text-muted-foreground' />
+										</div>
+										<div className='space-y-1.5 pt-0.5'>
+											<h3 className='text-xs font-bold text-muted-foreground uppercase'>
+												Ngày đăng
+											</h3>
+											<p className='text-sm font-medium text-foreground'>
+												{formatDate(job.createdAt, {
+													day: "2-digit",
+													month: "2-digit",
+													year: "numeric",
+												})}
+											</p>
+										</div>
+									</section>
+
+									<section className='flex items-start gap-3'>
+										<div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
+											<TrendingUp className='h-5 w-5 text-muted-foreground' />
+										</div>
+										<div className='space-y-1.5 pt-0.5'>
+											<h3 className='text-xs font-bold text-muted-foreground uppercase'>
+												Cấp bậc
+											</h3>
+											<p className='text-sm font-medium text-foreground'>
+												{EXPERIENCE_LEVEL_LABELS[job.experienceLevel]}
+											</p>
+										</div>
+									</section>
+
+									<section className='flex items-start gap-3'>
+										<div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
+											<MapPin className='h-5 w-5 text-muted-foreground' />
+										</div>
+										<div className='space-y-1.5 pt-0.5'>
+											<h3 className='text-xs font-bold text-muted-foreground uppercase'>
+												Hình thức làm việc
+											</h3>
+											<p className='text-sm font-medium text-foreground'>
+												{LOCATION_TYPES_LABELS[job.locationTypes]}
+											</p>
+										</div>
+									</section>
+
+									<section className='flex items-start gap-3'>
+										<div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
+											<ChartBarStacked className='h-5 w-5 text-muted-foreground' />
+										</div>
+										<div className='space-y-1.5 pt-0.5'>
+											<h3 className='text-xs font-bold text-muted-foreground uppercase'>
+												Ngành nghề
+											</h3>
+											<p className='text-sm font-medium text-foreground'>{job.categoryName}</p>
+										</div>
+									</section>
+
+									<section className='flex items-start gap-3'>
+										<div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
+											<Briefcase className='h-5 w-5 text-muted-foreground' />
+										</div>
+										<div className='space-y-1.5 pt-0.5'>
+											<h3 className='text-xs font-bold text-muted-foreground uppercase'>
+												Loại hình
+											</h3>
+											<p className='text-sm font-medium text-foreground'>
+												{EMPLOYMENT_TYPE_LABELS[job.employmentType]}
+											</p>
+										</div>
+									</section>
+
+									<section className='flex items-start gap-3'>
+										<div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
+											<Wrench className='h-5 w-5 text-muted-foreground' />
+										</div>
+										<div className='space-y-1.5 pt-0.5'>
+											<h3 className='text-xs font-bold text-muted-foreground uppercase'>
+												Kỹ năng
+											</h3>
+											{job.skills?.length > 0 ? (
+												<div className='flex flex-wrap gap-x-1 gap-y-0.5 text-sm font-medium text-foreground'>
+													{job.skills.map((s, i, arr) => (
+														<span key={s.id}>
+															{s.name}
+															{i !== arr.length - 1 && (
+																<span className='text-muted-foreground'>,</span>
+															)}
+														</span>
+													))}
+												</div>
+											) : (
+												<p className='text-sm text-muted-foreground italic'>Không yêu cầu</p>
+											)}
+										</div>
+									</section>
+								</div>
+							</section>
+						</div>
 					</div>
-					{job.location && (
-						<div className='flex items-center gap-2 text-muted-foreground'>
-							<MapPin className='h-4 w-4' />
-							{job.location}
-						</div>
-					)}
-					{job.numberOfOpenings && (
-						<div className='flex items-center gap-2 text-muted-foreground'>
-							<Users className='h-4 w-4' />
-							{job.numberOfOpenings} vị trí tuyển dụng
-						</div>
-					)}
-					{job.expirationDate && (
-						<div className='flex items-center gap-2 text-muted-foreground'>
-							<Calendar className='h-4 w-4' />
-							Hết hạn: {formatDate(job.expirationDate)}
-						</div>
-					)}
-					{job.postedDate && (
-						<div className='flex items-center gap-2 text-muted-foreground'>
-							<Clock className='h-4 w-4' />
-							Đăng ngày: {formatDate(job.postedDate)}
-						</div>
-					)}
 				</div>
 
-				{/* Skills */}
-				{job.skills && job.skills.length > 0 && (
-					<div>
-						<p className='text-sm font-medium mb-2'>Kỹ năng yêu cầu</p>
-						<div className='flex flex-wrap gap-2'>
-							{job.skills.map((s) => (
-								<Badge
-									key={s.id}
-									variant='secondary'
-								>
-									{s.name}
-								</Badge>
-							))}
+				{/* Sidebar Area */}
+				<div className='flex-1 lg:col-span-1 flex flex-col gap-4 order-last'>
+					<div className='top-6 border rounded-xl border-border bg-card p-6 flex flex-col items-center text-center gap-4 shadow-sm'>
+						<div className='bg-white p-2 rounded-lg border border-border shadow-sm'>
+							{job.companyLogoUrl ? (
+								<img
+									src={job.companyLogoUrl}
+									alt={`${job.companyName} logo`}
+									className='w-24 h-24 object-contain rounded'
+								/>
+							) : (
+								<Briefcase className='w-24 h-24 p-4 text-muted-foreground opacity-50' />
+							)}
+						</div>
+
+						<div className='space-y-1 w-full'>
+							<Link
+								to={RouterRoutes.COMPANY_DETAIL(job.companySlug)}
+								className='text-xl font-bold hover:text-primary transition-colors block'
+							>
+								{job.companyName}
+							</Link>
+						</div>
+
+						<Separator className='w-full my-2' />
+
+						<div className='flex flex-col gap-3 w-full text-sm text-left'>
+							<div className='flex items-start gap-2.5 text-muted-foreground'>
+								<MapPin className='h-4 w-4 shrink-0 mt-0.5' />
+								<p className='leading-tight'>{job.companyAddress}</p>
+							</div>
+							{job.categoryName && (
+								<div className='flex items-center justify-start gap-1.5 text-muted-foreground text-sm'>
+									<ChartBarStacked className='h-4 w-4 shrink-0' />
+									<p>{job.categoryName}</p>
+								</div>
+							)}
 						</div>
 					</div>
-				)}
-
-				<ApplySection
-					jobId={job.id}
-					jobTitle={job.title}
-					companyName={job.companyName}
-				/>
-
-				<Separator />
-
-				{/* Description */}
-				{job.description && (
-					<section>
-						<h2 className='text-lg font-semibold mb-3'>Mô tả công việc</h2>
-						<div className='prose prose-sm max-w-none whitespace-pre-wrap text-sm text-muted-foreground'>
-							{job.description}
-						</div>
-					</section>
-				)}
-
-				{/* Requirements */}
-				{job.requirements && (
-					<section>
-						<h2 className='text-lg font-semibold mb-3'>Yêu cầu ứng viên</h2>
-						<div className='prose prose-sm max-w-none whitespace-pre-wrap text-sm text-muted-foreground'>
-							{job.requirements}
-						</div>
-					</section>
-				)}
-
-				{/* Benefits */}
-				{job.benefits && (
-					<section>
-						<h2 className='text-lg font-semibold mb-3'>Phúc lợi</h2>
-						<div className='prose prose-sm max-w-none whitespace-pre-wrap text-sm text-muted-foreground'>
-							{job.benefits}
-						</div>
-					</section>
-				)}
+					<div className='flex-1 top-6 border rounded-xl border-border bg-card p-6 flex flex-col gap-4 shadow-sm'>
+						<h2 className='font-bold text-xl'>Việc làm tương tự</h2>
+						{relatedJobs && relatedJobs.content.length > 0 ? (
+							<div className='flex flex-col gap-3'>
+								{relatedJobs.content.slice(0, 5).map((rj) => (
+									<JobCardPublic key={rj.id} job={rj} />
+								))}
+							</div>
+						) : (
+							<p className='text-sm text-muted-foreground text-center py-4'>
+								Không có việc làm tương tự.
+							</p>
+						)}
+					</div>
+				</div>
 			</div>
 		</div>
 	);
 }
 
 /** Khu vực ứng tuyển — chỉ mount khi user là candidate */
-function ApplySection({ jobId, jobTitle, companyName }: { jobId: string; jobTitle: string; companyName: string }) {
+function ApplySection({
+	jobId,
+	jobTitle,
+	companyName,
+	isJobExpired,
+}: {
+	jobId: string;
+	jobTitle: string;
+	companyName: string;
+	isJobExpired: boolean;
+}) {
 	const { isAuthenticated } = useAuth();
 
 	const [applyOpen, setApplyOpen] = useState(false);
@@ -220,24 +369,29 @@ function ApplySection({ jobId, jobTitle, companyName }: { jobId: string; jobTitl
 						variant={"primary"}
 						onClick={() => (isAuthenticated ? setApplyOpen(true) : setAuthDialogOpen(true))}
 						size='lg'
+						disabled={isJobExpired}
 					>
 						<Briefcase className='mr-2 h-4 w-4' />
 						Ứng tuyển ngay
 					</Button>
 				)}
 			</div>
-			<ApplyDialog
-				isOpen={applyOpen}
-				onClose={() => setApplyOpen(false)}
-				jobId={jobId}
-				jobTitle={jobTitle}
-				companyName={companyName}
-			/>
-			<AuthRequiredDialog
-				isOpen={authDialogOpen}
-				onClose={() => setAuthDialogOpen(false)}
-				message='Bạn cần đăng nhập để ứng tuyển vào vị trí này.'
-			/>
+			{applyOpen && (
+				<ApplyDialog
+					isOpen={applyOpen}
+					onClose={() => setApplyOpen(false)}
+					jobId={jobId}
+					jobTitle={jobTitle}
+					companyName={companyName}
+				/>
+			)}
+			{authDialogOpen && (
+				<AuthRequiredDialog
+					isOpen={authDialogOpen}
+					onClose={() => setAuthDialogOpen(false)}
+					message='Bạn cần đăng nhập để ứng tuyển vào vị trí này.'
+				/>
+			)}
 		</>
 	);
 }

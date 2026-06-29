@@ -1,15 +1,15 @@
-import type { AdminCompanyListResponse, AdminPendingCompanyResponse } from "@/types/company";
-import type { AdminPendingJobResponse } from "@/types/job";
-import { toPageableParams, type PageResponse, type PaginationParams } from "@/types/pagination";
-import type { SkillRequest, SkillResponse } from "@/types/skill";
-import ApiError from "@/utils/ApiError";
-import client from "./client";
 import type {
 	AdminApplicationChartResponse,
 	AdminDashboardStatsResponse,
 	AdminUserListResponse,
 	AdminUsersQueryParams,
 } from "@/types/admin";
+import type { AdminCompanyListResponse, AdminPendingCompanyResponse } from "@/types/company";
+import type { AdminPendingJobResponse } from "@/types/job";
+import { toPageableParams, type PageResponse, type PaginationParams } from "@/types/pagination";
+import type { SkillRequest, SkillResponse } from "@/types/skill";
+import ApiError from "@/utils/ApiError";
+import client from "./client";
 
 const adminApi = {
 	getDashboardStats: (): Promise<AdminDashboardStatsResponse> =>

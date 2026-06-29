@@ -1,40 +1,15 @@
 
 package com.yoedu.job_board_platform.controllers;
 
-import java.util.UUID;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
-
 import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
-import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
-import com.yoedu.job_board_platform.dtos.admin.AdminJobListResponse;
-import com.yoedu.job_board_platform.dtos.admin.AdminSkillResponse;
-import com.yoedu.job_board_platform.dtos.admin.CompanyRejectionRequest;
-import com.yoedu.job_board_platform.dtos.admin.CompanySuspensionRequest;
-import com.yoedu.job_board_platform.dtos.admin.JobRejectRequest;
-import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
-import com.yoedu.job_board_platform.dtos.admin.PendingJobResponse;
+import com.yoedu.job_board_platform.dtos.admin.*;
 import com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
+import com.yoedu.job_board_platform.mappers.AdminMapper;
 import com.yoedu.job_board_platform.mappers.SkillMapper;
 import com.yoedu.job_board_platform.models.ReportStatus;
 import com.yoedu.job_board_platform.models.Skill;
@@ -43,12 +18,16 @@ import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.SkillService;
-import com.yoedu.job_board_platform.dtos.admin.AdminDashboardStatsResponse;
-import com.yoedu.job_board_platform.dtos.admin.AdminApplicationChartResponse;
-import com.yoedu.job_board_platform.dtos.admin.AdminUserListResponse;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/admin")
@@ -57,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminController implements AdminApi {
 
     private final AdminService adminService;
+    private final AdminMapper adminMapper;
     private final SkillService skillService;
     private final SkillMapper skillMapper;
     private final SkillRepository skillRepository;
@@ -74,12 +54,13 @@ public class AdminController implements AdminApi {
 
     // ================ Users ================
 
+    @Override
     @GetMapping("/users")
-    public ResponseEntity<Page<AdminUserListResponse>> getUsers(
-            @RequestParam(required = false) String role,
-            @RequestParam(required = false) String status,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(adminService.getUsers(role, status, pageable));
+    public ResponseEntity<Page<AdminUserResponse>> getUserStats(
+            @RequestParam(required = false) UserRole role,
+            @RequestParam(required = false) Boolean isActive,
+            @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(adminService.getUsers(role, isActive, pageable).map(adminMapper::toAdminUserResponse));
     }
 
     @GetMapping("/users/stats")

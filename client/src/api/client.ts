@@ -37,7 +37,8 @@ client.interceptors.response.use(
 		if (
 			error.response?.status === 401 &&
 			!originalConfig._retry &&
-			!originalConfig.url?.includes(ApiRoutes.REFRESH_TOKEN)
+			!originalConfig.url?.includes(ApiRoutes.REFRESH_TOKEN) &&
+			!originalConfig.url?.includes(ApiRoutes.ME)
 		) {
 			if (isRefreshing) {
 				return new Promise((resolve, reject) => {

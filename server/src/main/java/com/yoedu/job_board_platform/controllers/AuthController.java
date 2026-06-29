@@ -1,5 +1,6 @@
 package com.yoedu.job_board_platform.controllers;
 
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -75,7 +76,7 @@ public class AuthController implements AuthApi {
 	}
 
 	@GetMapping("/me")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize(AuthorizationConstants.AUTHENTICATED)
 	public ResponseEntity<UserResponse> me() {
 		return ResponseEntity.ok(userMapper.toResponse(authService.getCurrentUser()));
 	}
