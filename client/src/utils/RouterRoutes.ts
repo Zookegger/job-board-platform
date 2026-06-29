@@ -1,4 +1,4 @@
-const RouterRoutes = {
+﻿const RouterRoutes = {
 	HOME: "/",
 	LOGIN: "/login",
 	REGISTER: "/sign-up",
@@ -14,6 +14,9 @@ const RouterRoutes = {
 	// Candidate
 	CANDIDATE_APPLICATIONS: "/applications",
 	CANDIDATE_APPLICATION_DETAIL: (id: string) => `/applications/${id}`,
+
+        // Notifications
+        NOTIFICATIONS: "/notifications",
 
 	// Employer
 	EMPLOYER_DASHBOARD: "/employer/dashboard",
@@ -34,3 +37,4 @@ const RouterRoutes = {
 };
 
 export default RouterRoutes;
+

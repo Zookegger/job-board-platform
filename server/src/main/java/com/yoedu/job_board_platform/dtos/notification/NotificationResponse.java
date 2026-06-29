@@ -4,6 +4,7 @@ import com.yoedu.job_board_platform.models.NotificationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record NotificationResponse(
 		@Schema(description = "ID duy nhất của thông báo", example = "123e4567-e89b-12d3-a456-426614174000")
@@ -25,6 +26,7 @@ public record NotificationResponse(
 		OffsetDateTime readAt,
 
 		@Schema(description = "Trạng thái đã đọc (được tính toán từ readAt)", example = "true")
-		boolean read
+		@JsonProperty("isRead")
+    boolean isRead
 ) {
 }

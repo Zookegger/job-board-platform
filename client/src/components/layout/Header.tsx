@@ -1,9 +1,10 @@
-import { useAuth } from "@/hooks/useAuth";
+﻿import { useAuth } from "@/hooks/useAuth";
 import { UserRole, type UserResponse } from "@/types/auth";
 import RouterRoutes from "@/utils/RouterRoutes";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { NotificationBell } from "../shared/NotificationBell";
 import UserAvatar from "../shared/UserAvatar";
 import { Button } from "../ui/button";
 import {
@@ -159,6 +160,7 @@ export function Header() {
 
 				<div className='flex items-center gap-3'>
 					<div className='hidden lg:flex items-center gap-3'>
+						<NotificationBell />
 						{!isAuthenticated ? (
 							<>
 								<Button
@@ -193,6 +195,9 @@ export function Header() {
 							</DropdownMenu>
 						)}
 					</div>
+
+					<div className='lg:hidden'><NotificationBell /></div>
+
 
 					<Sheet
 						open={open}

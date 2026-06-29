@@ -1,15 +1,14 @@
-package com.yoedu.job_board_platform.services.impl;
+package com.yoedu.job_board_platform.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.eq;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +27,7 @@ import com.yoedu.job_board_platform.models.NotificationStatus;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
+import com.yoedu.job_board_platform.services.impl.NotificationServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceImplTest {
@@ -53,7 +53,8 @@ class NotificationServiceImplTest {
         User user = User.builder().id(userId).build();
         when(userRepository.getReferenceById(userId)).thenReturn(user);
 
-        notificationService.createNotification(userId, NotificationStatus.APPLICATION_STATUS_CHANGED, entityId, "Test message");
+        notificationService.createNotification(userId, NotificationStatus.APPLICATION_STATUS_CHANGED, entityId,
+                "Test message");
 
         verify(notificationRepository).save(notificationCaptor.capture());
         Notification saved = notificationCaptor.getValue();
@@ -93,21 +94,23 @@ class NotificationServiceImplTest {
                 .user(User.builder().id(userId).build())
                 .readAt(null)
                 .build();
-        when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+        when(notificationRepository.findByIdAndUserId(notificationId, userId)).thenReturn(Optional.of(notification));
 
         notificationService.markAsRead(userId, notificationId);
 
         assertThat(notification.getReadAt()).isNotNull();
-        verify(notificationRepository).findById(notificationId);
+        verify(notificationRepository).save(notificationCaptor.capture());
+        Notification savedNotification = notificationCaptor.getValue();
+        assertThat(savedNotification.getReadAt()).isNotNull();
     }
 
     @Test
     void markAsRead_doesNothingWhenNotificationNotFound() {
-        when(notificationRepository.findById(notificationId)).thenReturn(Optional.empty());
+        when(notificationRepository.findByIdAndUserId(notificationId, userId)).thenReturn(Optional.empty());
 
         notificationService.markAsRead(userId, notificationId);
 
-        verify(notificationRepository).findById(notificationId);
+        verify(notificationRepository).findByIdAndUserId(notificationId, userId);
     }
 
     @Test

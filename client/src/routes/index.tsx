@@ -16,6 +16,7 @@ import { JobListPage } from "@/features/jobs/JobListPage";
 
 import CandidateApplicationDetailPage from "@/features/candidate/ApplicationDetailPage";
 import CandidateApplicationsPage from "@/features/candidate/ApplicationsPage";
+import NotificationsPage from "@/features/shared/NotificationsPage";
 
 
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
@@ -69,6 +70,10 @@ export const router = createBrowserRouter([
 					{
 						path: RouterRoutes.PROFILE,
 						element: <ProfilePage />,
+					},
+					{
+						path: RouterRoutes.NOTIFICATIONS,
+						element: <NotificationsPage />,
 					},
 				],
 			},

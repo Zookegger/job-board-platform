@@ -1,20 +1,22 @@
 package com.yoedu.job_board_platform.services.impl;
 
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.yoedu.job_board_platform.models.Notification;
 import com.yoedu.job_board_platform.models.NotificationStatus;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.repositories.NotificationRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.services.NotificationService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 /**
  * Service để gửi thông báo tới người dùng.
@@ -78,13 +80,16 @@ public class NotificationServiceImpl implements NotificationService {
 	 * @param notificationId ID của thông báo cần đánh dấu
 	 */
 	@Override
+	@Transactional
 	public void markAsRead(UUID userId, UUID notificationId) {
 		OffsetDateTime now = OffsetDateTime.now();
 
 		notificationRepository.findByIdAndUserId(notificationId, userId).ifPresent(notification -> {
+			log.debug("{}", notification);
 			if (notification.getReadAt() != null) return;
 
 			notification.setReadAt(now);
+			notificationRepository.save(notification);
 		});
 	}
 
