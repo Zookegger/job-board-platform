@@ -28,8 +28,9 @@ export function getNotificationRoute(type: NotificationType, entityId: string): 
 			return RouterRoutes.ADMIN_COMPANIES;
 
 		case "APPLICATION_RECEIVED":
-			// Chưa có trang employer application detail — skip trong sprint này
-			return null;
+			// entityId = application UUID, nhưng employer xem qua trang danh sách jobs
+			// Chưa có route employer application detail riêng → về EMPLOYER_JOBS
+			return RouterRoutes.EMPLOYER_JOBS;
 
 		default:
 			return null;
