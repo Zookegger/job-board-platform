@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { useMarkAllAsRead, useMarkAsRead, useNotifications } from "@/hooks/useNotifications";
 import type { NotificationResponse, NotificationType } from "@/types/notification";
 import { TimeAgo } from "@/utils/DateUtils";
+import { getNotificationRoute } from "@/utils/notificationUtils";
 import { BellOff, Briefcase, Building2, CheckCheck, ChevronLeft, ChevronRight, Inbox } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const PAGE_SIZE = 15;
 
@@ -25,11 +27,14 @@ function notificationIcon(type: NotificationType) {
 
 function NotificationItem({ notification }: { notification: NotificationResponse }) {
 	const { mutate: markAsRead } = useMarkAsRead();
+	const navigate = useNavigate();
 
 	const handleClick = () => {
 		if (!notification.isRead) {
 			markAsRead(notification.id);
 		}
+		const route = getNotificationRoute(notification.type, notification.entityId);
+		if (route) navigate(route);
 	};
 
 	return (

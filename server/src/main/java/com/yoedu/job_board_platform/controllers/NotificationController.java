@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.dtos.notification.NotificationResponse;
@@ -58,8 +59,16 @@ public class NotificationController {
     @Transactional
     public ResponseEntity<Void> markAsRead(@PathVariable UUID id) {
         UUID userId = securityUtil.getCurrentUserId();
-        Notification notification = notificationRepository.findByIdAndUser_Id(id, userId)
+
+        // 1. Notification không tồn tại → 404
+        Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông báo"));
+
+        // 2. Notification tồn tại nhưng không thuộc về user hiện tại → 403
+        if (!notification.getUser().getId().equals(userId)) {
+            throw new ForbiddenException("Bạn không có quyền đọc thông báo này");
+        }
+
         if (notification.getReadAt() == null) {
             notification.setReadAt(OffsetDateTime.now());
             notificationRepository.save(notification);

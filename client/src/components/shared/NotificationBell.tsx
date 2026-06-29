@@ -1,8 +1,9 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useMarkAllAsRead, useNotifications, useUnreadCount } from "@/hooks/useNotifications";
+import { useMarkAllAsRead, useMarkAsRead, useNotifications, useUnreadCount } from "@/hooks/useNotifications";
 import type { NotificationResponse, NotificationType } from "@/types/notification";
 import { UserRole } from "@/types/auth";
 import RouterRoutes from "@/utils/RouterRoutes";
+import { getNotificationRoute } from "@/utils/notificationUtils";
 import { Bell, BellOff, Briefcase, Building2, CheckCheck, Inbox } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -29,7 +30,10 @@ function notificationIcon(type: NotificationType) {
 }
 
 function NotificationDropdownItem({ n }: { n: NotificationResponse }) {
-	return (
+	const { mutate: markAsRead } = useMarkAsRead();
+	const route = getNotificationRoute(n.type, n.entityId);
+
+	const content = (
 		<div className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-accent/60 ${!n.isRead ? "bg-primary/5" : ""}`}>
 			<div className='mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-background'>
 				{notificationIcon(n.type)}
@@ -40,6 +44,20 @@ function NotificationDropdownItem({ n }: { n: NotificationResponse }) {
 				</p>
 			</div>
 			{!n.isRead && <span className='mt-1 h-2 w-2 shrink-0 rounded-full bg-primary' />}
+		</div>
+	);
+
+	if (route) {
+		return (
+			<Link to={route} onClick={() => { if (!n.isRead) markAsRead(n.id); }}>
+				{content}
+			</Link>
+		);
+	}
+
+	return (
+		<div onClick={() => { if (!n.isRead) markAsRead(n.id); }} className='cursor-pointer'>
+			{content}
 		</div>
 	);
 }
