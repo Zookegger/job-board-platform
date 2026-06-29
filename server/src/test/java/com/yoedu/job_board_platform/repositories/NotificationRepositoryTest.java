@@ -1,10 +1,11 @@
 package com.yoedu.job_board_platform.repositories;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,28 +99,28 @@ class NotificationRepositoryTest {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // findByUser_IdOrderByCreatedAtDesc
+    // findByUserIdOrderByCreatedAtDesc
     // ─────────────────────────────────────────────────────────────
 
     @Test
-    void findByUser_IdOrderByCreatedAtDesc_returnsOnlyCurrentUserNotifications() {
+    void findByUserIdOrderByCreatedAtDesc_returnsOnlyCurrentUserNotifications() {
         saveNotification(userA, false);
         saveNotification(userA, true);
         saveNotification(userB, false); // không thuộc userA
 
         Page<Notification> page = notificationRepository
-                .findByUser_IdOrderByCreatedAtDesc(userA.getId(), PageRequest.of(0, 10));
+                .findByUserIdOrderByCreatedAtDesc(userA.getId(), PageRequest.of(0, 10));
 
         assertThat(page.getTotalElements()).isEqualTo(2);
         assertThat(page.getContent()).allMatch(n -> n.getUser().getId().equals(userA.getId()));
     }
 
     @Test
-    void findByUser_IdOrderByCreatedAtDesc_paginationWorks() {
+    void findByUserIdOrderByCreatedAtDesc_paginationWorks() {
         for (int i = 0; i < 5; i++) saveNotification(userA, false);
 
         Page<Notification> page = notificationRepository
-                .findByUser_IdOrderByCreatedAtDesc(userA.getId(), PageRequest.of(0, 3));
+                .findByUserIdOrderByCreatedAtDesc(userA.getId(), PageRequest.of(0, 3));
 
         assertThat(page.getTotalElements()).isEqualTo(5);
         assertThat(page.getTotalPages()).isEqualTo(2);
@@ -127,58 +128,58 @@ class NotificationRepositoryTest {
     }
 
     @Test
-    void findByUser_IdOrderByCreatedAtDesc_emptyWhenNoNotifications() {
+    void findByUserIdOrderByCreatedAtDesc_emptyWhenNoNotifications() {
         Page<Notification> page = notificationRepository
-                .findByUser_IdOrderByCreatedAtDesc(userA.getId(), PageRequest.of(0, 10));
+                .findByUserIdOrderByCreatedAtDesc(userA.getId(), PageRequest.of(0, 10));
 
         assertThat(page.getContent()).isEmpty();
         assertThat(page.getTotalElements()).isZero();
     }
 
     // ─────────────────────────────────────────────────────────────
-    // findByIdAndUser_Id
+    // findByIdAndUserId
     // ─────────────────────────────────────────────────────────────
 
     @Test
-    void findByIdAndUser_Id_returnsNotificationWhenOwnerMatches() {
+    void findByIdAndUserId_returnsNotificationWhenOwnerMatches() {
         Notification n = saveNotification(userA, false);
 
         Optional<Notification> result = notificationRepository
-                .findByIdAndUser_Id(n.getId(), userA.getId());
+                .findByIdAndUserId(n.getId(), userA.getId());
 
         assertThat(result).isPresent();
         assertThat(result.get().getId()).isEqualTo(n.getId());
     }
 
     @Test
-    void findByIdAndUser_Id_emptyWhenWrongOwner() {
+    void findByIdAndUserId_emptyWhenWrongOwner() {
         Notification n = saveNotification(userA, false);
 
         Optional<Notification> result = notificationRepository
-                .findByIdAndUser_Id(n.getId(), userB.getId());
+                .findByIdAndUserId(n.getId(), userB.getId());
 
         assertThat(result).isEmpty();
     }
 
     @Test
-    void findByIdAndUser_Id_emptyWhenIdNotExist() {
+    void findByIdAndUserId_emptyWhenIdNotExist() {
         Optional<Notification> result = notificationRepository
-                .findByIdAndUser_Id(UUID.randomUUID(), userA.getId());
+                .findByIdAndUserId(UUID.randomUUID(), userA.getId());
 
         assertThat(result).isEmpty();
     }
 
     // ─────────────────────────────────────────────────────────────
-    // markAllAsReadByUserId
+    // markAllAsRead
     // ─────────────────────────────────────────────────────────────
 
     @Test
-    void markAllAsReadByUserId_setsReadAtForAllUnread() {
+    void markAllAsRead_setsReadAtForAllUnread() {
         saveNotification(userA, false);
         saveNotification(userA, false);
-        saveNotification(userA, true); // đã đọc sẵn
+        saveNotification(userA, true);
 
-        int updated = notificationRepository.markAllAsReadByUserId(userA.getId(), OffsetDateTime.now());
+        int updated = notificationRepository.markAllAsRead(userA.getId(), OffsetDateTime.now());
 
         assertThat(updated).isEqualTo(2);
         long remaining = notificationRepository.countByUserIdAndReadAtIsNull(userA.getId());
@@ -186,21 +187,21 @@ class NotificationRepositoryTest {
     }
 
     @Test
-    void markAllAsReadByUserId_doesNotAffectOtherUsers() {
+    void markAllAsRead_doesNotAffectOtherUsers() {
         saveNotification(userA, false);
         saveNotification(userB, false);
 
-        notificationRepository.markAllAsReadByUserId(userA.getId(), OffsetDateTime.now());
+        notificationRepository.markAllAsRead(userA.getId(), OffsetDateTime.now());
 
         long userBUnread = notificationRepository.countByUserIdAndReadAtIsNull(userB.getId());
         assertThat(userBUnread).isEqualTo(1);
     }
 
     @Test
-    void markAllAsReadByUserId_returnsZeroWhenNothingToUpdate() {
+    void markAllAsRead_returnsZeroWhenNothingToUpdate() {
         saveNotification(userA, true); // đã đọc rồi
 
-        int updated = notificationRepository.markAllAsReadByUserId(userA.getId(), OffsetDateTime.now());
+        int updated = notificationRepository.markAllAsRead(userA.getId(), OffsetDateTime.now());
 
         assertThat(updated).isZero();
     }

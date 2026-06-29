@@ -1,20 +1,15 @@
 package com.yoedu.job_board_platform.services;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
+import com.yoedu.job_board_platform.common.exceptions.ForbiddenException;
+import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
+import com.yoedu.job_board_platform.dtos.application.*;
+import com.yoedu.job_board_platform.models.ApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
-import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
-import com.yoedu.job_board_platform.dtos.application.ApplicationCheckResponse;
-import com.yoedu.job_board_platform.dtos.application.ApplicationListResponse;
-import com.yoedu.job_board_platform.dtos.application.ApplicationRequest;
-import com.yoedu.job_board_platform.dtos.application.ApplicationResponse;
-import com.yoedu.job_board_platform.dtos.application.ApplicationTimelineResponse;
-import com.yoedu.job_board_platform.dtos.application.EmployerApplicationListResponse;
-import com.yoedu.job_board_platform.models.ApplicationStatus;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Service xử lý nộp đơn ứng tuyển của ứng viên.
@@ -27,8 +22,7 @@ public interface ApplicationService {
      *
      * @param candidateId UUID của ứng viên
      * @param status      lọc theo trạng thái (có thể null để lấy tất cả)
-     * @param page        số trang (bắt đầu từ 0)
-     * @param size        số phần tử mỗi trang
+     * @param pageable – thông tin phân trang
      * @return trang dữ liệu ApplicationListResponse
      */
     Page<ApplicationListResponse> getCandidateApplications(

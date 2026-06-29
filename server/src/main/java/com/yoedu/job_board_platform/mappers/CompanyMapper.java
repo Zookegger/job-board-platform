@@ -48,15 +48,8 @@ public interface CompanyMapper {
 
     @Mapping(target = "name", source = "company.companyName")
     @Mapping(target = "totalOpenJobs", source = "jobCount")
-    @Mapping(target = "categories", ignore = true)
-    PublicCompanyResponse toPublicResponse(Company company, long jobCount);
-
-    @Mapping(target = "name", source = "company.companyName")
-    @Mapping(target = "totalOpenJobs", source = "jobCount")
     @Mapping(target = "categories", source = "categories")
     PublicCompanyResponse toPublicResponse(Company company, long jobCount, List<JobCategoryResponse> categories);
-
-    List<PublicCompanyResponse> toPublicResponseList(List<Company> company);
 
     @Mapping(target = "name", source = "company.companyName")
     @Mapping(target = "totalOpenJobs", source = "jobCount")

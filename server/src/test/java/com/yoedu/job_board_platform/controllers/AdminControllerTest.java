@@ -87,23 +87,22 @@ class AdminControllerTest {
 	private Skill savedSkillInactive;
 	private JobCategory savedCategory;
 
-	@BeforeEach
-	void cleanup() {
-		candidateSkillRepository.deleteAll();
-		jobSkillRepository.deleteAll();
-		skillRepository.deleteAll();
-		reportRepository.deleteAll();
-		applicationRepository.deleteAll();
-		applicationRepository.deleteAll();
-		jobRepository.deleteAll();
-		jobCategoryRepository.deleteAll();
-		notificationRepository.deleteAll();
-		employerDetailRepository.deleteAll();
-		companyApprovalLogRepository.deleteAll();
-		companyRepository.deleteAll();
-		profileRepository.deleteAll();
-		refreshTokenRepository.deleteAll();
-		userRepository.deleteAll();
+        @BeforeEach
+        void cleanup() {
+                candidateSkillRepository.deleteAll();
+                jobSkillRepository.deleteAll();
+                skillRepository.deleteAll();
+                reportRepository.deleteAll();
+                applicationRepository.deleteAll();
+                jobRepository.deleteAll();
+                jobCategoryRepository.deleteAll();
+                notificationRepository.deleteAll();
+                employerDetailRepository.deleteAll();
+                companyApprovalLogRepository.deleteAll();
+                companyRepository.deleteAll();
+                profileRepository.deleteAll();
+                refreshTokenRepository.deleteAll();
+                userRepository.deleteAll();
 
 		savedSkillActive = skillRepository.save(
 				Skill.builder().name("Java").isActive(true).build());
@@ -743,148 +742,227 @@ class AdminControllerTest {
 						.content(payload))
 				.andExpect(status().isOk());
 
-		Report updated = reportRepository.findById(report.getId()).orElseThrow();
-		assertThat(updated.getStatus()).isEqualTo(ReportStatus.REVIEWED);
-		assertThat(updated.getReviewNotes()).isEqualTo("Đã xem xét, cần theo dõi thêm");
-	}
+                Report updated = reportRepository.findById(report.getId()).orElseThrow();
+                assertThat(updated.getStatus()).isEqualTo(ReportStatus.REVIEWED);
+                assertThat(updated.getReviewNotes()).isEqualTo("Đã xem xét, cần theo dõi thêm");
+        }
 
-	@Test
-	void admin_canGetDashboardStats() throws Exception {
-		createPendingCompany(
-				"Pending Dashboard Corp",
-				"123456789",
-				"pending-dashboard@example.com",
-				"0900000011");
+        @Test
+        void admin_canGetDashboardStats() throws Exception {
+        createPendingCompany(
+                        "Pending Dashboard Corp",
+                        "123456789",
+                        "pending-dashboard@example.com",
+                        "0900000011");
 
-		Company approvedCompany = createPendingCompany(
-				"Approved Dashboard Corp",
-				"987654321",
-				"approved-dashboard@example.com",
-				"0900000012");
+        Company approvedCompany = createPendingCompany(
+                        "Approved Dashboard Corp",
+                        "987654321",
+                        "approved-dashboard@example.com",
+                        "0900000012");
 
-		approvedCompany.setStatus(CompanyStatus.APPROVED);
-		approvedCompany.setApproved(true);
-		approvedCompany = companyRepository.save(approvedCompany);
+                approvedCompany.setStatus(CompanyStatus.APPROVED);
+                approvedCompany.setApproved(true);
+                approvedCompany = companyRepository.save(approvedCompany);
 
-		Job activeJob = createPendingJob(approvedCompany, "Dashboard Active Job");
-		activeJob.setStatus(JobStatus.ACTIVE);
-		activeJob = jobRepository.save(activeJob);
+                Job activeJob = createPendingJob(approvedCompany, "Dashboard Active Job");
+                activeJob.setStatus(JobStatus.ACTIVE);
+                activeJob = jobRepository.save(activeJob);
 
-		createPendingJob(approvedCompany, "Dashboard Pending Job");
+                createPendingJob(approvedCompany, "Dashboard Pending Job");
 
-		Profile candidateProfile = createCandidateProfile("candidate-dashboard@example.com");
+        Profile candidateProfile = createCandidateProfile("candidate-dashboard@example.com");
 
-		applicationRepository.save(Application.builder()
-				.candidate(candidateProfile)
-				.job(activeJob)
-				.status(ApplicationStatus.PENDING)
-				.coverLetter("Tôi muốn ứng tuyển")
-				.appliedAt(OffsetDateTime.now())
-				.build());
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(activeJob)
+                        .status(ApplicationStatus.PENDING)
+                        .coverLetter("Tôi muốn ứng tuyển")
+                        .appliedAt(OffsetDateTime.now())
+                        .build());
 
-		Cookie adminCookie = loginAsAdmin();
+        Cookie adminCookie = loginAsAdmin();
 
-		mockMvc.perform(get("/api/admin/dashboard/stats")
-						.cookie(adminCookie))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.totalUsers").value(4))
-				.andExpect(jsonPath("$.totalCompanies").value(2))
-				.andExpect(jsonPath("$.totalJobs").value(1))
-				.andExpect(jsonPath("$.totalApplications").value(1))
-				.andExpect(jsonPath("$.newUsers").value(4))
-				.andExpect(jsonPath("$.pendingJobs").value(1))
-				.andExpect(jsonPath("$.pendingCompanies").value(1));
-	}
+        mockMvc.perform(get("/api/admin/dashboard/stats")
+                        .cookie(adminCookie))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.totalUsers").value(4))
+                        .andExpect(jsonPath("$.totalCompanies").value(2))
+                        .andExpect(jsonPath("$.totalJobs").value(1))
+                        .andExpect(jsonPath("$.totalApplications").value(1))
+                        .andExpect(jsonPath("$.newUsers").value(4))
+                        .andExpect(jsonPath("$.pendingJobs").value(1))
+                        .andExpect(jsonPath("$.pendingCompanies").value(1));
+        }
 
-	@Test
-	void admin_canGetApplicationChartStats() throws Exception {
-		OffsetDateTime now = OffsetDateTime.now();
-		LocalDate today = now.toLocalDate();
+        @Test
+        void admin_canGetApplicationChartStats() throws Exception {
+        OffsetDateTime now = OffsetDateTime.now();
+        LocalDate today = now.toLocalDate();
 
-		Company company = createPendingCompany(
-				"Chart Dashboard Corp",
-				"456789123",
-				"chart-dashboard@example.com",
-				"0900000022");
+        Company company = createPendingCompany(
+                        "Chart Dashboard Corp",
+                        "456789123",
+                        "chart-dashboard@example.com",
+                        "0900000022");
 
-		company.setStatus(CompanyStatus.APPROVED);
-		company.setApproved(true);
-		company = companyRepository.save(company);
+        company.setStatus(CompanyStatus.APPROVED);
+        company.setApproved(true);
+        company = companyRepository.save(company);
 
-		Job jobTwoDaysAgo = createPendingJob(company, "Chart Job Two Days Ago");
-		jobTwoDaysAgo.setStatus(JobStatus.ACTIVE);
-		jobTwoDaysAgo = jobRepository.save(jobTwoDaysAgo);
+        Job jobTwoDaysAgo = createPendingJob(company, "Chart Job Two Days Ago");
+        jobTwoDaysAgo.setStatus(JobStatus.ACTIVE);
+        jobTwoDaysAgo = jobRepository.save(jobTwoDaysAgo);
 
-		Job jobYesterdayOne = createPendingJob(company, "Chart Job Yesterday One");
-		jobYesterdayOne.setStatus(JobStatus.ACTIVE);
-		jobYesterdayOne = jobRepository.save(jobYesterdayOne);
+        Job jobYesterdayOne = createPendingJob(company, "Chart Job Yesterday One");
+        jobYesterdayOne.setStatus(JobStatus.ACTIVE);
+        jobYesterdayOne = jobRepository.save(jobYesterdayOne);
 
-		Job jobYesterdayTwo = createPendingJob(company, "Chart Job Yesterday Two");
-		jobYesterdayTwo.setStatus(JobStatus.ACTIVE);
-		jobYesterdayTwo = jobRepository.save(jobYesterdayTwo);
+        Job jobYesterdayTwo = createPendingJob(company, "Chart Job Yesterday Two");
+        jobYesterdayTwo.setStatus(JobStatus.ACTIVE);
+        jobYesterdayTwo = jobRepository.save(jobYesterdayTwo);
 
-		Job jobToday = createPendingJob(company, "Chart Job Today");
-		jobToday.setStatus(JobStatus.ACTIVE);
-		jobToday = jobRepository.save(jobToday);
+        Job jobToday = createPendingJob(company, "Chart Job Today");
+        jobToday.setStatus(JobStatus.ACTIVE);
+        jobToday = jobRepository.save(jobToday);
 
-		Profile candidateProfile = createCandidateProfile("candidate-chart@example.com");
+        Profile candidateProfile = createCandidateProfile("candidate-chart@example.com");
 
-		applicationRepository.save(Application.builder()
-				.candidate(candidateProfile)
-				.job(jobTwoDaysAgo)
-				.status(ApplicationStatus.PENDING)
-				.coverLetter("Ứng tuyển ngày trước đó 2 ngày")
-				.appliedAt(today.minusDays(2).atTime(10, 0).atOffset(now.getOffset()))
-				.build());
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(jobTwoDaysAgo)
+                        .status(ApplicationStatus.PENDING)
+                        .coverLetter("Ứng tuyển ngày trước đó 2 ngày")
+                        .appliedAt(today.minusDays(2).atTime(10, 0).atOffset(now.getOffset()))
+                        .build());
 
-		applicationRepository.save(Application.builder()
-				.candidate(candidateProfile)
-				.job(jobYesterdayOne)
-				.status(ApplicationStatus.REVIEWING)
-				.coverLetter("Ứng tuyển hôm qua lần 1")
-				.appliedAt(today.minusDays(1).atTime(9, 0).atOffset(now.getOffset()))
-				.build());
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(jobYesterdayOne)
+                        .status(ApplicationStatus.REVIEWING)
+                        .coverLetter("Ứng tuyển hôm qua lần 1")
+                        .appliedAt(today.minusDays(1).atTime(9, 0).atOffset(now.getOffset()))
+                        .build());
 
-		applicationRepository.save(Application.builder()
-				.candidate(candidateProfile)
-				.job(jobYesterdayTwo)
-				.status(ApplicationStatus.REVIEWING)
-				.coverLetter("Ứng tuyển hôm qua lần 2")
-				.appliedAt(today.minusDays(1).atTime(15, 0).atOffset(now.getOffset()))
-				.build());
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(jobYesterdayTwo)
+                        .status(ApplicationStatus.REVIEWING)
+                        .coverLetter("Ứng tuyển hôm qua lần 2")
+                        .appliedAt(today.minusDays(1).atTime(15, 0).atOffset(now.getOffset()))
+                        .build());
 
-		applicationRepository.save(Application.builder()
-				.candidate(candidateProfile)
-				.job(jobToday)
-				.status(ApplicationStatus.HIRED)
-				.coverLetter("Ứng tuyển hôm nay")
-				.appliedAt(today.atTime(11, 0).atOffset(now.getOffset()))
-				.build());
+        applicationRepository.save(Application.builder()
+                        .candidate(candidateProfile)
+                        .job(jobToday)
+                        .status(ApplicationStatus.HIRED)
+                        .coverLetter("Ứng tuyển hôm nay")
+                        .appliedAt(today.atTime(11, 0).atOffset(now.getOffset()))
+                        .build());
 
-		Cookie adminCookie = loginAsAdmin();
+        Cookie adminCookie = loginAsAdmin();
 
-		mockMvc.perform(get("/api/admin/statistics/applications-chart")
-						.cookie(adminCookie)
-						.param("days", "7"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.days").value(7))
-				.andExpect(jsonPath("$.fromDate").value(today.minusDays(6).toString()))
-				.andExpect(jsonPath("$.toDate").value(today.toString()))
-				.andExpect(jsonPath("$.totalApplications").value(4))
-				.andExpect(jsonPath("$.dailyApplications.length()").value(7))
-				.andExpect(jsonPath("$.dailyApplications[4].date").value(today.minusDays(2).toString()))
-				.andExpect(jsonPath("$.dailyApplications[4].total").value(1))
-				.andExpect(jsonPath("$.dailyApplications[5].date").value(today.minusDays(1).toString()))
-				.andExpect(jsonPath("$.dailyApplications[5].total").value(2))
-				.andExpect(jsonPath("$.dailyApplications[6].date").value(today.toString()))
-				.andExpect(jsonPath("$.dailyApplications[6].total").value(1))
-				.andExpect(jsonPath("$.statusDistribution.length()").value(3))
-				.andExpect(jsonPath("$.statusDistribution[?(@.status == 'PENDING')].total").value(hasItem(1)))
-				.andExpect(jsonPath("$.statusDistribution[?(@.status == 'PENDING')].percentage").value(hasItem(25.0)))
-				.andExpect(jsonPath("$.statusDistribution[?(@.status == 'REVIEWING')].total").value(hasItem(2)))
-				.andExpect(jsonPath("$.statusDistribution[?(@.status == 'REVIEWING')].percentage").value(hasItem(50.0)))
-				.andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].total").value(hasItem(1)))
-				.andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].percentage").value(hasItem(25.0)));
-	}
+        mockMvc.perform(get("/api/admin/statistics/applications-chart")
+                        .cookie(adminCookie)
+                        .param("days", "7"))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.days").value(7))
+                        .andExpect(jsonPath("$.fromDate").value(today.minusDays(6).toString()))
+                        .andExpect(jsonPath("$.toDate").value(today.toString()))
+                        .andExpect(jsonPath("$.totalApplications").value(4))
+                        .andExpect(jsonPath("$.dailyApplications.length()").value(7))
+                        .andExpect(jsonPath("$.dailyApplications[4].date").value(today.minusDays(2).toString()))
+                        .andExpect(jsonPath("$.dailyApplications[4].total").value(1))
+                        .andExpect(jsonPath("$.dailyApplications[5].date").value(today.minusDays(1).toString()))
+                        .andExpect(jsonPath("$.dailyApplications[5].total").value(2))
+                        .andExpect(jsonPath("$.dailyApplications[6].date").value(today.toString()))
+                        .andExpect(jsonPath("$.dailyApplications[6].total").value(1))
+                        .andExpect(jsonPath("$.statusDistribution.length()").value(3))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'PENDING')].total").value(hasItem(1)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'PENDING')].percentage").value(hasItem(25.0)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'REVIEWING')].total").value(hasItem(2)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'REVIEWING')].percentage").value(hasItem(50.0)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].total").value(hasItem(1)))
+                        .andExpect(jsonPath("$.statusDistribution[?(@.status == 'HIRED')].percentage").value(hasItem(25.0)));
+        }
+
+        @Test
+        void admin_canGetUsers() throws Exception {
+                createPendingCompany(
+                                "User List Company",
+                                "111222333",
+                                "user-list-employer@example.com",
+                                "0900000101");
+
+                createCandidateProfile("user-list-candidate@example.com");
+
+                Cookie adminCookie = loginAsAdmin();
+
+                mockMvc.perform(get("/api/admin/users")
+                                .cookie(adminCookie)
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content.length()").value(3))
+                                .andExpect(jsonPath("$.totalElements").value(3))
+                                .andExpect(jsonPath("$.content[*].email").value(hasItem("employer.user-list-employer@example.com")))
+                                .andExpect(jsonPath("$.content[*].email").value(hasItem("user-list-candidate@example.com")))
+                                .andExpect(jsonPath("$.content[*].role").value(hasItem("EMPLOYER")))
+                                .andExpect(jsonPath("$.content[*].role").value(hasItem("CANDIDATE")))
+		                .andExpect(jsonPath("$.content[*].isActive").value(hasItem(true)));
+        }
+
+        @Test
+        void admin_canFilterUsersByRole() throws Exception {
+                createPendingCompany(
+                                "Role Filter Company",
+                                "222333444",
+                                "role-filter-employer@example.com",
+                                "0900000102");
+
+                createCandidateProfile("role-filter-candidate@example.com");
+
+                Cookie adminCookie = loginAsAdmin();
+
+                mockMvc.perform(get("/api/admin/users")
+                                .cookie(adminCookie)
+                                .param("role", "CANDIDATE")
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content.length()").value(1))
+                                .andExpect(jsonPath("$.totalElements").value(1))
+                                .andExpect(jsonPath("$.content[0].email").value("role-filter-candidate@example.com"))
+                                .andExpect(jsonPath("$.content[0].role").value("CANDIDATE"));
+        }
+
+        @Test
+        void admin_canFilterUsersByStatus() throws Exception {
+                User inactiveUser = User.builder()
+                                .email("inactive-user@example.com")
+                                .password(passwordEncoder.encode("password123"))
+                                .role(UserRole.CANDIDATE)
+                                .isActive(false)
+                                .build();
+	        Profile inactiveUserProfile = Profile.builder().fullName("Inactive User").user(inactiveUser).phone("0901234567").build();
+
+	        inactiveUser.setProfile(inactiveUserProfile);
+
+                userRepository.save(inactiveUser);
+
+                Cookie adminCookie = loginAsAdmin();
+
+                mockMvc.perform(get("/api/admin/users")
+                                .cookie(adminCookie)
+				                .param("isActive", "false")
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content.length()").value(1))
+                                .andExpect(jsonPath("$.totalElements").value(1))
+                                .andExpect(jsonPath("$.content[0].email").value("inactive-user@example.com"))
+		                .andExpect(jsonPath("$.content[0].isActive").value(false))
+		                .andExpect(jsonPath("$.content[0].fullName").value("Inactive User"));
+        }
 }
 
