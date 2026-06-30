@@ -25,7 +25,9 @@ public interface AdminMapper {
 	AdminCompanyListResponse toAdminCompanyListResponse(Company company);
 
 	@Mapping(target = "fullName", source = "profile.fullName")
+	@Mapping(target = "avatarUrl", source = "profile.avatarUrl")
 	@Mapping(target = "isActive", source = "active")
+	@Mapping(target = "phone", source = "profile.phone")
 	AdminUserResponse toAdminUserResponse(User user);
 
 	default PendingCompanyResponse toPendingCompanyResponseSafe(Company company, CompanyEmployerDetail detail) {

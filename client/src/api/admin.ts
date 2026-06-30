@@ -13,51 +13,43 @@ import client from "./client";
 
 const adminApi = {
 	getDashboardStats: (): Promise<AdminDashboardStatsResponse> =>
-	client
-		.get("/admin/dashboard/stats")
-		.then((response) => response.data)
-		.catch((error) => {
-			throw new ApiError(
-				error.response?.data?.message || error.message || "Lỗi, Không thể tải thống kê dashboard.",
-				error.response?.status || 500,
-			);
-		}),
-	
-	getApplicationChartStats: (
-		days: number,
-	): Promise<AdminApplicationChartResponse> =>
+		client
+			.get("/admin/dashboard/stats")
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể tải thống kê dashboard.",
+					error.response?.status || 500,
+				);
+			}),
+
+	getApplicationChartStats: (days: number): Promise<AdminApplicationChartResponse> =>
 		client
 			.get("/admin/statistics/applications-chart", { params: { days } })
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
-					error.response?.data?.message ||
-						error.message ||
-						"Lỗi, Không thể tải thống kê ứng tuyển.",
+					error.response?.data?.message || error.message || "Lỗi, Không thể tải thống kê ứng tuyển.",
 					error.response?.status || 500,
 				);
-			}),	
-	
-	getUsers: (
-		params: AdminUsersQueryParams,
-	): Promise<PageResponse<AdminUserListResponse>> =>
+			}),
+
+	getUsers: (params: AdminUsersQueryParams): Promise<PageResponse<AdminUserListResponse>> =>
 		client
 			.get("/admin/users", {
 				params: {
 					...toPageableParams(params),
 					role: params.role,
-					status: params.status,
+					isActive: params.isActive,
 				},
 			})
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(
-					error.response?.data?.message ||
-						error.message ||
-						"Lỗi, Không thể tải danh sách tài khoản.",
+					error.response?.data?.message || error.message || "Lỗi, Không thể tải danh sách tài khoản.",
 					error.response?.status || 500,
 				);
-			}),		
+			}),
 
 	// Companies Review
 	getAllCompanies: (

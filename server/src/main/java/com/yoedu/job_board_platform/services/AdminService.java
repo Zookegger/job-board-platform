@@ -44,7 +44,7 @@ public interface AdminService {
 	 *
 	 * @return trang dữ liệu danh sách người dùng
 	 */
-	Page<User> getUsers(UserRole role, Boolean isActive, Pageable pageable);
+	Page<User> getUsers(String keyword, UserRole role, Boolean isActive, Pageable pageable);
 
 	/**
 	 * Lấy danh sách công ty đang chờ duyệt.

@@ -10,6 +10,12 @@ public record AdminUserResponse(
         @Schema(description = "ID tài khoản")
         UUID id,
 
+        @Schema(description = "Đường link url của avatar")
+        String avatarUrl,
+
+        @Schema(description = "Số điện thoại")
+        String phone,
+
         @Schema(description = "Email đăng nhập của tài khoản")
         String email,
 
@@ -23,6 +29,9 @@ public record AdminUserResponse(
         boolean isActive,
 
         @Schema(description = "Thời điểm tạo tài khoản")
-        OffsetDateTime createdAt
+        OffsetDateTime createdAt,
+
+        @Schema(description = "Thời điểm lần cuối cập nhật tài khoản")
+        OffsetDateTime updatedAt
 ) {
 }

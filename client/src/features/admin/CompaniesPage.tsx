@@ -1,15 +1,13 @@
 import { DataTable } from "@/components/shared/DataTable";
+import { FilterToolbar, type FilterSelectConfig, type FilterToolbarProps } from "@/components/shared/FilterToolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanyApprovalModal from "@/features/admin/components/CompanyApprovalModal";
-import {
-	useAllCompanies,
-	usePendingCompanies,
-	useUnsuspendCompany,
-} from "@/hooks/useAdminCompanies";
+import { useAllCompanies, usePendingCompanies, useUnsuspendCompany } from "@/hooks/useAdminCompanies";
 import {
 	CompanyStatus,
 	type AdminCompanyListResponse,
@@ -122,6 +120,88 @@ function CompanyLogo({ company }: { company: { logoUrl: string | null; companyNa
 	);
 }
 
+interface CustomerToolbarProps extends Omit<FilterToolbarProps, "selects"> {
+	taxCodeFilter?: TaxCodeFilter;
+	onTaxCodeFilterChange?: (value: TaxCodeFilter) => void;
+	contactFilter?: ContactFilter;
+	onContactFilterChange?: (value: ContactFilter) => void;
+	sortOption: SortOption;
+	onSortChange: (value: SortOption) => void;
+	statusFilter?: string;
+	onStatusFilterChange?: (value: string) => void;
+}
+
+function CustomerFilterToolbar({
+	taxCodeFilter,
+	onTaxCodeFilterChange,
+	contactFilter,
+	onContactFilterChange,
+	sortOption,
+	onSortChange,
+	statusFilter,
+	onStatusFilterChange,
+	...props
+}: CustomerToolbarProps) {
+	const selects: FilterSelectConfig[] = [
+		{
+			key: "sort",
+			value: sortOption,
+			onValueChange: (v) => onSortChange(v as SortOption),
+			placeholder: "Sắp xếp",
+			options: [
+				{ value: "newest", label: "Mới nhất" },
+				{ value: "oldest", label: "Cũ nhất" },
+				{ value: "name", label: "Tên A-Z" },
+			],
+		},
+	];
+
+	if (taxCodeFilter && onTaxCodeFilterChange) {
+		selects.unshift({
+			key: "taxCode",
+			value: taxCodeFilter,
+			onValueChange: (v) => onTaxCodeFilterChange(v as TaxCodeFilter),
+			placeholder: "Tất cả MST",
+			options: [
+				{ value: "all", label: "Tất cả MST" },
+				{ value: "with-tax-code", label: "Có MST" },
+				{ value: "missing-tax-code", label: "Thiếu MST" },
+			],
+		});
+	}
+
+	if (contactFilter && onContactFilterChange) {
+		selects.unshift({
+			key: "contact",
+			value: contactFilter,
+			onValueChange: (v) => onContactFilterChange(v as ContactFilter),
+			placeholder: "Tất cả liên hệ",
+			options: [
+				{ value: "all", label: "Tất cả liên hệ" },
+				{ value: "with-contact", label: "Có liên hệ" },
+				{ value: "missing-contact", label: "Thiếu liên hệ" },
+			],
+		});
+	}
+
+	if (statusFilter && onStatusFilterChange) {
+		selects.push({
+			key: "status",
+			value: statusFilter,
+			onValueChange: (v) => onStatusFilterChange(v as string),
+			placeholder: "Tất cả trạng thái",
+			options: STATUS_FILTER_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label })),
+		});
+	}
+
+	return (
+		<FilterToolbar
+			{...props}
+			selects={selects}
+		/>
+	);
+}
+
 export default function AdminCompaniesPage() {
 	const [activeTab, setActiveTab] = useState("pending");
 
@@ -221,7 +301,10 @@ export default function AdminCompaniesPage() {
 	const actionPending = unsuspendCompany.isPending;
 
 	// ── Handlers ──
-	function openApprovalAction(company: AdminPendingCompanyResponse | CompanyResponse, action: "approve" | "reject" | "suspend") {
+	function openApprovalAction(
+		company: AdminPendingCompanyResponse | CompanyResponse,
+		action: "approve" | "reject" | "suspend",
+	) {
 		setApprovalAction({ company, action });
 	}
 
@@ -237,6 +320,11 @@ export default function AdminCompaniesPage() {
 		},
 		[unsuspendCompany],
 	);
+
+	const handleStatusFilterChange = useCallback((status: string) => {
+		setAllStatusFilter(status);
+		setAllPage(0);
+	}, []);
 
 	const pendingColumns = useMemo(
 		() => [
@@ -477,17 +565,42 @@ export default function AdminCompaniesPage() {
 		<Tabs
 			value={activeTab}
 			onValueChange={setActiveTab}
-			className='mx-auto flex w-full max-w-7xl flex-col gap-5'
+			className='flex w-full flex-col gap-5'
 		>
-			<div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
-				<div>
-					<h1 className='text-2xl font-semibold text-foreground'>Quản lý công ty</h1>
-					<p className='mt-1 text-sm text-muted-foreground'>
-						{activeTab === "pending"
-							? `${pendingTotalElements.toLocaleString("vi-VN")} hồ sơ đang cần xem xét`
-							: `Tổng số ${allTotalElements.toLocaleString("vi-VN")} công ty`}
-					</p>
-				</div>
+			<Card className='border-none bg-linear-to-r from-primary/10 via-background to-background shadow-sm'>
+				<CardHeader className='lg:flex-row lg:items-center lg:justify-between'>
+					<div className='flex gap-4 items-center'>
+						<div className='flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary'>
+							<Building2 className='size-6' />
+						</div>
+
+						<div>
+							<CardTitle className='text-2xl font-semibold'>Quản lý công ty</CardTitle>
+							<CardDescription className='mt-1 max-w-2xl'>
+								{activeTab === "pending"
+									? `${pendingTotalElements.toLocaleString("vi-VN")} hồ sơ đang cần xem xét`
+									: `Tổng số ${allTotalElements.toLocaleString("vi-VN")} công ty`}
+							</CardDescription>
+						</div>
+					</div>
+				</CardHeader>
+			</Card>
+
+			<div className='flex justify-between'>
+				<TabsList>
+					<TabsTrigger
+						value='pending'
+						className='flex items-center gap-2'
+					>
+						<Clock className='size-4' /> Chờ duyệt
+					</TabsTrigger>
+					<TabsTrigger
+						value='all'
+						className='flex items-center gap-2'
+					>
+						<Building2 className='size-4' /> Tất cả
+					</TabsTrigger>
+				</TabsList>
 				<Button
 					variant='outline'
 					onClick={() => (activeTab === "pending" ? pendingRefetch() : allRefetch())}
@@ -509,66 +622,20 @@ export default function AdminCompaniesPage() {
 				</Button>
 			</div>
 
-			<TabsList className='w-fit'>
-				<TabsTrigger
-					value='pending'
-					className='flex items-center gap-2'
-				>
-					<Clock className='size-4' /> Chờ duyệt
-				</TabsTrigger>
-				<TabsTrigger
-					value='all'
-					className='flex items-center gap-2'
-				>
-					<Building2 className='size-4' /> Tất cả
-				</TabsTrigger>
-			</TabsList>
-
 			<TabsContent
 				value='pending'
 				className='mt-0 flex flex-col gap-5'
 			>
-				<div className='rounded-lg border bg-card p-4'>
-					<div className='grid gap-3 md:grid-cols-[minmax(260px,1fr)_180px_180px_180px]'>
-						<Input
-							value={searchTerm}
-							onChange={(event) => handleSearchChange(event.target.value)}
-							placeholder='Tìm theo tên, email, MST, địa chỉ...'
-							startIcon={<Search className='size-4' />}
-							className='h-10 bg-background'
-						/>
-
-						<select
-							value={taxCodeFilter}
-							onChange={(event) => handleTaxCodeFilterChange(event.target.value as TaxCodeFilter)}
-							className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						>
-							<option value='all'>Tất cả MST</option>
-							<option value='with-tax-code'>Có MST</option>
-							<option value='missing-tax-code'>Thiếu MST</option>
-						</select>
-
-						<select
-							value={contactFilter}
-							onChange={(event) => handleContactFilterChange(event.target.value as ContactFilter)}
-							className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						>
-							<option value='all'>Tất cả liên hệ</option>
-							<option value='with-contact'>Có liên hệ</option>
-							<option value='missing-contact'>Thiếu liên hệ</option>
-						</select>
-
-						<select
-							value={sortOption}
-							onChange={(event) => handleSortChange(event.target.value as SortOption)}
-							className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						>
-							<option value='newest'>Mới nhất</option>
-							<option value='oldest'>Cũ nhất</option>
-							<option value='name'>Tên A-Z</option>
-						</select>
-					</div>
-				</div>
+				<CustomerFilterToolbar
+					searchPlaceholder='Tìm theo tên, email, MST, địa chỉ...'
+					taxCodeFilter={taxCodeFilter}
+					onTaxCodeFilterChange={handleTaxCodeFilterChange}
+					contactFilter={contactFilter}
+					onContactFilterChange={handleContactFilterChange}
+					sortOption={sortOption}
+					onSortChange={handleSortChange}
+					onSearchChange={handleSearchChange}
+				/>
 
 				<DataTable
 					columns={pendingColumns}
@@ -616,25 +683,15 @@ export default function AdminCompaniesPage() {
 							startIcon={<Search className='size-4' />}
 							className='h-10 bg-background'
 						/>
-
-						<select
-							value={allStatusFilter}
-							onChange={(event) => {
-								setAllStatusFilter(event.target.value);
-								setAllPage(0);
-							}}
-							className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						>
-							{STATUS_FILTER_OPTIONS.map((opt) => (
-								<option
-									key={opt.value}
-									value={opt.value}
-								>
-									{opt.label}
-								</option>
-							))}
-						</select>
 					</div>
+
+					<CustomerFilterToolbar
+						searchPlaceholder='Tìm theo tên, email, MST, địa chỉ...'
+						sortOption={sortOption}
+						onSortChange={handleSortChange}
+						onSearchChange={handleSearchChange}
+						onStatusFilterChange={handleStatusFilterChange}
+					/>
 				</div>
 
 				<DataTable
