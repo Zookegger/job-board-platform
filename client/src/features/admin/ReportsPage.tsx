@@ -154,11 +154,11 @@ export default function AdminReportsPage() {
 		[updateSearchParams],
 	);
 
-	const handleResetFilters = useCallback(() => {
-		updateSearchParams({ status: null, page: null });
-	}, [updateSearchParams]);
+const handleResetFilters = useCallback(() => {
+	updateSearchParams({ status: null, reason: null, page: null });
+}, [updateSearchParams]);
 
-	const hasActiveFilters = statusParam !== null;
+const hasActiveFilters = statusParam !== null || reasonParam !== null;
 
 	const queryParams = useMemo(
 		() => ({
