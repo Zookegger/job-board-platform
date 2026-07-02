@@ -1,16 +1,19 @@
 import { BaseDialog } from "@/components/shared/BaseDialog";
-import { DataTable } from "@/components/shared/DataTable";
+import { DataTable, type DataTableActions } from "@/components/shared/DataTable";
+import { FilterToolbar } from "@/components/shared/FilterToolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useApproveJob, usePendingJobs, useRejectJob } from "@/hooks/useAdminJobs";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { AdminPendingJobResponse } from "@/types/job";
 import { formatDate } from "@/utils/DateUtils";
 import getErrorMessage from "@/utils/getErrorMessage";
 import { formatSalary } from "@/utils/StringUtil";
-import { Briefcase, Building2, CheckCircle2, Eye, MapPin, RefreshCw, XCircle } from "lucide-react";
-import { useState } from "react";
+import { Briefcase, Building2, CheckCircle2, Eye, MapPin, XCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -31,8 +34,14 @@ const EXPERIENCE_LEVEL_LABELS: Record<string, string> = {
 };
 
 export default function AdminJobsPage() {
-	const [page, setPage] = useState(0);
-	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const page = parseInt(searchParams.get("page") || "0", 10);
+	const pageSize = parseInt(searchParams.get("size") || String(DEFAULT_PAGE_SIZE), 10);
+	const keywordParam = searchParams.get("keyword") || null;
+
+	const [searchKeyword, setSearchKeyword] = useState(keywordParam || "");
+	const debouncedSearch = useDebounce(searchKeyword.trim(), 400);
 
 	const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 	const [selectedJobToView, setSelectedJobToView] = useState<AdminPendingJobResponse | null>(null);
@@ -55,6 +64,8 @@ export default function AdminJobsPage() {
 	const totalPages = data?.totalPages ?? 0;
 
 	const actionPending = approveJob.isPending || rejectJob.isPending;
+
+	const hasActiveFilters = keywordParam !== null;
 
 	const handleApprove = (job: AdminPendingJobResponse) => {
 		setApproveDialog({ open: true, job });
@@ -100,8 +111,62 @@ export default function AdminJobsPage() {
 		);
 	};
 
+	const updateSearchParams = useCallback(
+		(updates: Record<string, string | null>) => {
+			const nextParams = new URLSearchParams(searchParams);
+			for (const [key, value] of Object.entries(updates)) {
+				if (value !== null) nextParams.set(key, value);
+				else nextParams.delete(key);
+			}
+			setSearchParams(nextParams);
+		},
+		[searchParams, setSearchParams],
+	);
+
+	const handleResetFilters = useCallback(() => {
+		setSearchKeyword("");
+		updateSearchParams({ keyword: null, page: null });
+	}, [updateSearchParams]);
+
+	useEffect(() => {
+		if (debouncedSearch !== (keywordParam || "")) {
+			updateSearchParams({ keyword: debouncedSearch || null, page: "0" });
+		}
+	}, [debouncedSearch, keywordParam, updateSearchParams]);
+
+	const tableActions = useMemo<DataTableActions<AdminPendingJobResponse>[]>(
+		() => [
+			{
+				header: "Thao tác",
+				items: [
+					{
+						label: "Chi tiết",
+						icon: Eye,
+						variant: "outline",
+						onClick: (job) => openDetailDialog(job),
+					},
+					{
+						label: "Duyệt",
+						icon: CheckCircle2,
+						variant: "primary",
+						disabled: () => actionPending,
+						onClick: (job) => handleApprove(job),
+					},
+					{
+						label: "Từ chối",
+						icon: XCircle,
+						variant: "destructive",
+						disabled: () => actionPending,
+						onClick: (job) => openRejectDialog(job),
+					},
+				],
+			},
+		],
+		[actionPending],
+	);
+
 	return (
-		<div className='mx-auto flex w-full max-w-7xl flex-col gap-5'>
+		<div className='mx-auto flex w-full flex-col gap-5'>
 			<div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
 				<div>
 					<h1 className='text-2xl font-semibold text-foreground'>Tin tuyển dụng chờ phê duyệt</h1>
@@ -109,18 +174,20 @@ export default function AdminJobsPage() {
 						{data?.totalElements.toLocaleString("vi-VN")} tin đang cần ADMIN xem xét
 					</p>
 				</div>
-				<Button
-					variant='outline'
-					onClick={() => refetch()}
-					disabled={isFetching}
-					className='w-fit'
-				>
-					<RefreshCw className={isFetching ? "animate-spin" : ""} />
-					Làm mới
-				</Button>
 			</div>
 
+			<FilterToolbar
+				searchValue={searchKeyword}
+				onSearchChange={setSearchKeyword}
+				searchPlaceholder='Tìm kiếm tin tuyển dụng...'
+				resetDisabled={!hasActiveFilters}
+				onReset={handleResetFilters}
+				onRefetch={() => refetch()}
+				isFetching={isFetching}
+			/>
+
 			<DataTable
+				actions={tableActions}
 				columns={[
 					{
 						key: "job",
@@ -182,38 +249,6 @@ export default function AdminJobsPage() {
 						className: "align-top text-sm text-muted-foreground",
 						render: (job) => formatDate(job.createdAt),
 					},
-					{
-						key: "actions",
-						header: "Xử lý",
-						className: "align-top",
-						render: (job) => (
-							<div className='flex flex-wrap gap-2'>
-								<Button
-									variant='outline'
-									size='sm'
-									onClick={() => openDetailDialog(job)}
-								>
-									<Eye /> Chi tiết
-								</Button>
-								<Button
-									variant='success'
-									size='sm'
-									disabled={actionPending}
-									onClick={() => handleApprove(job)}
-								>
-									<CheckCircle2 /> Duyệt
-								</Button>
-								<Button
-									variant='destructive'
-									size='sm'
-									disabled={actionPending}
-									onClick={() => openRejectDialog(job)}
-								>
-									<XCircle /> Từ chối
-								</Button>
-							</div>
-						),
-					},
 				]}
 				data={jobs}
 				isLoading={isLoading}
@@ -231,10 +266,9 @@ export default function AdminJobsPage() {
 					pageSize,
 					totalPages,
 					totalElements,
-					onPageChange: setPage,
+					onPageChange: (newPage) => updateSearchParams({ page: String(newPage) }),
 					onPageSizeChange: (newSize) => {
-						setPageSize(newSize);
-						setPage(0);
+						updateSearchParams({ size: String(newSize), page: "0" });
 					},
 					isFetching,
 					label: "tin tuyển dụng",

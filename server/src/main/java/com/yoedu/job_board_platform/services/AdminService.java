@@ -3,6 +3,7 @@ package com.yoedu.job_board_platform.services;
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.dtos.admin.*;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
+import com.yoedu.job_board_platform.models.ReportReason;
 import com.yoedu.job_board_platform.models.ReportStatus;
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
@@ -44,7 +45,7 @@ public interface AdminService {
 	 *
 	 * @return trang dữ liệu danh sách người dùng
 	 */
-	Page<User> getUsers(UserRole role, Boolean isActive, Pageable pageable);
+	Page<User> getUsers(String keyword, UserRole role, Boolean isActive, Pageable pageable);
 
 	/**
 	 * Lấy danh sách công ty đang chờ duyệt.
@@ -158,7 +159,7 @@ public interface AdminService {
 	 *
 	 * @return trang dữ liệu báo cáo
 	 */
-	Page<ReportResponse> getReports(ReportStatus status, Pageable pageable);
+	Page<ReportResponse> getReports(ReportStatus status, ReportReason reason, Pageable pageable);
 
 	/**
 	 * Xem xét báo cáo — chuyển trạng thái từ PENDING sang REVIEWED.

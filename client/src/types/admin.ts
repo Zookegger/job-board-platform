@@ -1,3 +1,7 @@
+import type { UserRole } from "./auth";
+import type { PaginationParams } from "./pagination";
+import type { ReportReason, ReportStatus } from "./report";
+
 export interface AdminDashboardStatsResponse {
 	totalUsers: number;
 	totalCompanies: number;
@@ -27,25 +31,25 @@ export interface StatusDistributionPoint {
 	percentage: number;
 }
 
-export type AdminUserRole = "ADMIN" | "EMPLOYER" | "CANDIDATE";
-
-export type AdminUserStatus = "ACTIVE" | "INACTIVE";
-
 export interface AdminUserListResponse {
 	id: string;
+	avatarUrl: string | null;
+	phone: string | null;
 	email: string;
 	fullName: string | null;
-	role: AdminUserRole;
-	status: AdminUserStatus;
+	role: UserRole;
 	isActive: boolean;
 	createdAt: string;
+	updatedAt: string | null;
 }
 
-export interface AdminUsersQueryParams {
-	page?: number;
-	size?: number;
-	role?: string;
-	status?: string;
-	sortBy?: string;
-	direction?: "asc" | "desc";
+export interface AdminUsersQueryParams extends PaginationParams {
+	keyword?: string | null;
+	role?: UserRole | null;
+	isActive?: boolean | null;
+}
+
+export interface ReportsParams extends PaginationParams {
+	status?: ReportStatus;
+	reason?: ReportReason;
 }

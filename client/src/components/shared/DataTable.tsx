@@ -64,6 +64,8 @@ export interface DataTableProps<T> {
 
 	rowTitle?: string | undefined;
 	onRowClick?: (item: T) => void | undefined;
+
+	size?: "thin" | "thick";
 }
 
 export interface DataTableActions<T> {
@@ -74,7 +76,7 @@ export interface DataTableActions<T> {
 		onClick: (item: T) => void;
 		disabled?: (item: T) => boolean;
 		show?: (item: T) => boolean;
-		variant?: "default" | "destructive" | "outline" | "ghost" | "link" | "secondary" | "primary";
+		variant?: "default" | "destructive" | "outline" | "ghost" | "link" | "secondary" | "primary" | "success" | "warning";
 	}[];
 }
 
@@ -231,7 +233,10 @@ function ActionColumn<T>({ actions, item }: { actions: DataTableActions<T>; item
 							<MoreHorizontal />
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align='end' className="min-w-40">
+					<DropdownMenuContent
+						align='end'
+						className='min-w-40'
+					>
 						{visibleItems.map((act, i) => (
 							<DropdownMenuItem
 								key={i}
@@ -280,6 +285,7 @@ export function DataTable<T>({
 	skeletonRows = 5,
 	onRowClick = undefined,
 	rowTitle,
+	size = "thick",
 }: DataTableProps<T>) {
 	const resolvedPagination: PaginationConfig | undefined = useMemo(() => {
 		if (pageResponse && pageable) {
@@ -354,6 +360,7 @@ export function DataTable<T>({
 									className={cn(
 										"border-b last:border-0 hover:bg-muted/30 transition-colors",
 										typeof onRowClick === "function" && "cursor-pointer",
+										size === "thin" && "px-4 py-1",
 									)}
 									onClick={() => onRowClick?.(item)}
 									title={rowTitle}
@@ -361,7 +368,7 @@ export function DataTable<T>({
 									{columnsWithActions.map((col) => (
 										<td
 											key={col.key}
-											className={cn("px-4 py-4", col.className)}
+											className={cn("px-4 py-4", col.className, size === "thin" && "px-4 py-1")}
 											onClick={(e) => {
 												if (col.key === "actions") {
 													e.stopPropagation();

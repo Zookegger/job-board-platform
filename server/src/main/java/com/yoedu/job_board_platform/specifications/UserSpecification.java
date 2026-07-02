@@ -1,14 +1,38 @@
 package com.yoedu.job_board_platform.specifications;
 
-import org.springframework.data.jpa.domain.Specification;
-
 import com.yoedu.job_board_platform.models.User;
 import com.yoedu.job_board_platform.models.UserRole;
-
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.experimental.UtilityClass;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.UUID;
 
 @UtilityClass
 public final class UserSpecification {
+
+	public static Specification<User> hasKeyword(String keyword) {
+		return ((root, query, cb) -> {
+			if (keyword == null || keyword.isBlank()) {
+				return cb.conjunction();
+			}
+			String pattern = "%" + keyword.trim().toLowerCase() + "%";
+			var profileJoin = root.join("profile", JoinType.INNER);
+			Predicate textSearchPredicate = cb.or(
+					cb.like(cb.lower(root.get("email")), pattern),
+					cb.like(cb.lower(profileJoin.get("fullName")), pattern),
+					cb.like(cb.lower(profileJoin.get("phone")), pattern)
+			);
+
+			try {
+				UUID parsedId = UUID.fromString(keyword.trim());
+				return cb.or(textSearchPredicate, cb.equal(root.get("id"), parsedId));
+			} catch (IllegalArgumentException e) {
+				return textSearchPredicate;
+			}
+		});
+	}
 
 	public static Specification<User> hasRole(UserRole role) {
 		return (root, query, cb) -> {

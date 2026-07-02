@@ -8,8 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 
 import java.util.UUID;
 
@@ -24,11 +24,11 @@ public interface NotificationApi {
 	@Operation(summary = "Get unread notification count")
 	ResponseEntity<Long> getUnreadCount();
 
-	@PutMapping("/{id}/read")
+	@PatchMapping("/{id}/read")
 	@Operation(summary = "Mark a notification as read")
 	ResponseEntity<Void> markAsRead(@PathVariable UUID id);
 
-	@PutMapping("/read-all")
+	@PatchMapping("/read-all")
 	@Operation(summary = "Mark all notifications as read")
 	ResponseEntity<Void> markAllAsRead();
 }

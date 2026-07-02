@@ -1,31 +1,40 @@
 import { BaseDialog } from "@/components/shared/BaseDialog";
-import { DataTable } from "@/components/shared/DataTable";
+import { DataTable, type DataTableActions } from "@/components/shared/DataTable";
+import { FilterToolbar } from "@/components/shared/FilterToolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAdminSkills, useCreateSkill, useDeleteSkill, useToggleSkill, useUpdateSkill } from "@/hooks/useAdminSkills";
+import { useDebounce } from "@/hooks/useDebounce";
 import { skillSchema, type SkillFormData } from "@/lib/schemas/skill";
 import type { PaginationParams } from "@/types/pagination";
 import type { SkillResponse } from "@/types/skill";
 import { formatDate } from "@/utils/DateUtils";
 import getErrorMessage from "@/utils/getErrorMessage";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GraduationCap, Loader2, Pencil, Plus, Power, RefreshCw, Save, Search, Trash2, X } from "lucide-react";
-import { useDeferredValue, useMemo, useState } from "react";
+import { GraduationCap, Loader2, Pencil, Plus, Power, Save, Trash2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
+const DEFAULT_PAGE = 0;
 
 export default function SkillsPage() {
-	const [page, setPage] = useState(0);
-	const [pageSize, setPageSize] = useState(PAGE_SIZE);
-	const [searchKeyword, setSearchKeyword] = useState("");
-	const deferredSearchKeyword = useDeferredValue(searchKeyword.trim());
-	const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
-	const [sortField, setSortField] = useState("");
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const page = parseInt(searchParams.get("page") || String(DEFAULT_PAGE), 10);
+	const pageSize = parseInt(searchParams.get("size") || String(PAGE_SIZE), 10);
+	const statusParam = searchParams.get("status") || "ALL";
+	const sortParam = searchParams.get("sort") || "ALL";
+	const keywordParam = searchParams.get("keyword") || null;
+
+	const [localSearchParams, setLocalSearchParams] = useState(keywordParam || "");
+	const debouncedSearch = useDebounce(localSearchParams, 400);
+
 	const [sheetOpen, setSheetOpen] = useState(false);
 	const [editingSkill, setEditingSkill] = useState<SkillResponse | null>(null);
 	const [confirmDialog, setConfirmDialog] = useState<{
@@ -35,36 +44,72 @@ export default function SkillsPage() {
 		onConfirm: () => void;
 	}>({ open: false, title: "", description: "", onConfirm: () => {} });
 
-	function handleSearchChange(keyword: string) {
-		setSearchKeyword(keyword);
-		setPage(0);
-	}
+	const updateSearchParams = useCallback(
+		(updates: Record<string, string | null>) => {
+			const nextParams = new URLSearchParams(searchParams);
+			for (const [key, value] of Object.entries(updates)) {
+				if (value !== null) {
+					nextParams.set(key, value);
+				} else {
+					nextParams.delete(key);
+				}
+			}
+			setSearchParams(nextParams);
+		},
+		[searchParams, setSearchParams],
+	);
 
-	function handleStatusChange(status: "all" | "active" | "inactive") {
-		setStatusFilter(status);
-		setPage(0);
-	}
+	useEffect(() => {
+		if (debouncedSearch !== (keywordParam || "")) {
+			const nextParams = new URLSearchParams(searchParams);
+			if (debouncedSearch) {
+				nextParams.set("keyword", debouncedSearch);
+			} else {
+				nextParams.delete("keyword");
+			}
+			nextParams.set("page", String(DEFAULT_PAGE));
+			setSearchParams(nextParams);
+		}
+	}, [debouncedSearch, keywordParam, searchParams, setSearchParams]);
 
-	function handleSortChange(sortOption: string) {
-		setSortField(sortOption);
-		setPage(0);
-	}
+	const handleStatusChange = useCallback(
+		(value: string) => {
+			updateSearchParams({ status: value, page: String(DEFAULT_PAGE) });
+		},
+		[updateSearchParams],
+	);
+
+	const handleSortChange = useCallback(
+		(value: string) => {
+			updateSearchParams({ sort: value, page: String(DEFAULT_PAGE) });
+		},
+		[updateSearchParams],
+	);
+
+	const handleResetFilters = useCallback(() => {
+		const nextParams = new URLSearchParams();
+		setSearchParams(nextParams);
+		setLocalSearchParams("");
+	}, [setSearchParams]);
+
+	const hasActiveFilters = Boolean(localSearchParams || statusParam !== "ALL" || sortParam !== "ALL");
 
 	const isActiveParam = useMemo(() => {
-		if (statusFilter === "all") return undefined;
-		return statusFilter === "active";
-	}, [statusFilter]);
+		if (statusParam === "ALL") return undefined;
+		return statusParam === "active";
+	}, [statusParam]);
 
 	const queryParams = useMemo<PaginationParams>(() => {
-		const parts = sortField.split("_");
+		if (sortParam === "ALL") return { page, size: pageSize };
+		const parts = sortParam.split("_");
 		const sortBy = parts[0] || undefined;
 		const direction = (parts[1] as "asc" | "desc") || undefined;
 		return { page, size: pageSize, sortBy, direction };
-	}, [page, pageSize, sortField]);
+	}, [page, pageSize, sortParam]);
 
 	const { data, isError, isFetching, isLoading, refetch, error } = useAdminSkills(
 		queryParams,
-		deferredSearchKeyword || undefined,
+		keywordParam || undefined,
 		isActiveParam,
 	);
 
@@ -77,46 +122,81 @@ export default function SkillsPage() {
 	const toggleSkill = useToggleSkill();
 	const deleteSkill = useDeleteSkill();
 
-	const handleToggle = (skill: SkillResponse) => {
-		const label = skill.isActive ? "tắt" : "bật";
-		setConfirmDialog({
-			open: true,
-			title: `Xác nhận ${label} kỹ năng`,
-			description: `Bạn có chắc muốn ${label} kỹ năng "${skill.name}"?`,
-			onConfirm: () => {
-				toggleSkill.mutate(skill.id, {
-					onSuccess: () => toast.success(`Đã ${label} kỹ năng "${skill.name}"`),
-					onError: (err) => toast.error(getErrorMessage(err, "Không thể thay đổi trạng thái")),
-				});
-				setConfirmDialog((prev) => ({ ...prev, open: false }));
-			},
-		});
-	};
+	const handleToggle = useCallback(
+		(skill: SkillResponse) => {
+			const label = skill.isActive ? "tắt" : "bật";
+			setConfirmDialog({
+				open: true,
+				title: `Xác nhận ${label} kỹ năng`,
+				description: `Bạn có chắc muốn ${label} kỹ năng "${skill.name}"?`,
+				onConfirm: () => {
+					toggleSkill.mutate(skill.id, {
+						onSuccess: () => toast.success(`Đã ${label} kỹ năng "${skill.name}"`),
+						onError: (err) => toast.error(getErrorMessage(err, "Không thể thay đổi trạng thái")),
+					});
+					setConfirmDialog((prev) => ({ ...prev, open: false }));
+				},
+			});
+		},
+		[toggleSkill],
+	);
 
-	const handleDelete = (skill: SkillResponse) => {
-		setConfirmDialog({
-			open: true,
-			title: "Xác nhận xóa kỹ năng",
-			description: `Xóa kỹ năng "${skill.name}"? Hành động này không thể hoàn tác.`,
-			onConfirm: () => {
-				deleteSkill.mutate(skill.id, {
-					onSuccess: () => toast.success(`Đã xóa kỹ năng "${skill.name}"`),
-					onError: (err) => toast.error(getErrorMessage(err, "Không thể xóa kỹ năng")),
-				});
-				setConfirmDialog((prev) => ({ ...prev, open: false }));
-			},
-		});
-	};
+	const handleDelete = useCallback(
+		(skill: SkillResponse) => {
+			setConfirmDialog({
+				open: true,
+				title: "Xác nhận xóa kỹ năng",
+				description: `Xóa kỹ năng "${skill.name}"? Hành động này không thể hoàn tác.`,
+				onConfirm: () => {
+					deleteSkill.mutate(skill.id, {
+						onSuccess: () => toast.success(`Đã xóa kỹ năng "${skill.name}"`),
+						onError: (err) => toast.error(getErrorMessage(err, "Không thể xóa kỹ năng")),
+					});
+					setConfirmDialog((prev) => ({ ...prev, open: false }));
+				},
+			});
+		},
+		[deleteSkill],
+	);
 
-	const openCreateSheet = () => {
+	const openCreateSheet = useCallback(() => {
 		setEditingSkill(null);
 		setSheetOpen(true);
-	};
+	}, []);
 
-	const openEditSheet = (skill: SkillResponse) => {
+	const openEditSheet = useCallback((skill: SkillResponse) => {
 		setEditingSkill(skill);
 		setSheetOpen(true);
-	};
+	}, []);
+
+	const tableActions = useMemo<DataTableActions<SkillResponse>[]>(
+		() => [
+			{
+				header: "Thao tác",
+				items: [
+					{
+						label: "Chỉnh sửa",
+						icon: Pencil,
+						variant: "ghost",
+						onClick: (skill) => openEditSheet(skill),
+					},
+					{
+						label: "Bật/tắt",
+						icon: Power,
+						variant: "ghost",
+						onClick: (skill) => handleToggle(skill),
+					},
+					{
+						label: "Xóa",
+						icon: Trash2,
+						variant: "destructive",
+						onClick: (skill) => handleDelete(skill),
+					},
+				],
+			},
+		],
+		[handleToggle, handleDelete, openEditSheet],
+	);
 
 	const {
 		register,
@@ -148,7 +228,7 @@ export default function SkillsPage() {
 	};
 
 	return (
-		<div className='mx-auto flex w-full max-w-7xl flex-col gap-5'>
+		<div className='mx-auto flex w-full flex-col gap-5'>
 			{/* Header */}
 			<div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
 				<div>
@@ -165,52 +245,42 @@ export default function SkillsPage() {
 				</Button>
 			</div>
 
-			{/* Search + Filter + Sort */}
-			<div className='rounded-lg border bg-card p-4'>
-				<div className='flex gap-3'>
-					<div className='relative flex-1'>
-						<Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
-						<Input
-							value={searchKeyword}
-							onChange={(e) => handleSearchChange(e.target.value)}
-							placeholder='Tìm kiếm kỹ năng...'
-							className='h-10 bg-background pl-10'
-						/>
-					</div>
-					<select
-						value={statusFilter}
-						onChange={(e) => handleStatusChange(e.target.value as "all" | "active" | "inactive")}
-						className='h-10 w-44 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-					>
-						<option value='all'>Tất cả</option>
-						<option value='active'>Đang hoạt động</option>
-						<option value='inactive'>Đã tắt</option>
-					</select>
-					<Button
-						variant='outline'
-						onClick={() => refetch()}
-						disabled={isFetching}
-						title='Làm mới dữ liệu'
-					>
-						<RefreshCw className={isFetching ? "animate-spin" : ""} />
-					</Button>
+			<FilterToolbar
+				searchValue={localSearchParams}
+				onSearchChange={setLocalSearchParams}
+				searchPlaceholder='Tìm kiếm kỹ năng...'
+				resetDisabled={!hasActiveFilters}
+				onReset={handleResetFilters}
+				onRefetch={() => refetch()}
+				isFetching={isFetching}
+				selects={[
+					{
+						key: "status-filter",
+						value: statusParam,
+						onValueChange: handleStatusChange,
+						placeholder: "Lọc trạng thái",
+						options: [
+							{ value: "ALL", label: "Tất cả" },
+							{ value: "active", label: "Đang hoạt động" },
+							{ value: "inactive", label: "Đã tắt" },
+						],
+					},
+					{
+						key: "sort-filter",
+						value: sortParam,
+						onValueChange: handleSortChange,
+						placeholder: "Sắp xếp theo...",
+						options: [
+							{ value: "ALL", label: "Mặc định" },
+							{ value: "name_asc", label: "Tên A-Z" },
+							{ value: "name_desc", label: "Tên Z-A" },
+							{ value: "createdAt_desc", label: "Mới nhất trước" },
+							{ value: "createdAt_asc", label: "Cũ nhất trước" },
+						],
+					},
+				]}
+			/>
 
-					<select
-						value={sortField}
-						onChange={(e) => handleSortChange(e.target.value)}
-						className='h-10 w-44 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						defaultValue={""}
-					>
-						<option value='' disabled>Sắp xếp theo...</option>
-						<option value='name_asc'>Tên A-Z</option>
-						<option value='name_desc'>Tên Z-A</option>
-						<option value='createdAt_desc'>Mới nhất trước</option>
-						<option value='createdAt_asc'>Cũ nhất trước</option>
-					</select>
-				</div>
-			</div>
-
-			{/* Table */}
 			<DataTable
 				columns={[
 					{
@@ -241,48 +311,18 @@ export default function SkillsPage() {
 						className: "text-sm text-muted-foreground",
 						render: (s) => formatDate(s.createdAt),
 					},
-					{
-						key: "actions",
-						header: "Hành động",
-						render: (s) => (
-							<div className='flex items-center gap-1'>
-								<Button
-									variant='ghost'
-									size='icon'
-									onClick={() => openEditSheet(s)}
-								>
-									<Pencil className='size-4' />
-								</Button>
-								<Button
-									variant='ghost'
-									size='icon'
-									onClick={() => handleToggle(s)}
-								>
-									<Power
-										className={`size-4 ${s.isActive ? "text-success" : "text-muted-foreground"}`}
-									/>
-								</Button>
-								<Button
-									variant='ghost'
-									size='icon'
-									onClick={() => handleDelete(s)}
-								>
-									<Trash2 className='size-4 text-destructive' />
-								</Button>
-							</div>
-						),
-					},
 				]}
 				data={skills}
 				isLoading={isLoading}
 				isError={isError}
 				error={error}
 				onRetry={() => refetch()}
+				actions={tableActions}
 				emptyState={{
 					icon: GraduationCap,
 					title: "Chưa có kỹ năng nào",
 					subtitle:
-						searchKeyword || statusFilter !== "all"
+						localSearchParams || statusParam !== "ALL"
 							? "Thay đổi bộ lọc hoặc tìm kiếm để xem kết quả khác."
 							: 'Nhấn "Thêm kỹ năng" để tạo kỹ năng đầu tiên.',
 				}}
@@ -293,14 +333,17 @@ export default function SkillsPage() {
 					totalPages,
 					totalElements,
 					isFetching,
-					onPageChange: setPage,
+					onPageChange: (newPage) => updateSearchParams({ page: String(newPage) }),
 					onPageSizeChange: (newSize) => {
-						setPageSize(newSize);
-						setPage(0);
+						const nextParams = new URLSearchParams(searchParams);
+						nextParams.set("size", String(newSize));
+						nextParams.set("page", String(DEFAULT_PAGE));
+						setSearchParams(nextParams);
 					},
 					label: "kỹ năng",
 				}}
 				minWidth='min-w-[640px]'
+				size="thin"
 			/>
 
 			{/* Create/Edit Sheet */}

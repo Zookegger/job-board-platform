@@ -35,7 +35,7 @@ export default function AdminLayout() {
 				isOpen={sidebarOpen}
 				onClose={() => setSidebarOpen(false)}
 			/>
-			<div className='flex flex-1 flex-col w-dvw'>
+			<div className='flex flex-1 flex-col min-w-0'>
 				<header className='grid lg:hidden h-16 grid-cols-[1fr_auto_1fr] items-center border-b bg-card px-4'>
 					<Button
 						variant='ghost'

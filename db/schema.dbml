@@ -89,6 +89,11 @@ enum proficient_level {
   EXPERT         // Chuyên gia — hiểu sâu, thiết kế giải pháp, giải quyết vấn đề phức tạp
 }
 
+enum review_reason {
+  NEW_COMPANY   // Công ty mới đăng ký
+  INFO_UPDATED  // Công ty đã duyệt nhưng vừa cập nhật thông tin
+}
+
 Table users {
   id uuid [primary key, default: `gen_random_uuid()`]
   email varchar(255) [unique, not null]
@@ -96,6 +101,7 @@ Table users {
   role user_role [not null]
   is_active bool [not null, default: true, note: "Dể quản trị viên khóa tài khoản"]
   created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
 }
 
 Table refresh_tokens {
@@ -119,18 +125,20 @@ Table profiles {
 // --- SUBTYPES (Domain specific details) ---
 Table candidate_details {
   profile_id uuid [primary key]
-  cv_file_url text [unique, note: "Lưu trữ URL tới file PDF CV"]
 }
 
 Table company_employer_details {
   profile_id uuid [primary key, note: "Khóa chính kiêm khóa ngoại 1:1 với profile"]
   company_id uuid [not null, note: "Liên kết HR với công ty của họ"]
-  role_in_company varchar(100)
+  role_in_company varchar(50)
 }
 
 Table skills {
   id int [primary key, default: `gen_identity()`]
   name varchar(100) [not null, unique]
+  is_active bool [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
 }
 
 Table candidate_skills {
@@ -153,11 +161,13 @@ Table companies {
   email varchar(255) [unique]
   phone varchar(15)
   tax_code varchar(20)
+  review_reason review_reason
   status company_status [not null, default: company_status.PENDING]
   is_approved bool [not null, default: false]
   created_at timestamptz [not null, default: `now()`]
   approved_at timestamptz [default: null, note: "Thời điểm Quản trị viên phê duyệt công ty lên hệ thống. NULL nếu chưa từng được duyệt."]
-  rejection_reason text [not null]
+  rejection_reason text
+  suspension_reason text
 }
 
 Table jobs {
@@ -180,6 +190,7 @@ Table jobs {
   status job_status [not null, default: job_status.DRAFT]
   posted_date timestamptz [default: 'now()']
   expiration_date timestamptz
+  rejection_reason text
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
 }
@@ -229,6 +240,19 @@ Table company_approval_logs {
   new_status company_status [not null]
   note text [note: "Lý do từ chối hoặc tạm ngưng, NULL nếu không có"]
   created_at timestamptz [not null, default: `now()`]
+}
+
+// CV/Resume PDF đã upload của ứng viên (1-1 với candidate_details, V8)
+Table resumes {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  candidate_detail_id uuid [not null, unique]
+  title varchar(255) [not null, default: '']
+  original_file_name varchar(255) [not null, default: '']
+  file_path text [not null]
+  file_size bigint [not null, default: 0]
+  file_type varchar(50) [not null, default: 'application/pdf']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
 }
 
 // Notification
@@ -291,9 +315,10 @@ Table reports {
   id uuid [primary key, default: `gen_random_uuid()`]
   job_id uuid [note: "Target 1: FK to jobs.id"]
   company_id uuid [note: "Target 2: FK to companies.id"]
-  reported_by uuid [note: "users.id của người báo cáo, NULL nếu tài khoản người báo cáo đã bị xóa"]
+  reported_by uuid [not null, note: "users.id của người báo cáo"]
   reason report_reason [not null]
   details text [note: "Mô tả chi tiết từ người report"] 
+  review_notes text [note: "Ghi chú xử lý của admin"]
   status report_status [not null, default: report_status.PENDING]
   reviewed_by uuid [note: "users.id của admin xử lý"]
   reviewed_at timestamptz
@@ -331,7 +356,9 @@ Ref: company_approval_logs.actor_id > users.id [delete: restrict]
 
 Ref: notifications.user_id > users.id [delete: cascade]
 
-Ref: reports.reported_by > users.id [delete: set null]
+Ref: resumes.candidate_detail_id > candidate_details.profile_id [delete: cascade]
+
+Ref: reports.reported_by > users.id [delete: restrict]
 Ref: reports.job_id > jobs.id [delete: cascade]
 Ref: reports.company_id > companies.id [delete: cascade]
 Ref: reports.reviewed_by > users.id [delete: set null]

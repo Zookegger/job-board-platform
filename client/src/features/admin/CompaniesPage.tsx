@@ -1,15 +1,13 @@
 import { DataTable } from "@/components/shared/DataTable";
+import { FilterToolbar, type FilterSelectConfig, type FilterToolbarProps } from "@/components/shared/FilterToolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanyApprovalModal from "@/features/admin/components/CompanyApprovalModal";
-import {
-	useAllCompanies,
-	usePendingCompanies,
-	useUnsuspendCompany,
-} from "@/hooks/useAdminCompanies";
+import { useAllCompanies, usePendingCompanies, useUnsuspendCompany } from "@/hooks/useAdminCompanies";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
 	CompanyStatus,
 	type AdminCompanyListResponse,
@@ -26,18 +24,17 @@ import {
 	Mail,
 	MapPin,
 	Phone,
-	RefreshCw,
 	RotateCcw,
-	Search,
 	XCircle,
 } from "lucide-react";
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const DEFAULT_PAGE_SIZE = 10;
 
-type TaxCodeFilter = "all" | "with-tax-code" | "missing-tax-code";
-type ContactFilter = "all" | "with-contact" | "missing-contact";
+type TaxCodeFilter = "ALL" | "with-tax-code" | "missing-tax-code";
+type ContactFilter = "ALL" | "with-contact" | "missing-contact";
 type SortOption = "newest" | "oldest" | "name";
 
 const sortConfig: Record<SortOption, { sortBy: "createdAt" | "companyName"; direction: "asc" | "desc" }> = {
@@ -47,7 +44,7 @@ const sortConfig: Record<SortOption, { sortBy: "createdAt" | "companyName"; dire
 };
 
 const STATUS_FILTER_OPTIONS = [
-	{ value: "", label: "Tất cả trạng thái" },
+	{ value: "ALL", label: "Tất cả trạng thái" },
 	{ value: "PENDING", label: "Chờ duyệt" },
 	{ value: "APPROVED", label: "Đã duyệt" },
 	{ value: "REJECTED", label: "Từ chối" },
@@ -122,73 +119,203 @@ function CompanyLogo({ company }: { company: { logoUrl: string | null; companyNa
 	);
 }
 
+interface CustomerToolbarProps extends Omit<FilterToolbarProps, "selects"> {
+	taxCodeFilter?: TaxCodeFilter;
+	onTaxCodeFilterChange?: (value: TaxCodeFilter) => void;
+	contactFilter?: ContactFilter;
+	onContactFilterChange?: (value: ContactFilter) => void;
+	sortOption: SortOption;
+	onSortChange: (value: SortOption) => void;
+	statusFilter?: string;
+	onStatusFilterChange?: (value: string) => void;
+}
+
+function CustomerFilterToolbar({
+	taxCodeFilter,
+	onTaxCodeFilterChange,
+	contactFilter,
+	onContactFilterChange,
+	sortOption,
+	onSortChange,
+	statusFilter,
+	onStatusFilterChange,
+	...props
+}: CustomerToolbarProps) {
+	const selects: FilterSelectConfig[] = [
+		{
+			key: "sort",
+			value: sortOption,
+			onValueChange: (v) => onSortChange(v as SortOption),
+			placeholder: "Sắp xếp",
+			options: [
+				{ value: "newest", label: "Mới nhất" },
+				{ value: "oldest", label: "Cũ nhất" },
+				{ value: "name", label: "Tên A-Z" },
+			],
+		},
+	];
+
+	if (taxCodeFilter && onTaxCodeFilterChange) {
+		selects.unshift({
+			key: "taxCode",
+			value: taxCodeFilter,
+			onValueChange: (v) => onTaxCodeFilterChange(v as TaxCodeFilter),
+			placeholder: "Tất cả MST",
+			options: [
+				{ value: "ALL", label: "Tất cả MST" },
+				{ value: "with-tax-code", label: "Có MST" },
+				{ value: "missing-tax-code", label: "Thiếu MST" },
+			],
+		});
+	}
+
+	if (contactFilter && onContactFilterChange) {
+		selects.unshift({
+			key: "contact",
+			value: contactFilter,
+			onValueChange: (v) => onContactFilterChange(v as ContactFilter),
+			placeholder: "Tất cả liên hệ",
+			options: [
+				{ value: "ALL", label: "Tất cả liên hệ" },
+				{ value: "with-contact", label: "Có liên hệ" },
+				{ value: "missing-contact", label: "Thiếu liên hệ" },
+			],
+		});
+	}
+
+	if (statusFilter && onStatusFilterChange) {
+		selects.push({
+			key: "status",
+			value: statusFilter,
+			onValueChange: (v) => onStatusFilterChange(v as string),
+			placeholder: "Tất cả trạng thái",
+			options: STATUS_FILTER_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label })),
+		});
+	}
+
+	return (
+		<FilterToolbar
+			{...props}
+			selects={selects}
+		/>
+	);
+}
+
 export default function AdminCompaniesPage() {
-	const [activeTab, setActiveTab] = useState("pending");
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	// ── Pending tab state ──
-	const [page, setPage] = useState(0);
-	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [taxCodeFilter, setTaxCodeFilter] = useState<TaxCodeFilter>("all");
-	const [contactFilter, setContactFilter] = useState<ContactFilter>("all");
-	const [sortOption, setSortOption] = useState<SortOption>("newest");
-	const deferredSearch = useDeferredValue(searchTerm.trim());
+	const activeTab = searchParams.get("tab") || "pending";
+	const page = parseInt(searchParams.get("page") || "0", 10);
+	const pageSize = parseInt(searchParams.get("size") || String(DEFAULT_PAGE_SIZE), 10);
+	const keywordParam = searchParams.get("keyword") || null;
+	const taxCodeParam = (searchParams.get("taxCode") || "ALL") as TaxCodeFilter;
+	const contactParam = (searchParams.get("contact") || "ALL") as ContactFilter;
+	const sortParam = (searchParams.get("sort") || "newest") as SortOption;
+	const statusParam = searchParams.get("status");
 
-	function handleSearchChange(keyword: string) {
-		setSearchTerm(keyword);
-		setPage(0);
-	}
+	const [searchTerm, setSearchTerm] = useState(keywordParam || "");
+	const debouncedSearch = useDebounce(searchTerm, 400);
 
-	function handleTaxCodeFilterChange(filter: TaxCodeFilter) {
-		setTaxCodeFilter(filter);
-		setPage(0);
-	}
+	const [allSearchTerm, setAllSearchTerm] = useState(keywordParam || "");
+	const allDebouncedSearch = useDebounce(allSearchTerm, 400);
 
-	function handleContactFilterChange(filter: ContactFilter) {
-		setContactFilter(filter);
-		setPage(0);
-	}
-
-	function handleSortChange(option: SortOption) {
-		setSortOption(option);
-		setPage(0);
-	}
-
-	// ── All tab state ──
-	const [allPage, setAllPage] = useState(0);
-	const [allPageSize, setAllPageSize] = useState(DEFAULT_PAGE_SIZE);
-	const [allSearchTerm, setAllSearchTerm] = useState("");
-	const [allStatusFilter, setAllStatusFilter] = useState("");
-	const allDeferredSearch = useDeferredValue(allSearchTerm.trim());
-
-	// ── Shared dialog state ──
 	const [approvalAction, setApprovalAction] = useState<{
 		company: AdminPendingCompanyResponse | CompanyResponse;
 		action: "approve" | "reject" | "suspend";
 	} | null>(null);
 
-	// ── Queries ──
+	const updateSearchParams = useCallback(
+		(updates: Record<string, string | null>) => {
+			const nextParams = new URLSearchParams(searchParams);
+			for (const [key, value] of Object.entries(updates)) {
+				if (value !== null) nextParams.set(key, value);
+				else nextParams.delete(key);
+			}
+			setSearchParams(nextParams);
+		},
+		[searchParams, setSearchParams],
+	);
+
+	const handleTabChange = useCallback(
+		(newTab: string) => {
+			const params = new URLSearchParams();
+			params.set("tab", newTab);
+			setSearchParams(params);
+		},
+		[setSearchParams],
+	);
+
+	useEffect(() => {
+		if (activeTab !== "pending") return;
+		if (debouncedSearch !== (keywordParam || "")) {
+			updateSearchParams({ keyword: debouncedSearch || null, page: "0" });
+		}
+	}, [debouncedSearch, keywordParam, activeTab, updateSearchParams]);
+
+	useEffect(() => {
+		if (activeTab !== "all") return;
+		if (allDebouncedSearch !== (keywordParam || "")) {
+			updateSearchParams({ keyword: allDebouncedSearch || null, page: "0" });
+		}
+	}, [allDebouncedSearch, keywordParam, activeTab, updateSearchParams]);
+
+	function handleSearchChange(keyword: string) {
+		setSearchTerm(keyword);
+	}
+
+	function handleTaxCodeFilterChange(filter: TaxCodeFilter) {
+		updateSearchParams({ taxCode: filter, page: "0" });
+	}
+
+	function handleContactFilterChange(filter: ContactFilter) {
+		updateSearchParams({ contact: filter, page: "0" });
+	}
+
+	function handleSortChange(option: SortOption) {
+		updateSearchParams({ sort: option, page: "0" });
+	}
+
+	const hasActivePendingFilters = keywordParam !== null || taxCodeParam !== "ALL" || contactParam !== "ALL";
+
+	function handleAllSearchChange(keyword: string) {
+		setAllSearchTerm(keyword);
+	}
+
+	const handleAllStatusFilterChange = useCallback(
+		(status: string) => {
+			updateSearchParams({ status, page: "0" });
+		},
+		[updateSearchParams],
+	);
+
+	const handleAllResetFilters = useCallback(() => {
+		setAllSearchTerm("");
+		updateSearchParams({ keyword: null, status: null, page: null });
+	}, [updateSearchParams]);
+
+	const hasActiveAllFilters = keywordParam !== null || statusParam !== null;
+
 	const pendingQueryParams = useMemo(() => {
-		const sort = sortConfig[sortOption];
+		const sort = sortConfig[sortParam];
 		return {
 			page,
 			size: pageSize,
-			keyword: deferredSearch,
-			hasTaxCode: toBooleanFilter(taxCodeFilter, "with-tax-code", "missing-tax-code"),
-			hasContact: toBooleanFilter(contactFilter, "with-contact", "missing-contact"),
+			keyword: debouncedSearch.trim(),
+			hasTaxCode: toBooleanFilter(taxCodeParam, "with-tax-code", "missing-tax-code"),
+			hasContact: toBooleanFilter(contactParam, "with-contact", "missing-contact"),
 			sortBy: sort.sortBy,
 			direction: sort.direction,
 		};
-	}, [contactFilter, deferredSearch, page, pageSize, sortOption, taxCodeFilter]);
+	}, [contactParam, debouncedSearch, page, pageSize, sortParam, taxCodeParam]);
 
 	const allQueryParams = useMemo(
 		() => ({
-			page: allPage,
-			size: allPageSize,
-			keyword: allDeferredSearch,
-			status: allStatusFilter || undefined,
+			page,
+			size: pageSize,
+			keyword: allDebouncedSearch.trim(),
+			status: statusParam || undefined,
 		}),
-		[allDeferredSearch, allPage, allPageSize, allStatusFilter],
+		[allDebouncedSearch, page, pageSize, statusParam],
 	);
 
 	const {
@@ -220,8 +347,10 @@ export default function AdminCompaniesPage() {
 
 	const actionPending = unsuspendCompany.isPending;
 
-	// ── Handlers ──
-	function openApprovalAction(company: AdminPendingCompanyResponse | CompanyResponse, action: "approve" | "reject" | "suspend") {
+	function openApprovalAction(
+		company: AdminPendingCompanyResponse | CompanyResponse,
+		action: "approve" | "reject" | "suspend",
+	) {
 		setApprovalAction({ company, action });
 	}
 
@@ -476,40 +605,29 @@ export default function AdminCompaniesPage() {
 	return (
 		<Tabs
 			value={activeTab}
-			onValueChange={setActiveTab}
-			className='mx-auto flex w-full max-w-7xl flex-col gap-5'
+			onValueChange={handleTabChange}
+			className='flex w-full flex-col gap-5'
 		>
-			<div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
-				<div>
-					<h1 className='text-2xl font-semibold text-foreground'>Quản lý công ty</h1>
-					<p className='mt-1 text-sm text-muted-foreground'>
-						{activeTab === "pending"
-							? `${pendingTotalElements.toLocaleString("vi-VN")} hồ sơ đang cần xem xét`
-							: `Tổng số ${allTotalElements.toLocaleString("vi-VN")} công ty`}
-					</p>
-				</div>
-				<Button
-					variant='outline'
-					onClick={() => (activeTab === "pending" ? pendingRefetch() : allRefetch())}
-					disabled={activeTab === "pending" ? pendingIsFetching : allIsFetching}
-					className='w-fit'
-				>
-					<RefreshCw
-						className={
-							activeTab === "pending"
-								? pendingIsFetching
-									? "animate-spin"
-									: ""
-								: allIsFetching
-									? "animate-spin"
-									: ""
-						}
-					/>
-					Làm mới
-				</Button>
-			</div>
+			<Card className='border-none bg-linear-to-r from-primary/10 via-background to-background shadow-sm'>
+				<CardHeader className='lg:flex-row lg:items-center lg:justify-between'>
+					<div className='flex gap-4 items-center'>
+						<div className='flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary'>
+							<Building2 className='size-6' />
+						</div>
 
-			<TabsList className='w-fit'>
+						<div>
+							<CardTitle className='text-2xl font-semibold'>Quản lý công ty</CardTitle>
+							<CardDescription className='mt-1 max-w-2xl'>
+								{activeTab === "pending"
+									? `${pendingTotalElements.toLocaleString("vi-VN")} hồ sơ đang cần xem xét`
+									: `Tổng số ${allTotalElements.toLocaleString("vi-VN")} công ty`}
+							</CardDescription>
+						</div>
+					</div>
+				</CardHeader>
+			</Card>
+
+			<TabsList>
 				<TabsTrigger
 					value='pending'
 					className='flex items-center gap-2'
@@ -528,47 +646,24 @@ export default function AdminCompaniesPage() {
 				value='pending'
 				className='mt-0 flex flex-col gap-5'
 			>
-				<div className='rounded-lg border bg-card p-4'>
-					<div className='grid gap-3 md:grid-cols-[minmax(260px,1fr)_180px_180px_180px]'>
-						<Input
-							value={searchTerm}
-							onChange={(event) => handleSearchChange(event.target.value)}
-							placeholder='Tìm theo tên, email, MST, địa chỉ...'
-							startIcon={<Search className='size-4' />}
-							className='h-10 bg-background'
-						/>
-
-						<select
-							value={taxCodeFilter}
-							onChange={(event) => handleTaxCodeFilterChange(event.target.value as TaxCodeFilter)}
-							className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						>
-							<option value='all'>Tất cả MST</option>
-							<option value='with-tax-code'>Có MST</option>
-							<option value='missing-tax-code'>Thiếu MST</option>
-						</select>
-
-						<select
-							value={contactFilter}
-							onChange={(event) => handleContactFilterChange(event.target.value as ContactFilter)}
-							className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						>
-							<option value='all'>Tất cả liên hệ</option>
-							<option value='with-contact'>Có liên hệ</option>
-							<option value='missing-contact'>Thiếu liên hệ</option>
-						</select>
-
-						<select
-							value={sortOption}
-							onChange={(event) => handleSortChange(event.target.value as SortOption)}
-							className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						>
-							<option value='newest'>Mới nhất</option>
-							<option value='oldest'>Cũ nhất</option>
-							<option value='name'>Tên A-Z</option>
-						</select>
-					</div>
-				</div>
+				<CustomerFilterToolbar
+					searchPlaceholder='Tìm theo tên, email, MST, địa chỉ...'
+					searchValue={searchTerm}
+					taxCodeFilter={taxCodeParam}
+					onTaxCodeFilterChange={handleTaxCodeFilterChange}
+					contactFilter={contactParam}
+					onContactFilterChange={handleContactFilterChange}
+					sortOption={sortParam}
+					onSortChange={handleSortChange}
+					onSearchChange={handleSearchChange}
+					resetDisabled={!hasActivePendingFilters}
+					onReset={() => {
+						setSearchTerm("");
+						updateSearchParams({ keyword: null, taxCode: null, contact: null, sort: null, page: null });
+					}}
+					onRefetch={() => pendingRefetch()}
+					isFetching={pendingIsFetching}
+				/>
 
 				<DataTable
 					columns={pendingColumns}
@@ -588,10 +683,9 @@ export default function AdminCompaniesPage() {
 						pageSize,
 						totalPages: pendingTotalPages,
 						totalElements: pendingTotalElements,
-						onPageChange: setPage,
+						onPageChange: (newPage) => updateSearchParams({ page: String(newPage) }),
 						onPageSizeChange: (newSize) => {
-							setPageSize(newSize);
-							setPage(0);
+							updateSearchParams({ size: String(newSize), page: "0" });
 						},
 						isFetching: pendingIsFetching,
 						label: "công ty",
@@ -604,38 +698,27 @@ export default function AdminCompaniesPage() {
 				value='all'
 				className='mt-0 flex flex-col gap-5'
 			>
-				<div className='rounded-lg border bg-card p-4'>
-					<div className='grid gap-3 md:grid-cols-[minmax(260px,1fr)_180px]'>
-						<Input
-							value={allSearchTerm}
-							onChange={(event) => {
-								setAllSearchTerm(event.target.value);
-								setAllPage(0);
-							}}
-							placeholder='Tìm theo tên, email, MST, địa chỉ...'
-							startIcon={<Search className='size-4' />}
-							className='h-10 bg-background'
-						/>
-
-						<select
-							value={allStatusFilter}
-							onChange={(event) => {
-								setAllStatusFilter(event.target.value);
-								setAllPage(0);
-							}}
-							className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-						>
-							{STATUS_FILTER_OPTIONS.map((opt) => (
-								<option
-									key={opt.value}
-									value={opt.value}
-								>
-									{opt.label}
-								</option>
-							))}
-						</select>
-					</div>
-				</div>
+				<FilterToolbar
+					searchValue={allSearchTerm}
+					onSearchChange={handleAllSearchChange}
+					searchPlaceholder='Tìm theo tên, email, MST, địa chỉ...'
+					resetDisabled={!hasActiveAllFilters}
+					onReset={handleAllResetFilters}
+					onRefetch={() => allRefetch()}
+					isFetching={allIsFetching}
+					selects={[
+						{
+							key: "status-filter",
+							value: statusParam || "ALL",
+							onValueChange: handleAllStatusFilterChange,
+							placeholder: "Tất cả trạng thái",
+							options: STATUS_FILTER_OPTIONS.map((opt) => ({
+								value: opt.value,
+								label: opt.label,
+							})),
+						},
+					]}
+				/>
 
 				<DataTable
 					columns={allColumns}
@@ -651,14 +734,13 @@ export default function AdminCompaniesPage() {
 					}}
 					pageResponse={allData}
 					pageable={{
-						page: allPage,
-						pageSize: allPageSize,
+						page,
+						pageSize,
 						totalPages: allTotalPages,
 						totalElements: allTotalElements,
-						onPageChange: setAllPage,
+						onPageChange: (newPage) => updateSearchParams({ page: String(newPage) }),
 						onPageSizeChange: (newSize) => {
-							setAllPageSize(newSize);
-							setAllPage(0);
+							updateSearchParams({ size: String(newSize), page: "0" });
 						},
 						isFetching: allIsFetching,
 						label: "công ty",

@@ -1,11 +1,7 @@
-import type { PaginationParams } from "@/types/pagination";
-import type { ReportStatus } from "@/types/report";
 import adminApi from "@/api/admin";
+import type { ReportsParams } from "@/types/admin";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export interface ReportsParams extends PaginationParams {
-	status?: ReportStatus;
-}
 
 export const ADMIN_REPORT_KEYS = {
 	all: (params: ReportsParams) => ["admin", "reports", params] as const,
@@ -15,7 +11,7 @@ export const ADMIN_REPORT_KEYS = {
 export function useReports(params: ReportsParams) {
 	return useQuery({
 		queryKey: ADMIN_REPORT_KEYS.all(params),
-		queryFn: () => adminApi.getReports({ page: params.page, size: params.size }, params.status),
+		queryFn: () => adminApi.getReports({ page: params.page, size: params.size, status: params.status, reason: params.reason }),
 		placeholderData: keepPreviousData,
 		retry: false,
 	});
