@@ -6,11 +6,11 @@ import org.mapstruct.Mapping;
 import com.yoedu.job_board_platform.dtos.auth.CandidateRegisterRequest;
 import com.yoedu.job_board_platform.models.User;
 
-@Mapper(componentModel = "spring")
 /**
  * MapStruct mapper cho đăng ký ứng viên.
  * Chuyển đổi CandidateRegisterRequest thành User entity (role = CANDIDATE).
  */
+@Mapper(componentModel = "spring")
 public interface CandidateMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -18,6 +18,7 @@ public interface CandidateMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "isActive", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "role", constant = "CANDIDATE")
     User toUser(CandidateRegisterRequest request);
 }

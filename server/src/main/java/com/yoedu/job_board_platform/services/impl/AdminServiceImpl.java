@@ -18,6 +18,7 @@ import com.yoedu.job_board_platform.repositories.*;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.specifications.CompanySpecification;
 import com.yoedu.job_board_platform.specifications.JobSpecification;
+import com.yoedu.job_board_platform.specifications.ReportSpecification;
 import com.yoedu.job_board_platform.specifications.UserSpecification;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -242,12 +243,10 @@ public class AdminServiceImpl implements AdminService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Page<ReportResponse> getReports(ReportStatus status, Pageable pageable) {
-		if (status != null) {
-			return reportRepository.findByStatus(status, pageable)
-					.map(reportMapper::toResponse);
-		}
-		return reportRepository.findAll(pageable)
+	public Page<ReportResponse> getReports(ReportStatus status, ReportReason reason, Pageable pageable) {
+		Specification<Report> spec = Specification.where(ReportSpecification.hasStatus(status).and(ReportSpecification.hasReason(reason)));
+
+		return reportRepository.findAll(spec, pageable)
 				.map(reportMapper::toResponse);
 	}
 

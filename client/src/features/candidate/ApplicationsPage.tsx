@@ -1,17 +1,15 @@
-import { DataTable } from "@/components/shared/DataTable";
-import { Button } from "@/components/ui/button";
+import { DataTable, type DataTableActions } from "@/components/shared/DataTable";
+import { FilterToolbar } from "@/components/shared/FilterToolbar";
 import { ApplicationStatusBadge } from "@/components/shared/ApplicationTimeline";
 import { useMyApplications } from "@/hooks/useApplications";
 import type { ApplicationListResponse, ApplicationStatus } from "@/types/application";
 import { formatDate } from "@/utils/DateUtils";
 import RouterRoutes from "@/utils/RouterRoutes";
-import { Building2, ExternalLink, Eye, FileText, MapPin, RefreshCw } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Building2, ExternalLink, Eye, FileText, MapPin } from "lucide-react";
+import { useCallback, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
 const DEFAULT_PAGE_SIZE = 10;
-
-type StatusFilter = "all" | ApplicationStatus;
 
 function CompanyLogo({ application }: { application: ApplicationListResponse }) {
 	return (
@@ -30,17 +28,41 @@ function CompanyLogo({ application }: { application: ApplicationListResponse }) 
 }
 
 export default function CandidateApplicationsPage() {
-	const [page, setPage] = useState(0);
-	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const page = parseInt(searchParams.get("page") || "0", 10);
+	const pageSize = parseInt(searchParams.get("size") || String(DEFAULT_PAGE_SIZE), 10);
+	const statusParam = searchParams.get("status");
+
+	const updateSearchParams = useCallback(
+		(updates: Record<string, string | null>) => {
+			const nextParams = new URLSearchParams(searchParams);
+			for (const [key, value] of Object.entries(updates)) {
+				if (value !== null) nextParams.set(key, value);
+				else nextParams.delete(key);
+			}
+			setSearchParams(nextParams);
+		},
+		[searchParams, setSearchParams],
+	);
+
+	const handleStatusFilterChange = useCallback((value: string) => {
+		updateSearchParams({ status: value === "ALL" ? null : value, page: "0" });
+	}, [updateSearchParams]);
+
+	const handleResetFilters = useCallback(() => {
+		updateSearchParams({ status: null, page: null });
+	}, [updateSearchParams]);
+
+	const hasActiveFilters = statusParam !== null;
 
 	const queryParams = useMemo(
 		() => ({
 			page,
 			size: pageSize,
-			status: statusFilter === "all" ? undefined : statusFilter,
+			status: statusParam as ApplicationStatus | undefined,
 		}),
-		[page, pageSize, statusFilter],
+		[page, pageSize, statusParam],
 	);
 
 	const { data, isError, isFetching, isLoading, refetch, error } = useMyApplications(queryParams);
@@ -48,6 +70,33 @@ export default function CandidateApplicationsPage() {
 	const applications = data?.content ?? [];
 	const totalElements = data?.totalElements ?? 0;
 	const totalPages = data?.totalPages ?? 0;
+
+	const tableActions = useMemo<DataTableActions<ApplicationListResponse>[]>(
+		() => [
+			{
+				header: "Thao tác",
+				items: [
+					{
+						label: "Chi tiết",
+						icon: Eye,
+						variant: "outline",
+						onClick: (app) => {
+							window.location.href = RouterRoutes.CANDIDATE_APPLICATION_DETAIL(app.id);
+						},
+					},
+					{
+						label: "Tin đăng",
+						icon: ExternalLink,
+						variant: "outline",
+						onClick: (app) => {
+							window.location.href = RouterRoutes.JOB_DETAIL(app.jobSlug);
+						},
+					},
+				],
+			},
+		],
+		[],
+	);
 
 	return (
 		<div className='mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 md:p-6'>
@@ -58,54 +107,31 @@ export default function CandidateApplicationsPage() {
 						{totalElements.toLocaleString("vi-VN")} hồ sơ đã nộp
 					</p>
 				</div>
-
-				<div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-					<div className='relative'>
-						<select
-							value={statusFilter}
-							onChange={(event) => {
-								setStatusFilter(event.target.value as StatusFilter);
-								setPage(0);
-							}}
-							className='h-10 w-full appearance-none rounded-lg border border-input bg-background pl-4 pr-10 text-sm font-medium shadow-sm outline-none transition-all hover:bg-accent hover:text-accent-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-[180px]'
-						>
-							<option value='all'>Tất cả trạng thái</option>
-							<option value='PENDING'>Chờ xử lý</option>
-							<option value='REVIEWING'>Đang xem xét</option>
-							<option value='INTERVIEW'>Phỏng vấn</option>
-							<option value='HIRED'>Đã tuyển</option>
-							<option value='REJECTED'>Từ chối</option>
-							<option value='WITHDRAWN'>Đã rút đơn</option>
-						</select>
-						<div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground'>
-							<svg
-								className='size-4'
-								fill='none'
-								stroke='currentColor'
-								viewBox='0 0 24 24'
-							>
-								<path
-									strokeLinecap='round'
-									strokeLinejoin='round'
-									strokeWidth='2'
-									d='M19 9l-7 7-7-7'
-								/>
-							</svg>
-						</div>
-					</div>
-
-					<Button
-						variant='outline'
-						size='icon'
-						onClick={() => refetch()}
-						disabled={isFetching}
-						className='h-10 w-10 shrink-0 rounded-lg shadow-sm'
-						title='Làm mới dữ liệu'
-					>
-						<RefreshCw className={`size-4 ${isFetching ? "animate-spin text-primary" : ""}`} />
-					</Button>
-				</div>
 			</div>
+
+			<FilterToolbar
+				resetDisabled={!hasActiveFilters}
+				onReset={handleResetFilters}
+				onRefetch={() => refetch()}
+				isFetching={isFetching}
+				selects={[
+					{
+						key: "status-filter",
+						value: statusParam || "ALL",
+						onValueChange: handleStatusFilterChange,
+						placeholder: "Tất cả trạng thái",
+						options: [
+							{ value: "ALL", label: "Tất cả trạng thái" },
+							{ value: "PENDING", label: "Chờ xử lý" },
+							{ value: "REVIEWING", label: "Đang xem xét" },
+							{ value: "INTERVIEW", label: "Phỏng vấn" },
+							{ value: "HIRED", label: "Đã tuyển" },
+							{ value: "REJECTED", label: "Từ chối" },
+							{ value: "WITHDRAWN", label: "Đã rút đơn" },
+						],
+					},
+				]}
+			/>
 
 			<div className='overflow-hidden rounded-xl border bg-card shadow-sm'>
 				<DataTable<ApplicationListResponse>
@@ -152,36 +178,8 @@ export default function CandidateApplicationsPage() {
 							className: "align-middle",
 							render: (application) => <ApplicationStatusBadge status={application.status} />,
 						},
-						{
-							key: "actions",
-							header: "Thao tác",
-							className: "align-middle text-right",
-							render: (application) => (
-								<div className='flex items-center justify-end gap-2'>
-									<Link to={RouterRoutes.CANDIDATE_APPLICATION_DETAIL(application.id)}>
-										<Button
-											variant='ghost'
-											size='sm'
-											className='h-8 gap-2 px-3 hover:bg-primary/10 hover:text-primary'
-										>
-											<Eye className='size-4' />
-											<span className='hidden sm:inline'>Chi tiết</span>
-										</Button>
-									</Link>
-									<Link to={RouterRoutes.JOB_DETAIL(application.jobSlug)}>
-										<Button
-											variant='ghost'
-											size='sm'
-											className='h-8 gap-2 px-3 text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
-										>
-											<ExternalLink className='size-4' />
-											<span className='hidden sm:inline'>Tin đăng</span>
-										</Button>
-									</Link>
-								</div>
-							),
-						},
 					]}
+					actions={tableActions}
 					data={applications}
 					isLoading={isLoading}
 					isError={isError}
@@ -191,7 +189,7 @@ export default function CandidateApplicationsPage() {
 						icon: FileText,
 						title: "Chưa có dữ liệu",
 						subtitle:
-							statusFilter === "all"
+							statusParam === null
 								? "Khám phá việc làm phù hợp và bắt đầu ứng tuyển ngay."
 								: "Không tìm thấy hồ sơ nào khớp với bộ lọc hiện tại.",
 					}}
@@ -201,10 +199,9 @@ export default function CandidateApplicationsPage() {
 						pageSize,
 						totalPages,
 						totalElements,
-						onPageChange: setPage,
+						onPageChange: (newPage) => updateSearchParams({ page: String(newPage) }),
 						onPageSizeChange: (newSize) => {
-							setPageSize(newSize);
-							setPage(0);
+							updateSearchParams({ size: String(newSize), page: "0" });
 						},
 						isFetching,
 						label: "đơn ứng tuyển",

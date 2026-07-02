@@ -3,11 +3,11 @@ import { FilterToolbar, type FilterSelectConfig, type FilterToolbarProps } from 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanyApprovalModal from "@/features/admin/components/CompanyApprovalModal";
 import { useAllCompanies, usePendingCompanies, useUnsuspendCompany } from "@/hooks/useAdminCompanies";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
 	CompanyStatus,
 	type AdminCompanyListResponse,
@@ -24,18 +24,17 @@ import {
 	Mail,
 	MapPin,
 	Phone,
-	RefreshCw,
 	RotateCcw,
-	Search,
 	XCircle,
 } from "lucide-react";
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const DEFAULT_PAGE_SIZE = 10;
 
-type TaxCodeFilter = "all" | "with-tax-code" | "missing-tax-code";
-type ContactFilter = "all" | "with-contact" | "missing-contact";
+type TaxCodeFilter = "ALL" | "with-tax-code" | "missing-tax-code";
+type ContactFilter = "ALL" | "with-contact" | "missing-contact";
 type SortOption = "newest" | "oldest" | "name";
 
 const sortConfig: Record<SortOption, { sortBy: "createdAt" | "companyName"; direction: "asc" | "desc" }> = {
@@ -45,7 +44,7 @@ const sortConfig: Record<SortOption, { sortBy: "createdAt" | "companyName"; dire
 };
 
 const STATUS_FILTER_OPTIONS = [
-	{ value: "", label: "Tất cả trạng thái" },
+	{ value: "ALL", label: "Tất cả trạng thái" },
 	{ value: "PENDING", label: "Chờ duyệt" },
 	{ value: "APPROVED", label: "Đã duyệt" },
 	{ value: "REJECTED", label: "Từ chối" },
@@ -163,7 +162,7 @@ function CustomerFilterToolbar({
 			onValueChange: (v) => onTaxCodeFilterChange(v as TaxCodeFilter),
 			placeholder: "Tất cả MST",
 			options: [
-				{ value: "all", label: "Tất cả MST" },
+				{ value: "ALL", label: "Tất cả MST" },
 				{ value: "with-tax-code", label: "Có MST" },
 				{ value: "missing-tax-code", label: "Thiếu MST" },
 			],
@@ -177,7 +176,7 @@ function CustomerFilterToolbar({
 			onValueChange: (v) => onContactFilterChange(v as ContactFilter),
 			placeholder: "Tất cả liên hệ",
 			options: [
-				{ value: "all", label: "Tất cả liên hệ" },
+				{ value: "ALL", label: "Tất cả liên hệ" },
 				{ value: "with-contact", label: "Có liên hệ" },
 				{ value: "missing-contact", label: "Thiếu liên hệ" },
 			],
@@ -203,72 +202,120 @@ function CustomerFilterToolbar({
 }
 
 export default function AdminCompaniesPage() {
-	const [activeTab, setActiveTab] = useState("pending");
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	// ── Pending tab state ──
-	const [page, setPage] = useState(0);
-	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [taxCodeFilter, setTaxCodeFilter] = useState<TaxCodeFilter>("all");
-	const [contactFilter, setContactFilter] = useState<ContactFilter>("all");
-	const [sortOption, setSortOption] = useState<SortOption>("newest");
-	const deferredSearch = useDeferredValue(searchTerm.trim());
+	const activeTab = searchParams.get("tab") || "pending";
+	const page = parseInt(searchParams.get("page") || "0", 10);
+	const pageSize = parseInt(searchParams.get("size") || String(DEFAULT_PAGE_SIZE), 10);
+	const keywordParam = searchParams.get("keyword") || null;
+	const taxCodeParam = (searchParams.get("taxCode") || "ALL") as TaxCodeFilter;
+	const contactParam = (searchParams.get("contact") || "ALL") as ContactFilter;
+	const sortParam = (searchParams.get("sort") || "newest") as SortOption;
+	const statusParam = searchParams.get("status");
 
-	function handleSearchChange(keyword: string) {
-		setSearchTerm(keyword);
-		setPage(0);
-	}
+	const [searchTerm, setSearchTerm] = useState(keywordParam || "");
+	const debouncedSearch = useDebounce(searchTerm, 400);
 
-	function handleTaxCodeFilterChange(filter: TaxCodeFilter) {
-		setTaxCodeFilter(filter);
-		setPage(0);
-	}
+	const [allSearchTerm, setAllSearchTerm] = useState(keywordParam || "");
+	const allDebouncedSearch = useDebounce(allSearchTerm, 400);
 
-	function handleContactFilterChange(filter: ContactFilter) {
-		setContactFilter(filter);
-		setPage(0);
-	}
-
-	function handleSortChange(option: SortOption) {
-		setSortOption(option);
-		setPage(0);
-	}
-
-	// ── All tab state ──
-	const [allPage, setAllPage] = useState(0);
-	const [allPageSize, setAllPageSize] = useState(DEFAULT_PAGE_SIZE);
-	const [allSearchTerm, setAllSearchTerm] = useState("");
-	const [allStatusFilter, setAllStatusFilter] = useState("");
-	const allDeferredSearch = useDeferredValue(allSearchTerm.trim());
-
-	// ── Shared dialog state ──
 	const [approvalAction, setApprovalAction] = useState<{
 		company: AdminPendingCompanyResponse | CompanyResponse;
 		action: "approve" | "reject" | "suspend";
 	} | null>(null);
 
-	// ── Queries ──
+	const updateSearchParams = useCallback(
+		(updates: Record<string, string | null>) => {
+			const nextParams = new URLSearchParams(searchParams);
+			for (const [key, value] of Object.entries(updates)) {
+				if (value !== null) nextParams.set(key, value);
+				else nextParams.delete(key);
+			}
+			setSearchParams(nextParams);
+		},
+		[searchParams, setSearchParams],
+	);
+
+	const handleTabChange = useCallback(
+		(newTab: string) => {
+			const params = new URLSearchParams();
+			params.set("tab", newTab);
+			setSearchParams(params);
+		},
+		[setSearchParams],
+	);
+
+	useEffect(() => {
+		if (activeTab !== "pending") return;
+		if (debouncedSearch !== (keywordParam || "")) {
+			updateSearchParams({ keyword: debouncedSearch || null, page: "0" });
+		}
+	}, [debouncedSearch, keywordParam, activeTab, updateSearchParams]);
+
+	useEffect(() => {
+		if (activeTab !== "all") return;
+		if (allDebouncedSearch !== (keywordParam || "")) {
+			updateSearchParams({ keyword: allDebouncedSearch || null, page: "0" });
+		}
+	}, [allDebouncedSearch, keywordParam, activeTab, updateSearchParams]);
+
+	function handleSearchChange(keyword: string) {
+		setSearchTerm(keyword);
+	}
+
+	function handleTaxCodeFilterChange(filter: TaxCodeFilter) {
+		updateSearchParams({ taxCode: filter, page: "0" });
+	}
+
+	function handleContactFilterChange(filter: ContactFilter) {
+		updateSearchParams({ contact: filter, page: "0" });
+	}
+
+	function handleSortChange(option: SortOption) {
+		updateSearchParams({ sort: option, page: "0" });
+	}
+
+	const hasActivePendingFilters = keywordParam !== null || taxCodeParam !== "ALL" || contactParam !== "ALL";
+
+	function handleAllSearchChange(keyword: string) {
+		setAllSearchTerm(keyword);
+	}
+
+	const handleAllStatusFilterChange = useCallback(
+		(status: string) => {
+			updateSearchParams({ status, page: "0" });
+		},
+		[updateSearchParams],
+	);
+
+	const handleAllResetFilters = useCallback(() => {
+		setAllSearchTerm("");
+		updateSearchParams({ keyword: null, status: null, page: null });
+	}, [updateSearchParams]);
+
+	const hasActiveAllFilters = keywordParam !== null || statusParam !== null;
+
 	const pendingQueryParams = useMemo(() => {
-		const sort = sortConfig[sortOption];
+		const sort = sortConfig[sortParam];
 		return {
 			page,
 			size: pageSize,
-			keyword: deferredSearch,
-			hasTaxCode: toBooleanFilter(taxCodeFilter, "with-tax-code", "missing-tax-code"),
-			hasContact: toBooleanFilter(contactFilter, "with-contact", "missing-contact"),
+			keyword: debouncedSearch.trim(),
+			hasTaxCode: toBooleanFilter(taxCodeParam, "with-tax-code", "missing-tax-code"),
+			hasContact: toBooleanFilter(contactParam, "with-contact", "missing-contact"),
 			sortBy: sort.sortBy,
 			direction: sort.direction,
 		};
-	}, [contactFilter, deferredSearch, page, pageSize, sortOption, taxCodeFilter]);
+	}, [contactParam, debouncedSearch, page, pageSize, sortParam, taxCodeParam]);
 
 	const allQueryParams = useMemo(
 		() => ({
-			page: allPage,
-			size: allPageSize,
-			keyword: allDeferredSearch,
-			status: allStatusFilter || undefined,
+			page,
+			size: pageSize,
+			keyword: allDebouncedSearch.trim(),
+			status: statusParam || undefined,
 		}),
-		[allDeferredSearch, allPage, allPageSize, allStatusFilter],
+		[allDebouncedSearch, page, pageSize, statusParam],
 	);
 
 	const {
@@ -300,7 +347,6 @@ export default function AdminCompaniesPage() {
 
 	const actionPending = unsuspendCompany.isPending;
 
-	// ── Handlers ──
 	function openApprovalAction(
 		company: AdminPendingCompanyResponse | CompanyResponse,
 		action: "approve" | "reject" | "suspend",
@@ -320,11 +366,6 @@ export default function AdminCompaniesPage() {
 		},
 		[unsuspendCompany],
 	);
-
-	const handleStatusFilterChange = useCallback((status: string) => {
-		setAllStatusFilter(status);
-		setAllPage(0);
-	}, []);
 
 	const pendingColumns = useMemo(
 		() => [
@@ -564,7 +605,7 @@ export default function AdminCompaniesPage() {
 	return (
 		<Tabs
 			value={activeTab}
-			onValueChange={setActiveTab}
+			onValueChange={handleTabChange}
 			className='flex w-full flex-col gap-5'
 		>
 			<Card className='border-none bg-linear-to-r from-primary/10 via-background to-background shadow-sm'>
@@ -586,41 +627,20 @@ export default function AdminCompaniesPage() {
 				</CardHeader>
 			</Card>
 
-			<div className='flex justify-between'>
-				<TabsList>
-					<TabsTrigger
-						value='pending'
-						className='flex items-center gap-2'
-					>
-						<Clock className='size-4' /> Chờ duyệt
-					</TabsTrigger>
-					<TabsTrigger
-						value='all'
-						className='flex items-center gap-2'
-					>
-						<Building2 className='size-4' /> Tất cả
-					</TabsTrigger>
-				</TabsList>
-				<Button
-					variant='outline'
-					onClick={() => (activeTab === "pending" ? pendingRefetch() : allRefetch())}
-					disabled={activeTab === "pending" ? pendingIsFetching : allIsFetching}
-					className='w-fit'
+			<TabsList>
+				<TabsTrigger
+					value='pending'
+					className='flex items-center gap-2'
 				>
-					<RefreshCw
-						className={
-							activeTab === "pending"
-								? pendingIsFetching
-									? "animate-spin"
-									: ""
-								: allIsFetching
-									? "animate-spin"
-									: ""
-						}
-					/>
-					Làm mới
-				</Button>
-			</div>
+					<Clock className='size-4' /> Chờ duyệt
+				</TabsTrigger>
+				<TabsTrigger
+					value='all'
+					className='flex items-center gap-2'
+				>
+					<Building2 className='size-4' /> Tất cả
+				</TabsTrigger>
+			</TabsList>
 
 			<TabsContent
 				value='pending'
@@ -628,13 +648,21 @@ export default function AdminCompaniesPage() {
 			>
 				<CustomerFilterToolbar
 					searchPlaceholder='Tìm theo tên, email, MST, địa chỉ...'
-					taxCodeFilter={taxCodeFilter}
+					searchValue={searchTerm}
+					taxCodeFilter={taxCodeParam}
 					onTaxCodeFilterChange={handleTaxCodeFilterChange}
-					contactFilter={contactFilter}
+					contactFilter={contactParam}
 					onContactFilterChange={handleContactFilterChange}
-					sortOption={sortOption}
+					sortOption={sortParam}
 					onSortChange={handleSortChange}
 					onSearchChange={handleSearchChange}
+					resetDisabled={!hasActivePendingFilters}
+					onReset={() => {
+						setSearchTerm("");
+						updateSearchParams({ keyword: null, taxCode: null, contact: null, sort: null, page: null });
+					}}
+					onRefetch={() => pendingRefetch()}
+					isFetching={pendingIsFetching}
 				/>
 
 				<DataTable
@@ -655,10 +683,9 @@ export default function AdminCompaniesPage() {
 						pageSize,
 						totalPages: pendingTotalPages,
 						totalElements: pendingTotalElements,
-						onPageChange: setPage,
+						onPageChange: (newPage) => updateSearchParams({ page: String(newPage) }),
 						onPageSizeChange: (newSize) => {
-							setPageSize(newSize);
-							setPage(0);
+							updateSearchParams({ size: String(newSize), page: "0" });
 						},
 						isFetching: pendingIsFetching,
 						label: "công ty",
@@ -671,28 +698,27 @@ export default function AdminCompaniesPage() {
 				value='all'
 				className='mt-0 flex flex-col gap-5'
 			>
-				<div className='rounded-lg border bg-card p-4'>
-					<div className='grid gap-3 md:grid-cols-[minmax(260px,1fr)_180px]'>
-						<Input
-							value={allSearchTerm}
-							onChange={(event) => {
-								setAllSearchTerm(event.target.value);
-								setAllPage(0);
-							}}
-							placeholder='Tìm theo tên, email, MST, địa chỉ...'
-							startIcon={<Search className='size-4' />}
-							className='h-10 bg-background'
-						/>
-					</div>
-
-					<CustomerFilterToolbar
-						searchPlaceholder='Tìm theo tên, email, MST, địa chỉ...'
-						sortOption={sortOption}
-						onSortChange={handleSortChange}
-						onSearchChange={handleSearchChange}
-						onStatusFilterChange={handleStatusFilterChange}
-					/>
-				</div>
+				<FilterToolbar
+					searchValue={allSearchTerm}
+					onSearchChange={handleAllSearchChange}
+					searchPlaceholder='Tìm theo tên, email, MST, địa chỉ...'
+					resetDisabled={!hasActiveAllFilters}
+					onReset={handleAllResetFilters}
+					onRefetch={() => allRefetch()}
+					isFetching={allIsFetching}
+					selects={[
+						{
+							key: "status-filter",
+							value: statusParam || "ALL",
+							onValueChange: handleAllStatusFilterChange,
+							placeholder: "Tất cả trạng thái",
+							options: STATUS_FILTER_OPTIONS.map((opt) => ({
+								value: opt.value,
+								label: opt.label,
+							})),
+						},
+					]}
+				/>
 
 				<DataTable
 					columns={allColumns}
@@ -708,14 +734,13 @@ export default function AdminCompaniesPage() {
 					}}
 					pageResponse={allData}
 					pageable={{
-						page: allPage,
-						pageSize: allPageSize,
+						page,
+						pageSize,
 						totalPages: allTotalPages,
 						totalElements: allTotalElements,
-						onPageChange: setAllPage,
+						onPageChange: (newPage) => updateSearchParams({ page: String(newPage) }),
 						onPageSizeChange: (newSize) => {
-							setAllPageSize(newSize);
-							setAllPage(0);
+							updateSearchParams({ size: String(newSize), page: "0" });
 						},
 						isFetching: allIsFetching,
 						label: "công ty",

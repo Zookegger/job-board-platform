@@ -1,5 +1,6 @@
 import type { UserRole } from "./auth";
 import type { PaginationParams } from "./pagination";
+import type { ReportReason, ReportStatus } from "./report";
 
 export interface AdminDashboardStatsResponse {
 	totalUsers: number;
@@ -46,4 +47,9 @@ export interface AdminUsersQueryParams extends PaginationParams {
 	keyword?: string | null;
 	role?: UserRole | null;
 	isActive?: boolean | null;
+}
+
+export interface ReportsParams extends PaginationParams {
+	status?: ReportStatus;
+	reason?: ReportReason;
 }

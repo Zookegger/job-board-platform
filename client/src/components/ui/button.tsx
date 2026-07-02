@@ -20,7 +20,9 @@ const buttonVariants = cva(
 				link: "text-primary underline-offset-4 hover:underline",
 				dark: "bg-foreground text-background hover:bg-dark-hover",
 				success: "bg-success text-background hover:bg-success-hover",
-				default: "border-0 bg-transparent shadow-none rounded-none hover:bg-transparent hover:text-foreground active:translate-y-0 px-0",
+				warning: "bg-warning text-background hover:bg-warning-hover",
+				default:
+					"border-0 bg-transparent shadow-none rounded-none hover:bg-transparent hover:text-foreground active:translate-y-0 px-0",
 			},
 			size: {
 				default:
@@ -49,14 +51,7 @@ const Button = React.forwardRef<
 			asChild?: boolean;
 		}
 >(function Button(
-	{
-		className,
-		variant = "default",
-		size = "default",
-		asChild = false,
-		type = "button",
-		...props
-	},
+	{ className, variant = "default", size = "default", asChild = false, type = "button", ...props },
 	ref,
 ) {
 	const Comp = asChild ? Slot.Root : "button";

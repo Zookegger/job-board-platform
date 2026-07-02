@@ -11,6 +11,7 @@ import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.mappers.AdminMapper;
 import com.yoedu.job_board_platform.mappers.SkillMapper;
+import com.yoedu.job_board_platform.models.ReportReason;
 import com.yoedu.job_board_platform.models.ReportStatus;
 import com.yoedu.job_board_platform.models.Skill;
 import com.yoedu.job_board_platform.models.UserRole;
@@ -164,9 +165,27 @@ public class AdminController implements AdminApi {
 
 	@GetMapping("/reports")
 	public ResponseEntity<Page<ReportResponse>> getReports(
-			@RequestParam(required = false) ReportStatus status,
+			@RequestParam(required = false) String status,
+			@RequestParam(required = false) String reason,
 			Pageable pageable) {
-		return ResponseEntity.ok(adminService.getReports(status, pageable));
+
+		ReportStatus statusEnum = null;
+		ReportReason reasonEnum = null;
+
+		try {
+			if (status != null && !status.isBlank()) {
+				statusEnum = ReportStatus.valueOf(status.toUpperCase().trim());
+			}
+
+			if (reason != null && !reason.isBlank()) {
+				reasonEnum = ReportReason.valueOf(reason.toUpperCase().trim());
+			}
+
+			return ResponseEntity.ok(adminService.getReports(statusEnum, reasonEnum, pageable));
+
+		} catch (IllegalArgumentException ex) {
+			return ResponseEntity.badRequest().build();
+		}
 	}
 
 	@PatchMapping("/reports/{id}/review")

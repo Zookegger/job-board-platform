@@ -1,17 +1,19 @@
 import { BaseDialog } from "@/components/shared/BaseDialog";
 import { DataTable, type DataTableActions } from "@/components/shared/DataTable";
+import { FilterToolbar } from "@/components/shared/FilterToolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useDeleteEmployerJob, useEmployerJobs, useSubmitForReview } from "@/hooks/useEmployerJobs";
 import type { JobListResponse, JobStatus } from "@/types/job";
 import { EMPLOYMENT_TYPE_LABELS, EXPERIENCE_LEVEL_LABELS, JOB_STATUS_LABELS, LOCATION_TYPES_LABELS } from "@/types/job";
 import { formatDate } from "@/utils/DateUtils";
 import getErrorMessage from "@/utils/getErrorMessage";
 import { formatSalary } from "@/utils/StringUtil";
-import { Briefcase, Eye, Plus, RefreshCw, Search, SendHorizonal, SendHorizontal, Trash2 } from "lucide-react";
-import { useDeferredValue, useMemo, useState } from "react";
+import { Briefcase, Eye, Plus, SendHorizonal, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import CandidateTable from "./components/CandidateTable";
 import JobFormDialog from "./components/JobFormDialog";
@@ -51,11 +53,15 @@ function getStatusBadge(status: JobStatus) {
 }
 
 export default function EmployerJobsPage() {
-	const [page, setPage] = useState(0);
-	const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [statusFilter, setStatusFilter] = useState<JobStatus | "ALL">("ALL");
-	const deferredSearch = useDeferredValue(searchTerm.trim());
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const page = parseInt(searchParams.get("page") || "0", 10);
+	const pageSize = parseInt(searchParams.get("size") || String(DEFAULT_PAGE_SIZE), 10);
+	const statusParam = searchParams.get("status");
+	const keywordParam = searchParams.get("keyword") || null;
+
+	const [searchTerm, setSearchTerm] = useState(keywordParam || "");
+	const debouncedSearch = useDebounce(searchTerm.trim(), 400);
 
 	const [formDialogOpen, setFormDialogOpen] = useState(false);
 	const [formDialogMode, setFormDialogMode] = useState<"create" | "detail" | "edit">("create");
@@ -73,24 +79,43 @@ export default function EmployerJobsPage() {
 		job: JobListResponse | null;
 	}>({ open: false, job: null });
 
-	function handleSearchChange(keyword: string) {
-		setSearchTerm(keyword);
-		setPage(0);
-	}
+	const updateSearchParams = useCallback(
+		(updates: Record<string, string | null>) => {
+			const nextParams = new URLSearchParams(searchParams);
+			for (const [key, value] of Object.entries(updates)) {
+				if (value !== null) nextParams.set(key, value);
+				else nextParams.delete(key);
+			}
+			setSearchParams(nextParams);
+		},
+		[searchParams, setSearchParams],
+	);
 
-	function handleStatusFilterChange(filter: JobStatus | "ALL") {
-		setStatusFilter(filter);
-		setPage(0);
-	}
+	const handleStatusFilterChange = useCallback((filter: JobStatus | "ALL") => {
+		updateSearchParams({ status: filter === "ALL" ? null : filter, page: "0" });
+	}, [updateSearchParams]);
+
+	const handleResetFilters = useCallback(() => {
+		setSearchTerm("");
+		updateSearchParams({ keyword: null, status: null, page: null });
+	}, [updateSearchParams]);
+
+	useEffect(() => {
+		if (debouncedSearch !== (keywordParam || "")) {
+			updateSearchParams({ keyword: debouncedSearch || null, page: "0" });
+		}
+	}, [debouncedSearch, keywordParam, updateSearchParams]);
+
+	const hasActiveFilters = keywordParam !== null || statusParam !== null;
 
 	const queryParams = useMemo(
 		() => ({
 			page,
 			size: pageSize,
-			keyword: deferredSearch || undefined,
-			status: statusFilter !== "ALL" ? statusFilter : undefined,
+			keyword: debouncedSearch || undefined,
+			status: statusParam as JobStatus | undefined,
 		}),
-		[page, pageSize, deferredSearch, statusFilter],
+		[page, pageSize, debouncedSearch, statusParam],
 	);
 
 	const { data, isError, isFetching, isLoading, refetch, error } = useEmployerJobs(queryParams);
@@ -140,7 +165,7 @@ export default function EmployerJobsPage() {
 				},
 				{
 					label: "Gửi duyệt",
-					icon: SendHorizontal,
+					icon: SendHorizonal,
 					variant: "primary", // Maps directly to your mobile variant
 					show: (job) => job.status === "DRAFT",
 					disabled: () => actionPending,
@@ -178,52 +203,43 @@ export default function EmployerJobsPage() {
 						{totalElements.toLocaleString("vi-VN")} tin tuyển dụng
 					</p>
 				</div>
-				<div className='flex gap-2'>
-					<Button
-						variant='outline'
-						onClick={() => {
-							setFormDialogMode("create");
-							setSelectedJobId(undefined);
-							setFormDialogOpen(true);
-						}}
-					>
-						<Plus /> Tạo tin
-					</Button>
-					<Button
-						variant='outline'
-						onClick={() => refetch()}
-						disabled={isFetching}
-						className='w-fit'
-					>
-						<RefreshCw className={isFetching ? "animate-spin" : ""} />
-						Làm mới
-					</Button>
-				</div>
+				<Button
+					variant='outline'
+					onClick={() => {
+						setFormDialogMode("create");
+						setSelectedJobId(undefined);
+						setFormDialogOpen(true);
+					}}
+				>
+					<Plus /> Tạo tin
+				</Button>
 			</div>
 
-			<div className='rounded-lg border bg-card p-4'>
-				<div className='grid gap-3 md:grid-cols-[minmax(260px,1fr)_180px]'>
-					<Input
-						value={searchTerm}
-						onChange={(event) => handleSearchChange(event.target.value)}
-						placeholder='Tìm theo tiêu đề việc làm...'
-						startIcon={<Search className='size-4' />}
-						className='h-10 bg-background'
-					/>
-					<select
-						value={statusFilter}
-						onChange={(event) => handleStatusFilterChange(event.target.value as JobStatus | "ALL")}
-						className='h-10 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/50'
-					>
-						<option value='ALL'>Tất cả trạng thái</option>
-						<option value='DRAFT'>Bản nháp</option>
-						<option value='PENDING_APPROVAL'>Chờ duyệt</option>
-						<option value='ACTIVE'>Đã đăng</option>
-						<option value='EXPIRED'>Hết hạn</option>
-						<option value='REJECTED'>Bị từ chối</option>
-					</select>
-				</div>
-			</div>
+				<FilterToolbar
+					searchValue={searchTerm}
+					onSearchChange={setSearchTerm}
+					searchPlaceholder='Tìm theo tiêu đề việc làm...'
+					resetDisabled={!hasActiveFilters}
+					onReset={handleResetFilters}
+					onRefetch={() => refetch()}
+					isFetching={isFetching}
+					selects={[
+						{
+							key: "status-filter",
+							value: statusParam || "ALL",
+							onValueChange: (val) => handleStatusFilterChange(val as JobStatus | "ALL"),
+							placeholder: "Tất cả trạng thái",
+							options: [
+								{ value: "ALL", label: "Tất cả trạng thái" },
+								{ value: "DRAFT", label: "Bản nháp" },
+								{ value: "PENDING_APPROVAL", label: "Chờ duyệt" },
+								{ value: "ACTIVE", label: "Đã đăng" },
+								{ value: "EXPIRED", label: "Hết hạn" },
+								{ value: "REJECTED", label: "Bị từ chối" },
+							],
+						},
+					]}
+				/>
 
 			<DataTable
 				columns={[
@@ -284,7 +300,7 @@ export default function EmployerJobsPage() {
 					icon: Briefcase,
 					title: "Chưa có tin tuyển dụng nào",
 					subtitle:
-						statusFilter !== "ALL" || deferredSearch
+						statusParam !== null || debouncedSearch
 							? "Thay đổi bộ lọc hoặc tìm kiếm để xem kết quả khác."
 							: "Bắt đầu bằng cách tạo tin tuyển dụng mới.",
 				}}
@@ -294,10 +310,9 @@ export default function EmployerJobsPage() {
 					pageSize,
 					totalPages,
 					totalElements,
-					onPageChange: setPage,
+					onPageChange: (newPage) => updateSearchParams({ page: String(newPage) }),
 					onPageSizeChange: (newSize) => {
-						setPageSize(newSize);
-						setPage(0);
+						updateSearchParams({ size: String(newSize), page: "0" });
 					},
 					isFetching,
 					label: "tin",

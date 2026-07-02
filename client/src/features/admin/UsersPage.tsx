@@ -1,30 +1,29 @@
-import { DataTable, type Column } from "@/components/shared/DataTable";
+import { DataTable, type Column, type DataTableActions } from "@/components/shared/DataTable";
+import { FilterToolbar } from "@/components/shared/FilterToolbar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import type { AdminUserListResponse, AdminUsersQueryParams } from "@/types/admin";
 import { UserRole } from "@/types/auth";
 import { formatDate } from "@/utils/DateUtils";
-import { RefreshCcw, Search, UserCog, Users } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { Eye, ShieldBan, ShieldCheck, UserCog, Users } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-const STATUS_OPTIONS = [
-	{ value: null, label: "Tất cả trạng thái" },
-	{ value: true, label: "Đang hoạt động" },
-	{ value: false, label: "Đã khóa" },
-] as const;
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+	{ value: "ALL", label: "Tất cả trạng thái" },
+	{ value: "true", label: "Đang hoạt động" },
+	{ value: "false", label: "Đã khóa" },
+];
 
-const ROLE_OPTIONS = [
-	{ value: null, label: "Tất cả vai trò" },
+const ROLE_OPTIONS: { value: string; label: string }[] = [
+	{ value: "ALL", label: "Tất cả vai trò" },
 	{ value: UserRole.ADMIN, label: "Quản trị viên" },
 	{ value: UserRole.EMPLOYER, label: "Nhà tuyển dụng" },
 	{ value: UserRole.CANDIDATE, label: "Người tìm việc" },
-] as const;
+];
 
 const DEFAULT_PAGE = 0;
 
@@ -68,6 +67,10 @@ export default function AdminUsersPage() {
 	const roleParam = searchParams.get("role") as UserRole | null;
 	const isActiveParam = searchParams.get("isActive") as "true" | "false" | null;
 	const keywordParam = searchParams.get("keyword") || null;
+
+	const [localSearchParams, setLocalSearchParams] = useState(keywordParam || "");
+
+	const debouncedSearch = useDebounce(localSearchParams, 400);
 
 	const updateSearchParams = useCallback(
 		(updates: AdminUsersQueryParams) => {
@@ -116,17 +119,17 @@ export default function AdminUsersPage() {
 			size: pageSize,
 			role: roleParam,
 			isActive: isActiveParam === null ? null : isActiveParam === "true" ? true : false,
+			keyword: keywordParam,
 			sortBy: "createdAt",
 			direction: "desc" as const,
 		}),
-		[page, pageSize, roleParam, isActiveParam],
+		[page, pageSize, roleParam, isActiveParam, keywordParam],
 	);
 
 	const { data, isLoading, isFetching, isError, error, refetch } = useAdminUsers(queryParams);
 
 	const users = data?.content ?? [];
-	const activeFiltersCount = [roleParam !== null, isActiveParam !== null].filter(Boolean).length;
-
+	
 	const columns = useMemo<Column<AdminUserListResponse>[]>(
 		() => [
 			{
@@ -197,8 +200,50 @@ export default function AdminUsersPage() {
 		[],
 	);
 
+	const actions = useMemo<DataTableActions<AdminUserListResponse>[]>(
+		() => [
+			{
+				header: "Thao tác",
+				items: [
+					{
+						label: "Xem chi tiết",
+						icon: Eye,
+						variant: "outline",
+						onClick: (user) => {
+							// Hook this up to your detail modal or route
+							console.log("Xem chi tiết user:", user.id);
+						},
+					},
+					{
+						label: "Khóa tài khoản",
+						icon: ShieldBan,
+						variant: "destructive",
+						show: (user) => user.isActive === true,
+						// disabled: () => actionPending,
+						onClick: (user) => {
+							// Hook this up to your confirmation dialog
+							console.log("Khóa user:", user.id);
+						},
+					},
+					{
+						label: "Mở khóa",
+						icon: ShieldCheck,
+						variant: "outline", // Or "primary" if you want it to pop
+						show: (user) => user.isActive === false,
+						// disabled: () => actionPending,
+						onClick: (user) => {
+							// Hook this up to your confirmation dialog
+							console.log("Mở khóa user:", user.id);
+						},
+					},
+				],
+			},
+		],
+		[], // dependency array: add actionPending or dialog state variables here later
+	);
+
 	const handleRoleChange = useCallback(
-		(nextRole: UserRole) => {
+		(nextRole: UserRole | null) => {
 			updateSearchParams({
 				role: nextRole,
 				page: DEFAULT_PAGE,
@@ -241,12 +286,13 @@ export default function AdminUsersPage() {
 		});
 	}, [updateSearchParams]);
 
-	const handleKeywordChange = useCallback(
-		(nextKeyword: string | null) => {
-			updateSearchParams({ keyword: nextKeyword, page: DEFAULT_PAGE });
-		},
-		[updateSearchParams],
-	);
+	useEffect(() => {
+		if (debouncedSearch !== (keywordParam || "")) {
+			updateSearchParams({ keyword: debouncedSearch || null, page: DEFAULT_PAGE });
+		}
+	}, [debouncedSearch, keywordParam, updateSearchParams]);
+
+	const hasActiveFilters = Boolean(roleParam || isActiveParam || keywordParam);
 
 	return (
 		<div className='space-y-6'>
@@ -267,75 +313,35 @@ export default function AdminUsersPage() {
 				</CardHeader>
 			</Card>
 
-			<div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
-				<Input
-					value={keywordParam || ""}
-					onChange={(e) => handleKeywordChange(e.target.value || null)}
-					placeholder='Tìm kiếm tài khoản theo ID, tên, email, số điện thoại...'
-					startIcon={<Search className='size-4' />}
-					className='h-10 bg-background'
-				/>
-
-				<div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-					<Select
-						value={roleParam === null ? "" : roleParam}
-						onValueChange={handleRoleChange}
-					>
-						<SelectTrigger className='w-full sm:w-48'>
-							<SelectValue placeholder='Lọc vai trò' />
-						</SelectTrigger>
-						<SelectContent>
-							{ROLE_OPTIONS.map((option) => (
-								<SelectItem
-									key={option.value}
-									value={option.value as string}
-								>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-
-					<Select
-						value={isActiveParam === null ? "all" : isActiveParam === "true" ? "true" : "false"}
-						onValueChange={(value) =>
-							handleStatusChange(value === "true" ? true : value === "false" ? false : null)
-						}
-					>
-						<SelectTrigger className='w-full sm:w-48'>
-							<SelectValue placeholder='Lọc trạng thái' />
-						</SelectTrigger>
-						<SelectContent>
-							{STATUS_OPTIONS.map((option) => (
-								<SelectItem
-									key={option.label !== null ? option.label : "all"}
-									value={String(option.value) === "null" ? "all" : String(option.value)}
-								>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-
-					<Button
-						variant='outline'
-						onClick={handleResetFilters}
-						disabled={activeFiltersCount === 0}
-					>
-						Xóa lọc
-					</Button>
-					<Button
-						variant='outline'
-						onClick={() => refetch()}
-						disabled={isFetching}
-					>
-						<RefreshCcw className={isFetching ? "animate-spin" : ""} />
-						Tải lại
-					</Button>
-				</div>
-			</div>
+			<FilterToolbar
+				searchValue={localSearchParams}
+				onSearchChange={setLocalSearchParams}
+				searchPlaceholder='Tìm kiếm tài khoản theo ID, tên, email, số điện thoại...'
+				resetDisabled={!hasActiveFilters}
+				onReset={handleResetFilters}
+				onRefetch={() => refetch()}
+				isFetching={isFetching}
+				selects={[
+					{
+						key: "role-filter",
+						value: roleParam ?? "ALL",
+						onValueChange: (val) => handleRoleChange(val === "ALL" ? null : val as UserRole),
+						placeholder: "Lọc vai trò",
+						options: ROLE_OPTIONS,
+					},
+					{
+						key: "status-filter",
+						value: isActiveParam ?? "ALL",
+						onValueChange: (val) =>
+							handleStatusChange(val === "ALL" ? null : val === "true"),
+						placeholder: "Lọc trạng thái",
+						options: STATUS_OPTIONS,
+					},
+				]}
+			/>
 			<DataTable
 				columns={columns}
+				actions={actions}
 				data={users}
 				isLoading={isLoading}
 				isError={isError}

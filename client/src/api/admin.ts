@@ -3,6 +3,7 @@ import type {
 	AdminDashboardStatsResponse,
 	AdminUserListResponse,
 	AdminUsersQueryParams,
+	ReportsParams,
 } from "@/types/admin";
 import type { AdminCompanyListResponse, AdminPendingCompanyResponse } from "@/types/company";
 import type { AdminPendingJobResponse } from "@/types/job";
@@ -39,6 +40,7 @@ const adminApi = {
 			.get("/admin/users", {
 				params: {
 					...toPageableParams(params),
+					keyword: params.keyword,
 					role: params.role,
 					isActive: params.isActive,
 				},
@@ -223,9 +225,9 @@ const adminApi = {
 				);
 			}),
 
-	getReports: (params: PaginationParams, status?: string) =>
+	getReports: (params: ReportsParams) =>
 		client
-			.get("/admin/reports", { params: { ...params, status } })
+			.get("/admin/reports", { params: { ...params } })
 			.then((response) => response.data)
 			.catch((error) => {
 				throw new ApiError(

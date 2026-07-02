@@ -1,6 +1,6 @@
 import { ApplicationStatusBadge } from "@/components/shared/ApplicationTimeline";
 import { DataTable, type DataTableActions } from "@/components/shared/DataTable";
-import { Button } from "@/components/ui/button";
+import { FilterToolbar } from "@/components/shared/FilterToolbar";
 import { useEmployerApplications } from "@/hooks/useEmployerApplications";
 import {
 	APPLICATION_STATUS_LABELS,
@@ -8,8 +8,8 @@ import {
 	type CandidateApplicationParams,
 } from "@/types/application";
 import { formatDate } from "@/utils/DateUtils";
-import { Eye, RefreshCw, User, UserCog } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Eye, User, UserCog } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { CandidateProfileModal } from "./CandidateProfileModal";
 import { UpdateStatusDialog } from "./UpdateStatusDialog";
 
@@ -41,6 +41,18 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [cvTarget, setCvTarget] = useState<CandidateApplicationListResponse | null>(null);
 	const [cvOpen, setCvOpen] = useState(false);
+
+	const handleStatusFilterChange = useCallback((value: string) => {
+		setStatusFilter(value);
+		setPage(0);
+	}, []);
+
+	const handleResetFilters = useCallback(() => {
+		setStatusFilter("all");
+		setPage(0);
+	}, []);
+
+	const hasActiveFilters = statusFilter !== "all";
 
 	const params: CandidateApplicationParams = useMemo(
 		() => ({
@@ -92,54 +104,29 @@ export default function CandidateTable({ jobId }: CandidateTableProps) {
 			{/* Toolbar */}
 			<div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
 				<p className='text-sm text-muted-foreground'>{totalElements.toLocaleString("vi-VN")} ứng viên</p>
-				<div className='flex items-center gap-2'>
-					<div className='relative'>
-						<select
-							value={statusFilter}
-							onChange={(e) => {
-								setStatusFilter(e.target.value);
-								setPage(0);
-							}}
-							className='h-9 appearance-none rounded-lg border border-input bg-background pl-3 pr-8 text-sm shadow-sm outline-none hover:bg-accent focus:border-primary focus:ring-2 focus:ring-primary/20'
-						>
-							<option value='all'>Tất cả trạng thái</option>
-							{Object.entries(APPLICATION_STATUS_LABELS).map(([key, status]) => (
-								<option
-									key={key}
-									value={key}
-								>
-									{status}
-								</option>
-							))}
-						</select>
-						<div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground'>
-							<svg
-								className='size-3.5'
-								fill='none'
-								stroke='currentColor'
-								viewBox='0 0 24 24'
-							>
-								<path
-									strokeLinecap='round'
-									strokeLinejoin='round'
-									strokeWidth='2'
-									d='M19 9l-7 7-7-7'
-								/>
-							</svg>
-						</div>
-					</div>
-					<Button
-						variant='outline'
-						size='icon'
-						className='h-9 w-9'
-						onClick={() => refetch()}
-						disabled={isFetching}
-						title='Làm mới'
-					>
-						<RefreshCw className={`size-4 ${isFetching ? "animate-spin text-primary" : ""}`} />
-					</Button>
-				</div>
 			</div>
+
+			<FilterToolbar
+				resetDisabled={!hasActiveFilters}
+				onReset={handleResetFilters}
+				onRefetch={() => refetch()}
+				isFetching={isFetching}
+				selects={[
+					{
+						key: "status-filter",
+						value: statusFilter,
+						onValueChange: handleStatusFilterChange,
+						placeholder: "Tất cả trạng thái",
+						options: [
+							{ value: "all", label: "Tất cả trạng thái" },
+							...Object.entries(APPLICATION_STATUS_LABELS).map(([key, label]) => ({
+								value: key,
+								label,
+							})),
+						],
+					},
+				]}
+			/>
 
 			{/* Table */}
 			<div className='overflow-hidden rounded-xl border bg-card shadow-sm'>

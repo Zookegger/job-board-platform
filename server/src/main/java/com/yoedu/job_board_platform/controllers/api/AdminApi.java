@@ -217,7 +217,8 @@ public interface AdminApi {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền truy cập (chỉ ADMIN)", content = @Content)
 	})
 	ResponseEntity<Page<com.yoedu.job_board_platform.dtos.report.ReportResponse>> getReports(
-			@Parameter(description = "Lọc theo trạng thái: PENDING, REVIEWED, DISMISSED, RESOLVED", example = "PENDING") com.yoedu.job_board_platform.models.ReportStatus status,
+			@Parameter(description = "Lọc theo trạng thái: PENDING, REVIEWED, DISMISSED, RESOLVED", example = "PENDING") String status,
+			@Parameter(description = "Lọc theo loại: SCAM, SPAM, INAPPROPRIATE, OTHER", example = "INAPPROPRIATE") String reason,
 			@ParameterObject Pageable pageable);
 
 	@Operation(summary = "Xem xét báo cáo", description = "Xem xét báo cáo — chuyển trạng thái từ PENDING sang REVIEWED.")

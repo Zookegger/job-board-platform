@@ -13,5 +13,6 @@ export function useAdminUsers(params: AdminUsersQueryParams) {
 		queryFn: () => adminApi.getUsers(params),
 		placeholderData: keepPreviousData,
 		retry: false,
+		staleTime: 3 * 60 * 1000, // 3 minutes
 	});
 }
