@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useMarkAllAsRead, useMarkAsRead, useNotifications, useUnreadCount } from "@/hooks/useNotifications";
-import type { NotificationResponse, NotificationType } from "@/types/notification";
 import { UserRole } from "@/types/auth";
+import type { NotificationResponse, NotificationType } from "@/types/notification";
 import RouterRoutes from "@/utils/RouterRoutes";
 import { getNotificationRoute } from "@/utils/notificationUtils";
 import { Bell, BellOff, Briefcase, Building2, CheckCheck, Inbox } from "lucide-react";
@@ -62,7 +62,14 @@ function NotificationDropdownItem({ n }: { n: NotificationResponse }) {
 	);
 }
 
-export function NotificationBell() {
+export interface NotificationBellProps {
+	align?: "start" | "center" | "end";
+	side?: "top" | "right" | "bottom" | "left";
+	sideOffset?: number;
+	alignOffset?: number;
+}
+
+export function NotificationBell({ align = "end", side = "bottom", sideOffset = 8, alignOffset }: NotificationBellProps) {
 	const { isAuthenticated, user } = useAuth();
 	const { data: count = 0 } = useUnreadCount();
 	const { data } = useNotifications({ page: 0, size: 5 });
@@ -92,7 +99,13 @@ export function NotificationBell() {
 				</Button>
 			</DropdownMenuTrigger>
 
-			<DropdownMenuContent align='end' className='w-80 p-0' sideOffset={8}>
+			<DropdownMenuContent
+				align={align}
+				className='w-80 p-0 rounded-lg border bg-background shadow-lg'
+				alignOffset={alignOffset}
+				side={side}
+				sideOffset={sideOffset}
+			>
 				{/* Header */}
 				<div className='flex items-center justify-between border-b px-4 py-3'>
 					<span className='text-sm font-semibold'>Thông báo</span>
@@ -112,7 +125,10 @@ export function NotificationBell() {
 				{hasNotifications ? (
 					<div className='max-h-80 overflow-y-auto divide-y divide-border'>
 						{notifications.map((n) => (
-							<NotificationDropdownItem key={n.id} n={n} />
+							<NotificationDropdownItem
+								key={n.id}
+								n={n}
+							/>
 						))}
 					</div>
 				) : (

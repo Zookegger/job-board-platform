@@ -3,9 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { PageResponse } from "@/types/pagination";
 import getErrorMessage from "@/utils/getErrorMessage";
-import { ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react";
+import { MoreHorizontal, RefreshCw } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { PaginationBar, type PaginationConfig } from "./PaginationBar";
 
 export interface Column<T> {
 	key: string;
@@ -18,17 +19,6 @@ export interface EmptyStateConfig {
 	icon: React.ElementType;
 	title: string;
 	subtitle: string;
-}
-
-export interface PaginationConfig {
-	page: number;
-	pageSize: number;
-	totalPages: number;
-	totalElements: number;
-	isFetching: boolean;
-	onPageChange: (page: number) => void;
-	onPageSizeChange: (size: number) => void;
-	label?: string;
 }
 
 export interface PageableConfig {
@@ -146,74 +136,6 @@ function EmptyRow({
 				<p className='mt-1 text-sm text-muted-foreground'>{subtitle}</p>
 			</td>
 		</tr>
-	);
-}
-
-function PaginationFooter({
-	page,
-	pageSize,
-	totalPages,
-	totalElements,
-	isFetching,
-	onPageChange,
-	onPageSizeChange,
-	label,
-}: PaginationConfig) {
-	const currentPageLabel = totalPages > 0 ? page + 1 : 0;
-
-	return (
-		<div className='flex flex-col items-center justify-between gap-4 border-t px-4 py-3 sm:flex-row'>
-			{/* Trái: Thông tin tổng số & Dropdown số lượng */}
-			<div className='flex items-center gap-4 sm:gap-6 lg:gap-8'>
-				<div className='text-sm text-muted-foreground'>
-					Tổng số: <span className='font-medium text-foreground'>{totalElements}</span> {label || "bản ghi"}
-				</div>
-
-				<div className='flex items-center gap-2 text-sm text-muted-foreground'>
-					<span>Hiển thị</span>
-					<select
-						value={pageSize} // FIXED: Don't hardcode this to 10! Pass your state variable here.
-						onChange={(e) => onPageSizeChange(Number(e.target.value))}
-						className='h-8 w-16 rounded-md border border-input bg-background px-2 text-sm outline-none transition focus:border-ring focus:ring-1 focus:ring-ring'
-					>
-						<option value={5}>5</option>
-						<option value={10}>10</option>
-						<option value={20}>20</option>
-						<option value={50}>50</option>
-						<option value={100}>100</option>
-					</select>
-					<span>/ trang</span>
-				</div>
-			</div>
-
-			{/* Phải: Trạng thái trang & Nút điều hướng */}
-			<div className='flex items-center gap-4 sm:gap-6'>
-				<div className='text-sm text-muted-foreground'>
-					Trang <span className='font-medium text-foreground'>{currentPageLabel}</span> / {totalPages}
-				</div>
-
-				<div className='flex items-center gap-2'>
-					<Button
-						variant='outline'
-						size='sm'
-						className='h-8 w-24'
-						disabled={page === 0 || isFetching}
-						onClick={() => onPageChange(Math.max(page - 1, 0))}
-					>
-						<ChevronLeft className='mr-1 h-4 w-4' /> Trước
-					</Button>
-					<Button
-						variant='outline'
-						size='sm'
-						className='h-8 w-24'
-						disabled={totalPages === 0 || page >= totalPages - 1 || isFetching}
-						onClick={() => onPageChange(page + 1)}
-					>
-						Sau <ChevronRight className='ml-1 h-4 w-4' />
-					</Button>
-				</div>
-			</div>
-		</div>
 	);
 }
 
@@ -384,7 +306,7 @@ export function DataTable<T>({
 					</tbody>
 				</table>
 			</div>
-			{resolvedPagination && <PaginationFooter {...resolvedPagination} />}
+			{resolvedPagination && <PaginationBar {...resolvedPagination} />}
 		</div>
 	);
 }

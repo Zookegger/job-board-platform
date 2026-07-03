@@ -6,6 +6,9 @@ import java.util.UUID;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -65,4 +68,12 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
         List<StatusApplicationCount> countApplicationsByStatusBetween(
                 @Param("fromDateTime") OffsetDateTime fromDateTime,
                 @Param("toDateTime") OffsetDateTime toDateTime);
+
+        // --- Employer dashboard count queries ---
+        @Query("SELECT COUNT(a) FROM Application a WHERE a.job.company.id = :companyId")
+        long countByJobCompanyId(@Param("companyId") UUID companyId);
+
+        long countByJobCompanyIdAndAppliedAtAfter(UUID companyId, OffsetDateTime after);
+
+        long countByJobCompanyIdAndStatus(UUID companyId, ApplicationStatus status);
 }

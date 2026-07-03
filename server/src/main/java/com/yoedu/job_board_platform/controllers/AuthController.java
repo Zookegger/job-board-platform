@@ -1,32 +1,23 @@
 package com.yoedu.job_board_platform.controllers;
 
-import com.yoedu.job_board_platform.security.AuthorizationConstants;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AuthApi;
-import com.yoedu.job_board_platform.dtos.auth.AuthResponse;
-import com.yoedu.job_board_platform.dtos.auth.AuthResult;
-import com.yoedu.job_board_platform.dtos.auth.CandidateRegisterRequest;
-import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
-import com.yoedu.job_board_platform.dtos.auth.LoginRequest;
+import com.yoedu.job_board_platform.dtos.auth.*;
 import com.yoedu.job_board_platform.dtos.user.UserResponse;
 import com.yoedu.job_board_platform.mappers.AuthMapper;
 import com.yoedu.job_board_platform.mappers.UserMapper;
 import com.yoedu.job_board_platform.models.CookieName;
+import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.AuthService;
 import com.yoedu.job_board_platform.utils.CookieUtil;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(ApiPaths.BASE + "/auth")
@@ -36,6 +27,12 @@ public class AuthController implements AuthApi {
 	private final AuthMapper authMapper;
 	private final UserMapper userMapper;
 	private final CookieUtil cookieUtil;
+
+	@Value("${app.jwt.expiration-millis}")
+	private long jwtExpirationInMs;
+
+	@Value("${app.refresh-token.expiration-days}")
+	private long refreshTokenExpirationDays;
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
@@ -94,8 +91,8 @@ public class AuthController implements AuthApi {
 	}
 
 	private void addCookie(HttpServletResponse response, String accessToken, String refreshToken) {
-		cookieUtil.add(response, CookieName.ACCESS_TOKEN, accessToken);
-		cookieUtil.add(response, CookieName.REFRESH_TOKEN, refreshToken);
+		cookieUtil.add(response, CookieName.ACCESS_TOKEN, accessToken, (int) (jwtExpirationInMs / 1000));
+		cookieUtil.add(response, CookieName.REFRESH_TOKEN, refreshToken, (int) (refreshTokenExpirationDays * 86400));
 	}
 
 	private void clearCookie(HttpServletResponse response) {

@@ -42,10 +42,11 @@ public class CookieUtil {
      * @param name     tên cookie
      * @param value    giá trị cookie
      */
-    public void add(HttpServletResponse response, CookieName name, String value) {
+    public void add(HttpServletResponse response, CookieName name, String value, int maxAgeSeconds) {
         Cookie cookie = new Cookie(name.getValue(), value);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
+        cookie.setMaxAge(maxAgeSeconds);
         response.addCookie(cookie);
     }
 

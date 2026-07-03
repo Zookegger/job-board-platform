@@ -21,15 +21,14 @@ import NotificationsPage from "@/features/shared/NotificationsPage";
 
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
 import EmployerDashboardPage from "@/features/employer/DashboardPage";
-import EmployerJobDetailPage from "@/features/employer/JobDetailPage";
 import EmployerJobsPage from "@/features/employer/JobsPage";
 
 import AdminCompaniesPage from "@/features/admin/CompaniesPage";
 import AdminDashboardPage from "@/features/admin/DashboardPage";
-import AdminStatisticsPage from "@/features/admin/StatisticsPage";
 import AdminJobsPage from "@/features/admin/JobsPage";
 import AdminReportsPage from "@/features/admin/ReportsPage";
 import AdminSkillPage from "@/features/admin/SkillsPage";
+import AdminStatisticsPage from "@/features/admin/StatisticsPage";
 import AdminUsersPage from "@/features/admin/UsersPage";
 import UnauthorizedPage from "@/features/home/UnauthorizedPage";
 import ProfilePage from "@/features/profile/ProfilePage";
@@ -108,7 +107,6 @@ export const router = createBrowserRouter([
 							},
 							{ path: RouterRoutes.EMPLOYER_DASHBOARD, element: <EmployerDashboardPage /> },
 							{ path: RouterRoutes.EMPLOYER_JOBS, element: <EmployerJobsPage /> },
-							{ path: RouterRoutes.EMPLOYER_JOB_DETAIL(":slug"), element: <EmployerJobDetailPage /> },
 							{ path: RouterRoutes.EMPLOYER_COMPANY, element: <EmployerCompanyPage /> },
 						],
 					},

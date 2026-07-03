@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import { EllipsisVertical, LogOut, Menu, UserIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { NotificationBell } from "../shared/NotificationBell";
 import UserAvatar from "../shared/UserAvatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Sheet, SheetContent } from "../ui/sheet";
@@ -75,6 +76,10 @@ function SidebarContent({ navItems, isCollapsed, onToggle }: SidebarContentProps
 									fullName={user?.fullName || "User"}
 									avatarUrl={user?.avatarUrl}
 								/>
+								<div className='truncate text-sm align-middle font-medium select-none'>
+									{user?.fullName}
+								</div>
+								<NotificationBell />
 							</DropdownMenuTrigger>
 						) : (
 							<>
@@ -86,9 +91,12 @@ function SidebarContent({ navItems, isCollapsed, onToggle }: SidebarContentProps
 								<div className='truncate text-sm align-middle font-medium select-none'>
 									{user?.fullName}
 								</div>
-								<DropdownMenuTrigger className='flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg px-1 py-2 cursor-pointer'>
-									<EllipsisVertical className='h-4 w-4 shrink-0' />
-								</DropdownMenuTrigger>
+								<div className="flex">
+									<NotificationBell side="top" align="end" alignOffset={100} />
+									<DropdownMenuTrigger className='flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg px-1 py-2 cursor-pointer'>
+										<EllipsisVertical className='h-4 w-4 shrink-0' />
+									</DropdownMenuTrigger>
+								</div>
 							</>
 						)}
 

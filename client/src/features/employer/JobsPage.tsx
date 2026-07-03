@@ -195,7 +195,7 @@ export default function EmployerJobsPage() {
 	};
 
 	return (
-		<div className='mx-auto flex w-full max-w-7xl flex-col gap-5'>
+		<div className='mx-auto flex w-full flex-col gap-5'>
 			<div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
 				<div>
 					<h1 className='text-2xl font-semibold text-foreground'>Việc làm của tôi</h1>
