@@ -2,11 +2,13 @@
 package com.yoedu.job_board_platform.controllers;
 
 import com.yoedu.job_board_platform.common.ApiResponse;
+import com.yoedu.job_board_platform.common.exceptions.ConflictException;
 import com.yoedu.job_board_platform.config.ApiPaths;
 import com.yoedu.job_board_platform.controllers.api.AdminApi;
 import com.yoedu.job_board_platform.dtos.admin.*;
 import com.yoedu.job_board_platform.dtos.report.AdminReportActionRequest;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
+import com.yoedu.job_board_platform.dtos.user.UserFullResponse;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
 import com.yoedu.job_board_platform.mappers.AdminMapper;
@@ -19,6 +21,8 @@ import com.yoedu.job_board_platform.repositories.SkillRepository;
 import com.yoedu.job_board_platform.security.AuthorizationConstants;
 import com.yoedu.job_board_platform.services.AdminService;
 import com.yoedu.job_board_platform.services.SkillService;
+import com.yoedu.job_board_platform.services.UserService;
+import com.yoedu.job_board_platform.utils.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -41,6 +45,8 @@ public class AdminController implements AdminApi {
 	private final SkillService skillService;
 	private final SkillMapper skillMapper;
 	private final SkillRepository skillRepository;
+	private final UserService userService;
+	private final SecurityUtil securityUtil;
 
 	@GetMapping("/dashboard/stats")
 	public ResponseEntity<AdminDashboardStatsResponse> getDashboardStats() {
@@ -57,7 +63,7 @@ public class AdminController implements AdminApi {
 
 	@Override
 	@GetMapping("/users")
-	public ResponseEntity<Page<AdminUserResponse>> getUserStats(
+	public ResponseEntity<Page<AdminUserResponse>> getUsers(
 			@RequestParam(required = false) String keyword,
 			@RequestParam(required = false) UserRole role,
 			@RequestParam(required = false) Boolean isActive,
@@ -65,19 +71,26 @@ public class AdminController implements AdminApi {
 		return ResponseEntity.ok(adminService.getUsers(keyword, role, isActive, pageable).map(adminMapper::toAdminUserResponse));
 	}
 
-	@GetMapping("/users/stats")
-	public ResponseEntity<?> getUserStats() {
-		return ResponseEntity.ok("Thống kê user");
+	@Override
+	@GetMapping("/users/{id}")
+	public ResponseEntity<UserFullResponse> getUserDetail(@PathVariable UUID id) {
+		return ResponseEntity.ok(adminService.getUserDetail(id));
 	}
 
-	@PostMapping("/users/{id}/suspend")
+	@PatchMapping("/users/{id}/suspend")
 	public ResponseEntity<?> suspendUser(@PathVariable UUID id) {
-		return ResponseEntity.ok("Khóa tài khoản thành công");
+		UUID currentUser = securityUtil.getCurrentUserId();
+		if (currentUser.equals(id)) {
+			throw new ConflictException("Không thể tự khóa tài khoản của mình");
+		}
+		userService.suspend(id);
+		return ResponseEntity.ok(new ApiResponse("Khóa tài khoản thành công"));
 	}
 
-	@PostMapping("/users/{id}/reactivate")
+	@PatchMapping("/users/{id}/reactivate")
 	public ResponseEntity<?> reactivateUser(@PathVariable UUID id) {
-		return ResponseEntity.ok("Mở khóa thành công");
+		userService.reactivate(id);
+		return ResponseEntity.ok(new ApiResponse("Mở khóa tài khoản thành công"));
 	}
 
 	// ================ Companies ================
@@ -254,4 +267,5 @@ public class AdminController implements AdminApi {
 		skillService.deleteSkill(id);
 		return ResponseEntity.ok(new ApiResponse("Xóa kỹ năng thành công"));
 	}
+
 }

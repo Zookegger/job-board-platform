@@ -1,27 +1,14 @@
 package com.yoedu.job_board_platform.services.impl;
 
-import java.util.UUID;
-
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ConflictException;
 import com.yoedu.job_board_platform.dtos.auth.AuthResult;
 import com.yoedu.job_board_platform.dtos.auth.CandidateRegisterRequest;
 import com.yoedu.job_board_platform.dtos.auth.CompanyRegisterRequest;
+import com.yoedu.job_board_platform.events.NewCompanyUserEvent;
 import com.yoedu.job_board_platform.mappers.CandidateMapper;
 import com.yoedu.job_board_platform.mappers.CompanyMapper;
-import com.yoedu.job_board_platform.models.CandidateDetail;
-import com.yoedu.job_board_platform.models.Company;
-import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
-import com.yoedu.job_board_platform.models.CompanyReviewReason;
-import com.yoedu.job_board_platform.models.Profile;
-import com.yoedu.job_board_platform.models.RefreshToken;
-import com.yoedu.job_board_platform.models.User;
+import com.yoedu.job_board_platform.models.*;
 import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
 import com.yoedu.job_board_platform.repositories.CompanyRepository;
@@ -32,15 +19,23 @@ import com.yoedu.job_board_platform.services.ProfileService;
 import com.yoedu.job_board_platform.services.RefreshTokenService;
 import com.yoedu.job_board_platform.utils.SecurityUtil;
 import com.yoedu.job_board_platform.utils.StringUtils;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+import java.util.UUID;
+
 /**
  * Triển khai AuthService. Xử lý xác thực, đăng ký và quản lý token.
  * Sử dụng PasswordEncoder để mã hóa mật khẩu và JwtService để tạo JWT.
  */
+@Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -53,14 +48,19 @@ public class AuthServiceImpl implements AuthService {
     private final CompanyEmployerDetailRepository employerRepository;
     private final ProfileService profileService;
     private final SecurityUtil securityUtil;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public AuthResult authenticate(String email, String password) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+                .orElseThrow(() -> new BadCredentialsException("Thông tin đăng nhập không hợp lệ"));
+
+        if (!user.isActive()) {
+            throw new DisabledException("Tài khoản đã bị vô hiệu hóa");
+        }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new BadCredentialsException("Invalid credentials");
+            throw new BadCredentialsException("Thông tin đăng nhập không hợp lệ");
         }
 
         UserDetails userDetails = toUserDetails(user);
@@ -77,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken stored = refreshTokenService.validateRefreshToken(tokenString);
 
         User user = userRepository.findById(stored.getUser().getId())
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+                .orElseThrow(() -> new BadCredentialsException("Thông tin đăng nhập không hợp lệ"));
 
         UserDetails userDetails = toUserDetails(user);
 
@@ -137,12 +137,11 @@ public class AuthServiceImpl implements AuthService {
         // 5. Tạo Company: status = PENDING, isApproved = false, slug tự sinh từ companyName
         Company company = companyMapper.toEntity(request);
         company.setSlug(
-                StringUtils.slugifyUnique(request.companyName(), (slug) -> companyRepository.existsBySlug(slug)));
+                StringUtils.slugifyUnique(request.companyName(), companyRepository::existsBySlug));
         company.setReviewReason(CompanyReviewReason.NEW_COMPANY);
         companyRepository.save(company);
 
-        // 7. Tạo CompanyEmployerDetail: link Profile → Company, roleInCompany = "HR
-        // Representative"
+        // 7. Tạo CompanyEmployerDetail: link Profile → Company, roleInCompany = "HR Representative"
         CompanyEmployerDetail detail = CompanyEmployerDetail.builder()
                 .profileId(profile.getId())
                 .profile(profile)
@@ -151,9 +150,8 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         employerRepository.save(detail);
 
-        // TODO: 8. Tạo Notification cho tất cả ADMIN: type = COMPANY_PENDING_REVIEW,
-        // message
-        // = "Công ty {companyName} đã đăng ký và đang chờ duyệt", entityId = companyId
+        // 8. Tạo Notification cho tất cả ADMIN: type = COMPANY_PENDING_REVIEW,
+        applicationEventPublisher.publishEvent(new NewCompanyUserEvent(company.getId(), company.getCompanyName()));
     }
 
     @Override

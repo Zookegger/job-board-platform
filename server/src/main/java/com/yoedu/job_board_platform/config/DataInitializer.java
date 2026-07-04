@@ -1,68 +1,28 @@
 package com.yoedu.job_board_platform.config;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
-
+import com.yoedu.job_board_platform.models.*;
+import com.yoedu.job_board_platform.repositories.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.yoedu.job_board_platform.models.Application;
-import com.yoedu.job_board_platform.models.ApplicationStatus;
-import com.yoedu.job_board_platform.models.ApplicationStatusLog;
-import com.yoedu.job_board_platform.models.CandidateDetail;
-import com.yoedu.job_board_platform.models.CandidateSkill;
-import com.yoedu.job_board_platform.models.CandidateSkillId;
-import com.yoedu.job_board_platform.models.Company;
-import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
-import com.yoedu.job_board_platform.models.CompanyStatus;
-import com.yoedu.job_board_platform.models.EmploymentType;
-import com.yoedu.job_board_platform.models.ExperienceLevel;
-import com.yoedu.job_board_platform.models.Job;
-import com.yoedu.job_board_platform.models.JobCategory;
-import com.yoedu.job_board_platform.models.JobSkill;
-import com.yoedu.job_board_platform.models.JobStatus;
-import com.yoedu.job_board_platform.models.LocationTypes;
-import com.yoedu.job_board_platform.models.Notification;
-import com.yoedu.job_board_platform.models.NotificationStatus;
-import com.yoedu.job_board_platform.models.ProficientLevel;
-import com.yoedu.job_board_platform.models.Profile;
-import com.yoedu.job_board_platform.models.Report;
-import com.yoedu.job_board_platform.models.ReportReason;
-import com.yoedu.job_board_platform.models.Resume;
-import com.yoedu.job_board_platform.models.Skill;
-import com.yoedu.job_board_platform.models.User;
-import com.yoedu.job_board_platform.models.UserRole;
-import com.yoedu.job_board_platform.repositories.ApplicationRepository;
-import com.yoedu.job_board_platform.repositories.ApplicationStatusLogRepository;
-import com.yoedu.job_board_platform.repositories.CandidateDetailRepository;
-import com.yoedu.job_board_platform.repositories.CandidateSkillRepository;
-import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
-import com.yoedu.job_board_platform.repositories.CompanyRepository;
-import com.yoedu.job_board_platform.repositories.JobCategoryRepository;
-import com.yoedu.job_board_platform.repositories.JobRepository;
-import com.yoedu.job_board_platform.repositories.JobSkillRepository;
-import com.yoedu.job_board_platform.repositories.NotificationRepository;
-import com.yoedu.job_board_platform.repositories.ReportRepository;
-import com.yoedu.job_board_platform.repositories.ResumeRepository;
-import com.yoedu.job_board_platform.repositories.SkillRepository;
-import com.yoedu.job_board_platform.repositories.UserRepository;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-@Component
-@org.springframework.context.annotation.Profile("!test")
-@RequiredArgsConstructor
-@Slf4j
 /**
  * Khởi tạo dữ liệu mẫu (seed) cho database khi chạy lần đầu.
  * Tạo tài khoản admin, nhà tuyển dụng (kèm công ty và tin tuyển dụng),
  * ứng viên (kèm kỹ năng, đơn ứng tuyển, CV), thông báo và báo cáo.
  */
+@Component
+@org.springframework.context.annotation.Profile("!test")
+@RequiredArgsConstructor
+@Slf4j
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;

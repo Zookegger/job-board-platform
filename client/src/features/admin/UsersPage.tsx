@@ -1,16 +1,21 @@
+import adminApi from "@/api/admin";
 import { DataTable, type Column, type DataTableActions } from "@/components/shared/DataTable";
 import { FilterToolbar } from "@/components/shared/FilterToolbar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { ADMIN_USER_KEYS, useAdminUsers, useReactivateUser, useSuspendUser } from "@/hooks/useAdminUsers";
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
-import type { AdminUserListResponse, AdminUsersQueryParams } from "@/types/admin";
+import { useToast } from "@/providers/ToastProvider";
+import type { AdminUserListResponse, AdminUsersQueryParams, UserFullResponse } from "@/types/admin";
 import { UserRole } from "@/types/auth";
 import { formatDate } from "@/utils/DateUtils";
+import getErrorMessage from "@/utils/getErrorMessage";
+import { useQueryClient } from "@tanstack/react-query";
 import { Eye, ShieldBan, ShieldCheck, UserCog, Users } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { UserDetailModal } from "./components/UserDetailModal";
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
 	{ value: "ALL", label: "Tất cả trạng thái" },
@@ -61,6 +66,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 
 export default function AdminUsersPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const toast = useToast();
 
 	const page = parseInt(searchParams.get("page") || String(DEFAULT_PAGE), 10);
 	const pageSize = parseInt(searchParams.get("size") || "10", 10);
@@ -69,6 +75,7 @@ export default function AdminUsersPage() {
 	const keywordParam = searchParams.get("keyword") || null;
 
 	const [localSearchParams, setLocalSearchParams] = useState(keywordParam || "");
+	const [detailUser, setDetailUser] = useState<UserFullResponse | null>(null);
 
 	const debouncedSearch = useDebounce(localSearchParams, 400);
 
@@ -128,8 +135,51 @@ export default function AdminUsersPage() {
 
 	const { data, isLoading, isFetching, isError, error, refetch } = useAdminUsers(queryParams);
 
+	const suspendUser = useSuspendUser();
+	const reactivateUser = useReactivateUser();
+	const queryClient = useQueryClient();
+
 	const users = data?.content ?? [];
-	
+
+	const handleSuspendUser = useCallback(
+		async (userId: string) => {
+			try {
+				await suspendUser.mutateAsync(userId);
+				toast.success(suspendUser.data || "Tài khoản đã bị khóa thành công.");
+			} catch (err) {
+				toast.error(getErrorMessage(err, "Không thể khóa tài khoản. Vui lòng thử lại sau."));
+			}
+		},
+		[suspendUser, toast],
+	);
+
+	const handleReactivateUser = useCallback(
+		async (userId: string) => {
+			try {
+				await reactivateUser.mutateAsync(userId);
+				toast.success(reactivateUser.data || "Tài khoản đã được mở khóa thành công.");
+			} catch (err) {
+				toast.error(getErrorMessage(err, "Không thể mở khóa tài khoản. Vui lòng thử lại sau."));
+			}
+		},
+		[reactivateUser, toast],
+	);
+
+	const handleViewDetail = useCallback(
+		async (userId: string) => {
+			try {
+				const user = await queryClient.fetchQuery({
+					queryKey: ADMIN_USER_KEYS.detail(userId),
+					queryFn: () => adminApi.getUserDetail(userId),
+				});
+				setDetailUser(user);
+			} catch (err) {
+				toast.error(getErrorMessage(err, "Không thể tải thông tin tài khoản."));
+			}
+		},
+		[queryClient, toast],
+	);
+
 	const columns = useMemo<Column<AdminUserListResponse>[]>(
 		() => [
 			{
@@ -210,8 +260,7 @@ export default function AdminUsersPage() {
 						icon: Eye,
 						variant: "outline",
 						onClick: (user) => {
-							// Hook this up to your detail modal or route
-							console.log("Xem chi tiết user:", user.id);
+							handleViewDetail(user.id);
 						},
 					},
 					{
@@ -220,10 +269,7 @@ export default function AdminUsersPage() {
 						variant: "destructive",
 						show: (user) => user.isActive === true,
 						// disabled: () => actionPending,
-						onClick: (user) => {
-							// Hook this up to your confirmation dialog
-							console.log("Khóa user:", user.id);
-						},
+						onClick: (user) => handleSuspendUser(user.id),
 					},
 					{
 						label: "Mở khóa",
@@ -231,15 +277,12 @@ export default function AdminUsersPage() {
 						variant: "outline", // Or "primary" if you want it to pop
 						show: (user) => user.isActive === false,
 						// disabled: () => actionPending,
-						onClick: (user) => {
-							// Hook this up to your confirmation dialog
-							console.log("Mở khóa user:", user.id);
-						},
+						onClick: (user) => handleReactivateUser(user.id),
 					},
 				],
 			},
 		],
-		[], // dependency array: add actionPending or dialog state variables here later
+		[handleViewDetail, handleSuspendUser, handleReactivateUser],
 	);
 
 	const handleRoleChange = useCallback(
@@ -325,15 +368,14 @@ export default function AdminUsersPage() {
 					{
 						key: "role-filter",
 						value: roleParam ?? "ALL",
-						onValueChange: (val) => handleRoleChange(val === "ALL" ? null : val as UserRole),
+						onValueChange: (val) => handleRoleChange(val === "ALL" ? null : (val as UserRole)),
 						placeholder: "Lọc vai trò",
 						options: ROLE_OPTIONS,
 					},
 					{
 						key: "status-filter",
 						value: isActiveParam ?? "ALL",
-						onValueChange: (val) =>
-							handleStatusChange(val === "ALL" ? null : val === "true"),
+						onValueChange: (val) => handleStatusChange(val === "ALL" ? null : val === "true"),
 						placeholder: "Lọc trạng thái",
 						options: STATUS_OPTIONS,
 					},
@@ -362,6 +404,11 @@ export default function AdminUsersPage() {
 					subtitle: "Thử đổi bộ lọc vai trò hoặc trạng thái để xem thêm dữ liệu.",
 				}}
 				minWidth='min-w-[760px]'
+			/>
+			<UserDetailModal
+				user={detailUser}
+				isOpen={!!detailUser}
+				onClose={() => setDetailUser(null)}
 			/>
 		</div>
 	);

@@ -109,15 +109,6 @@ export function LoginPage() {
 				</Field>
 			</FieldGroup>
 
-			<div className='flex justify-end'>
-				<Link
-					to={RouterRoutes.FORGOT_PASSWORD}
-					className='text-sm text-primary no-underline hover:no-underline mt-2 block'
-				>
-					Quên mật khẩu?
-				</Link>
-			</div>
-
 			<Button
 				type='submit'
 				disabled={isSubmitting}

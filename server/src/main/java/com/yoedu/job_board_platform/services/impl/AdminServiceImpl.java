@@ -5,6 +5,7 @@ import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.common.exceptions.ResourceNotFoundException;
 import com.yoedu.job_board_platform.dtos.admin.*;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
+import com.yoedu.job_board_platform.dtos.user.UserFullResponse;
 import com.yoedu.job_board_platform.events.CompanyStatusChangeEvent;
 import com.yoedu.job_board_platform.events.JobStatusChangeEvent;
 import com.yoedu.job_board_platform.mappers.AdminMapper;
@@ -55,6 +56,9 @@ public class AdminServiceImpl implements AdminService {
 	private final UserRepository userRepository;
 	private final ApplicationRepository applicationRepository;
 	private final ApplicationEventPublisher eventPublisher;
+	private final CandidateSkillRepository candidateSkillRepository;
+	private final ResumeRepository resumeRepository;
+	private final SkillRepository skillRepository;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -367,5 +371,147 @@ public class AdminServiceImpl implements AdminService {
 	public Page<User> getUsers(String keyword, UserRole role, Boolean isActive, Pageable pageable) {
 		Specification<User> specification = Specification.where(UserSpecification.hasKeyword(keyword)).and(UserSpecification.hasRole(role)).and(UserSpecification.isActive(isActive));
 		return userRepository.findAll(specification, pageable);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public UserFullResponse getUserDetail(UUID userId) {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
+
+		UserFullResponse response = adminMapper.toUserFullResponse(user);
+
+		if (user.getRole() == UserRole.CANDIDATE && user.getProfile() != null) {
+			UUID profileId = user.getProfile().getId();
+
+			List<CandidateSkill> candidateSkills = candidateSkillRepository.findAllByIdCandidateId(profileId);
+			List<UserFullResponse.CandidateSkillInfo> skills = candidateSkills.stream()
+					.map(cs -> {
+						Skill skill = skillRepository.findById(cs.getId().getSkillId()).orElse(null);
+						return new UserFullResponse.CandidateSkillInfo(
+								cs.getId().getSkillId(),
+								skill != null ? skill.getName() : null,
+								cs.getProficientLevel());
+					})
+					.toList();
+
+			Resume resume = resumeRepository.findByCandidateDetailProfileId(profileId).orElse(null);
+			UserFullResponse.ResumeInfo resumeInfo = null;
+			if (resume != null) {
+				resumeInfo = new UserFullResponse.ResumeInfo(
+						resume.getId(),
+						resume.getTitle(),
+						resume.getOriginalFileName(),
+						resume.getFileSize(),
+						resume.getFileType(),
+						resume.getCreatedAt());
+			}
+
+			List<Application> applications = applicationRepository.findByCandidateId(profileId, Pageable.unpaged()).getContent();
+			List<UserFullResponse.ApplicationInfo> applicationInfos = applications.stream()
+					.map(app -> new UserFullResponse.ApplicationInfo(
+							app.getId(),
+							app.getJob().getId(),
+							app.getJob().getTitle(),
+							app.getJob().getCompany().getCompanyName(),
+							app.getStatus(),
+							app.getAppliedAt()))
+					.toList();
+
+			return new UserFullResponse(
+					response.id(),
+					response.email(),
+					response.role(),
+					response.isActive(),
+					response.fullName(),
+					response.phone(),
+					response.avatarUrl(),
+					response.createdAt(),
+					response.updatedAt(),
+					skills,
+					resumeInfo,
+					applicationInfos,
+					null,
+					null,
+					null,
+					null);
+		}
+
+		if (user.getRole() == UserRole.EMPLOYER && user.getProfile() != null) {
+			UUID profileId = user.getProfile().getId();
+
+			CompanyEmployerDetail employerDetail = employerDetailRepository.findById(profileId).orElse(null);
+
+			UserFullResponse.CompanyInfo companyInfo = null;
+			String roleInCompany = null;
+			UUID companyId = null;
+
+			if (employerDetail != null && employerDetail.getCompany() != null) {
+				Company company = employerDetail.getCompany();
+				companyId = company.getId();
+				roleInCompany = employerDetail.getRoleInCompany();
+				companyInfo = new UserFullResponse.CompanyInfo(
+						company.getId(),
+						company.getCompanyName(),
+						company.getSlug(),
+						company.getLogoUrl(),
+						company.getEmail(),
+						company.getPhone(),
+						company.getAddress(),
+						company.getWebsite(),
+						company.getTaxCode(),
+						company.getStatus(),
+						company.isApproved(),
+						company.getCreatedAt(),
+						company.getApprovedAt());
+			}
+
+			List<UserFullResponse.JobPostingInfo> jobPostings = List.of();
+			UserFullResponse.HiringActivityInfo hiringActivity = null;
+
+			if (companyId != null) {
+				List<Job> jobs = jobRepository.findByCompanyId(companyId, Pageable.unpaged()).getContent();
+				jobPostings = jobs.stream()
+						.map(job -> new UserFullResponse.JobPostingInfo(
+								job.getId(),
+								job.getTitle(),
+								job.getSlug(),
+								job.getStatus(),
+								job.getCategory().getName(),
+								job.getLocation(),
+								job.getCreatedAt()))
+						.toList();
+
+				long totalApps = applicationRepository.countByJobCompanyId(companyId);
+				long pendingApps = applicationRepository.countByJobCompanyIdAndStatus(companyId, ApplicationStatus.PENDING);
+				long reviewingApps = applicationRepository.countByJobCompanyIdAndStatus(companyId, ApplicationStatus.REVIEWING);
+				long interviewApps = applicationRepository.countByJobCompanyIdAndStatus(companyId, ApplicationStatus.INTERVIEW);
+				long hiredApps = applicationRepository.countByJobCompanyIdAndStatus(companyId, ApplicationStatus.HIRED);
+				long rejectedApps = applicationRepository.countByJobCompanyIdAndStatus(companyId, ApplicationStatus.REJECTED);
+
+				hiringActivity = new UserFullResponse.HiringActivityInfo(
+						totalApps, pendingApps, reviewingApps, interviewApps, hiredApps, rejectedApps);
+			}
+
+			return new UserFullResponse(
+					response.id(),
+					response.email(),
+					response.role(),
+					response.isActive(),
+					response.fullName(),
+					response.phone(),
+					response.avatarUrl(),
+					response.createdAt(),
+					response.updatedAt(),
+					null,
+					null,
+					null,
+					companyInfo,
+					roleInCompany,
+					jobPostings,
+					hiringActivity);
+		}
+
+		return response;
 	}
 }

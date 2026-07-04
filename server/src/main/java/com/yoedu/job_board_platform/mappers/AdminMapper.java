@@ -3,6 +3,7 @@ package com.yoedu.job_board_platform.mappers;
 import com.yoedu.job_board_platform.dtos.admin.AdminCompanyListResponse;
 import com.yoedu.job_board_platform.dtos.admin.AdminUserResponse;
 import com.yoedu.job_board_platform.dtos.admin.PendingCompanyResponse;
+import com.yoedu.job_board_platform.dtos.user.UserFullResponse;
 import com.yoedu.job_board_platform.models.Company;
 import com.yoedu.job_board_platform.models.CompanyEmployerDetail;
 
@@ -29,6 +30,19 @@ public interface AdminMapper {
 	@Mapping(target = "isActive", source = "active")
 	@Mapping(target = "phone", source = "profile.phone")
 	AdminUserResponse toAdminUserResponse(User user);
+
+	@Mapping(target = "fullName", source = "profile.fullName")
+	@Mapping(target = "avatarUrl", source = "profile.avatarUrl")
+	@Mapping(target = "isActive", source = "active")
+	@Mapping(target = "phone", source = "profile.phone")
+	@Mapping(target = "skills", ignore = true)
+	@Mapping(target = "resume", ignore = true)
+	@Mapping(target = "applications", ignore = true)
+	@Mapping(target = "company", ignore = true)
+	@Mapping(target = "roleInCompany", ignore = true)
+	@Mapping(target = "jobPostings", ignore = true)
+	@Mapping(target = "hiringActivity", ignore = true)
+	UserFullResponse toUserFullResponse(User user);
 
 	default PendingCompanyResponse toPendingCompanyResponseSafe(Company company, CompanyEmployerDetail detail) {
 		if (detail == null) {

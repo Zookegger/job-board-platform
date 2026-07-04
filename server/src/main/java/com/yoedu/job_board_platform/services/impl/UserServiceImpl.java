@@ -1,14 +1,8 @@
 package com.yoedu.job_board_platform.services.impl;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.common.exceptions.ConflictException;
+import com.yoedu.job_board_platform.common.exceptions.NotFoundException;
 import com.yoedu.job_board_platform.dtos.user.CreateUserRequest;
 import com.yoedu.job_board_platform.dtos.user.UpdateUserRequest;
 import com.yoedu.job_board_platform.dtos.user.UserResponse;
@@ -19,72 +13,97 @@ import com.yoedu.job_board_platform.repositories.ProfileRepository;
 import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.services.ProfileService;
 import com.yoedu.job_board_platform.services.UserService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@RequiredArgsConstructor
+import java.util.Optional;
+import java.util.UUID;
+
 /**
  * Triển khai UserService. Xử lý tạo và cập nhật thông tin người dùng,
  * đồng bộ với Profile tương ứng.
  */
+@Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UserRepository userRepository;
-    private final ProfileRepository profileRepository;
-    private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
-    private final ProfileService profileService;
+	private final UserRepository userRepository;
+	private final ProfileRepository profileRepository;
+	private final UserMapper userMapper;
+	private final PasswordEncoder passwordEncoder;
+	private final ProfileService profileService;
 
-    @Override
-    @Transactional
-    public UserResponse create(CreateUserRequest request) {
-        Optional<User> existingUser = userRepository.findByEmail(request.email());
-        if (existingUser.isPresent()) {
-            throw new ConflictException("Email " + request.email() + " đã tồn tại");
-        }
-        User user = userMapper.toEntity(request);
-        user.setId(UUID.randomUUID());
-        user.setPassword(passwordEncoder.encode(request.password()));
-        user = userRepository.save(user);
+	@Override
+	@Transactional
+	public UserResponse create(CreateUserRequest request) {
+		Optional<User> existingUser = userRepository.findByEmail(request.email());
+		if (existingUser.isPresent()) {
+			throw new ConflictException("Email " + request.email() + " đã tồn tại");
+		}
+		User user = userMapper.toEntity(request);
+		user.setId(UUID.randomUUID());
+		user.setPassword(passwordEncoder.encode(request.password()));
+		user = userRepository.save(user);
 
-        Profile profile = profileService.createProfile(user, request.fullName(), request.phone(), request.avatarUrl());
-        user.setProfile(profile);
-        user = userRepository.save(user);
+		Profile profile = profileService.createProfile(user, request.fullName(), request.phone(), request.avatarUrl());
+		user.setProfile(profile);
+		user = userRepository.save(user);
 
-        return userMapper.toResponse(user);
-    }
+		return userMapper.toResponse(user);
+	}
 
-    @Override
-    @Transactional
-    public UserResponse update(UUID id, UpdateUserRequest request) {
-        Optional<User> checkEmail = userRepository.findByEmail(request.email());
-        if (checkEmail.isPresent() && !checkEmail.get().getId().equals(id)) {
-            throw new BadRequestException("Email " + request.email() + " đã được sử dụng");
-        }
-        Optional<User> existingUser = userRepository.findById(id);
-        if (existingUser.isEmpty()) {
-            throw new BadRequestException("Không tìm thấy người dùng với id: " + id);
-        }
-        User user = existingUser.get();
-        userMapper.updateEntity(request, user);
-        if (request.password() != null && !request.password().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(request.password()));
-        }
-        user = userRepository.save(user);
+	@Override
+	@Transactional
+	public UserResponse update(UUID id, UpdateUserRequest request) {
+		Optional<User> checkEmail = userRepository.findByEmail(request.email());
+		if (checkEmail.isPresent() && !checkEmail.get().getId().equals(id)) {
+			throw new BadRequestException("Email " + request.email() + " đã được sử dụng");
+		}
+		Optional<User> existingUser = userRepository.findById(id);
+		if (existingUser.isEmpty()) {
+			throw new BadRequestException("Không tìm thấy người dùng với id: " + id);
+		}
+		User user = existingUser.get();
+		userMapper.updateEntity(request, user);
+		if (request.password() != null && !request.password().isEmpty()) {
+			user.setPassword(passwordEncoder.encode(request.password()));
+		}
+		user = userRepository.save(user);
 
-        if (request.fullName() != null || request.phone() != null || request.avatarUrl() != null) {
-            Profile profile = profileRepository.findById(id)
-                    .orElseThrow(() -> new BadRequestException("Không tìm thấy hồ sơ với id: " + id));
-            if (request.fullName() != null)
-                profile.setFullName(request.fullName());
-            if (request.phone() != null)
-                profile.setPhone(request.phone());
-            if (request.avatarUrl() != null)
-                profile.setAvatarUrl(request.avatarUrl());
-            profileRepository.save(profile);
-        }
+		if (request.fullName() != null || request.phone() != null || request.avatarUrl() != null) {
+			Profile profile = profileRepository.findById(id)
+					.orElseThrow(() -> new BadRequestException("Không tìm thấy hồ sơ với id: " + id));
+			if (request.fullName() != null)
+				profile.setFullName(request.fullName());
+			if (request.phone() != null)
+				profile.setPhone(request.phone());
+			if (request.avatarUrl() != null)
+				profile.setAvatarUrl(request.avatarUrl());
+			profileRepository.save(profile);
+		}
 
-        return userMapper.toResponse(user);
-    }
+		return userMapper.toResponse(user);
+	}
+
+	@Override
+	@Transactional
+	public void suspend(UUID id) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
+
+		user.setActive(false);
+		userRepository.save(user);
+	}
+
+	@Override
+	@Transactional
+	public void reactivate(UUID id) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng"));
+
+		user.setActive(true);
+		userRepository.save(user);
+	}
 
 }

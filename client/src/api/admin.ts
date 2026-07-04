@@ -4,6 +4,7 @@ import type {
 	AdminUserListResponse,
 	AdminUsersQueryParams,
 	ReportsParams,
+	UserFullResponse,
 } from "@/types/admin";
 import type { AdminCompanyListResponse, AdminPendingCompanyResponse } from "@/types/company";
 import type { AdminPendingJobResponse } from "@/types/job";
@@ -49,6 +50,39 @@ const adminApi = {
 			.catch((error) => {
 				throw new ApiError(
 					error.response?.data?.message || error.message || "Lỗi, Không thể tải danh sách tài khoản.",
+					error.response?.status || 500,
+				);
+			}),
+
+	suspendUser: (userId: string) =>
+		client
+			.patch(`/admin/users/${userId}/suspend`)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể tạm ngưng tài khoản.",
+					error.response?.status || 500,
+				);
+			}),
+
+	reactivateUser: (userId: string) =>
+		client
+			.patch(`/admin/users/${userId}/reactivate`)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể kích hoạt lại tài khoản.",
+					error.response?.status || 500,
+				);
+			}),
+
+	getUserDetail: (userId: string): Promise<UserFullResponse> =>
+		client
+			.get(`/admin/users/${userId}`)
+			.then((response) => response.data)
+			.catch((error) => {
+				throw new ApiError(
+					error.response?.data?.message || error.message || "Lỗi, Không thể tải thông tin tài khoản.",
 					error.response?.status || 500,
 				);
 			}),

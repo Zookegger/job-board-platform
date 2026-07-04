@@ -1,6 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useMarkAllAsRead, useMarkAsRead, useNotifications, useUnreadCount } from "@/hooks/useNotifications";
-import { UserRole } from "@/types/auth";
 import type { NotificationResponse, NotificationType } from "@/types/notification";
 import RouterRoutes from "@/utils/RouterRoutes";
 import { getNotificationRoute } from "@/utils/notificationUtils";
@@ -70,12 +69,12 @@ export interface NotificationBellProps {
 }
 
 export function NotificationBell({ align = "end", side = "bottom", sideOffset = 8, alignOffset }: NotificationBellProps) {
-	const { isAuthenticated, user } = useAuth();
+	const { isAuthenticated } = useAuth();
 	const { data: count = 0 } = useUnreadCount();
 	const { data } = useNotifications({ page: 0, size: 5 });
 	const { mutate: markAllAsRead, isPending } = useMarkAllAsRead();
 
-	if (!isAuthenticated || user?.role === UserRole.ADMIN) return null;
+	if (!isAuthenticated) return null;
 
 	const notifications = data?.content ?? [];
 	const displayCount = count > 99 ? "99+" : count;

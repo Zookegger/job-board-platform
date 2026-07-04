@@ -3,8 +3,10 @@ package com.yoedu.job_board_platform.events.listeners;
 import com.yoedu.job_board_platform.events.ApplicationStatusChangeEvent;
 import com.yoedu.job_board_platform.events.CompanyStatusChangeEvent;
 import com.yoedu.job_board_platform.events.JobStatusChangeEvent;
+import com.yoedu.job_board_platform.events.NewCompanyUserEvent;
 import com.yoedu.job_board_platform.models.*;
 import com.yoedu.job_board_platform.repositories.CompanyEmployerDetailRepository;
+import com.yoedu.job_board_platform.repositories.UserRepository;
 import com.yoedu.job_board_platform.services.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,7 @@ import java.util.List;
 public class NotificationEventListener {
 	private final NotificationService notificationService;
 	private final CompanyEmployerDetailRepository companyEmployerDetailRepository;
+	private final UserRepository userRepository;
 
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleApplicationStatusChange(ApplicationStatusChangeEvent event) {
@@ -67,5 +70,14 @@ public class NotificationEventListener {
 						job.getId(),
 						message
 				));
+	}
+
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void handleNewCompanyUser(NewCompanyUserEvent event) {
+		List<User> admins = userRepository.findAllByRole(UserRole.ADMIN);
+
+		admins.forEach(admin -> {
+			notificationService.createNotification(admin.getId(), NotificationStatus.COMPANY_PENDING_REVIEW, event.companyId(), "Công ty" + event.companyName() + "đã đăng ký và đang chờ duyệt");
+		});
 	}
 }

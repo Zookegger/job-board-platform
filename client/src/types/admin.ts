@@ -1,6 +1,10 @@
+import type { ApplicationListResponse } from "./application";
 import type { UserRole } from "./auth";
+import type { CompanyResponse } from "./company";
 import type { PaginationParams } from "./pagination";
+import type { ResumeResponse } from "./profile";
 import type { ReportReason, ReportStatus } from "./report";
+import type { CandidateSkillResponse } from "./skill";
 
 export interface AdminDashboardStatsResponse {
 	totalUsers: number;
@@ -52,4 +56,42 @@ export interface AdminUsersQueryParams extends PaginationParams {
 export interface ReportsParams extends PaginationParams {
 	status?: ReportStatus;
 	reason?: ReportReason;
+}
+
+export interface HiringActivityInfo {
+	totalApplications: number;
+	pendingApplications: number;
+	reviewingApplications: number;
+	interviewApplications: number;
+	hiredApplications: number;
+	rejectedApplications: number;
+}
+
+export interface UserFullJobPosting {
+	id: string;
+	title: string;
+	slug: string;
+	status: string;
+	categoryName: string;
+	location: string | null;
+	createdAt: string;
+}
+
+export interface UserFullResponse {
+	id: string;
+	email: string;
+	role: UserRole;
+	isActive: boolean;
+	fullName: string | null;
+	phone: string | null;
+	avatarUrl: string | null;
+	createdAt: string;
+	updatedAt: string | null;
+	skills: CandidateSkillResponse[] | null;
+	resume: ResumeResponse | null;
+	applications: ApplicationListResponse[] | null;
+	company: CompanyResponse | null;
+	roleInCompany: string | null;
+	jobPostings: UserFullJobPosting[] | null;
+	hiringActivity: HiringActivityInfo | null;
 }

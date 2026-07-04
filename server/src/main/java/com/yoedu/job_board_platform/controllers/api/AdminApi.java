@@ -4,6 +4,7 @@ import com.yoedu.job_board_platform.common.ApiResponse;
 import com.yoedu.job_board_platform.dtos.admin.*;
 import com.yoedu.job_board_platform.dtos.skill.SkillFilterRequest;
 import com.yoedu.job_board_platform.dtos.skill.SkillRequest;
+import com.yoedu.job_board_platform.dtos.user.UserFullResponse;
 import com.yoedu.job_board_platform.models.UserRole;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -59,7 +60,7 @@ public interface AdminApi {
 			responseCode = "200",
 			description = "Danh sách tài khoản",
 			content = @Content)
-	ResponseEntity<Page<AdminUserResponse>> getUserStats(
+	ResponseEntity<Page<AdminUserResponse>> getUsers(
 			@Parameter(description = "Tìm kiếm theo họ tên, số điện thoại cá nhân hoặc email") String keyword,
 
 			@Parameter(description = "Lọc theo vai trò: ADMIN, EMPLOYER, CANDIDATE hoặc ALL", example = "CANDIDATE")
@@ -72,22 +73,44 @@ public interface AdminApi {
 			Pageable pageable
 	);
 
-	@Operation(summary = "Khóa tài khoản", description = """
-			Khóa tài khoản người dùng. User bị khóa sẽ không thể đăng nhập hoặc sử dụng hệ thống.
-			Có thể khóa bất kỳ tài khoản nào (CANDIDATE, EMPLOYER, ADMIN).
-			""")
-	@ApiResponses({
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Khóa tài khoản thành công", content = @Content),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng", content = @Content),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Không thể khóa tài khoản ADMIN khác", content = @Content)
+	@Operation(
+			summary = "Lấy chi tiết người dùng (Admin)",
+			description = "Trả về thông tin chi tiết của một người dùng dựa trên userId. Chỉ dành cho quản trị viên."
+	)
+	@ApiResponses(value = {
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lấy thông tin người dùng thành công"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền truy cập"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng")
+	})
+	ResponseEntity<UserFullResponse> getUserDetail(
+			@Parameter(description = "ID của người dùng cần xem chi tiết")
+			UUID userId
+	);
+
+	@Operation(
+			summary = "Khóa tài khoản người dùng",
+			description = "Vô hiệu hóa tài khoản của người dùng theo ID, ngăn không cho đăng nhập hoặc sử dụng hệ thống."
+	)
+	@ApiResponses(value = {
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Khóa tài khoản thành công"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền thực hiện thao tác này"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng")
 	})
 	ResponseEntity<?> suspendUser(
 			@Parameter(description = "ID của người dùng cần khóa", example = "1", required = true) UUID id);
 
-	@Operation(summary = "Mở khóa tài khoản", description = "Mở khóa tài khoản đã bị khóa trước đó. User có thể đăng nhập và sử dụng hệ thống trở lại.")
-	@ApiResponses({
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Mở khóa tài khoản thành công", content = @Content),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng", content = @Content)
+
+	@Operation(
+			summary = "Mở khóa tài khoản người dùng",
+			description = "Kích hoạt lại tài khoản đã bị khóa, cho phép người dùng đăng nhập và sử dụng hệ thống bình thường."
+	)
+	@ApiResponses(value = {
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Mở khóa tài khoản thành công"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Không có quyền thực hiện thao tác này"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Không tìm thấy người dùng")
 	})
 	ResponseEntity<?> reactivateUser(
 			@Parameter(description = "ID của người dùng cần mở khóa", example = "1", required = true) UUID id);

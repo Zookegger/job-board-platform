@@ -3,6 +3,7 @@ package com.yoedu.job_board_platform.services;
 import com.yoedu.job_board_platform.common.exceptions.BadRequestException;
 import com.yoedu.job_board_platform.dtos.admin.*;
 import com.yoedu.job_board_platform.dtos.report.ReportResponse;
+import com.yoedu.job_board_platform.dtos.user.UserFullResponse;
 import com.yoedu.job_board_platform.models.ReportReason;
 import com.yoedu.job_board_platform.models.ReportStatus;
 import com.yoedu.job_board_platform.models.User;
@@ -46,6 +47,18 @@ public interface AdminService {
 	 * @return trang dữ liệu danh sách người dùng
 	 */
 	Page<User> getUsers(String keyword, UserRole role, Boolean isActive, Pageable pageable);
+
+	/**
+	 * Lấy thông tin chi tiết của một người dùng theo ID.
+	 * Bao gồm thông tin cơ bản, profile, và các dữ liệu liên quan đến vai trò
+	 * (kỹ năng, CV, lịch sử ứng tuyển cho CANDIDATE; thông tin công tin, tin
+	 * tuyển dụng, hoạt động tuyển dụng cho EMPLOYER).
+	 *
+	 * @param userId ID người dùng cần xem chi tiết
+	 *
+	 * @return thông tin đầy đủ của người dùng
+	 */
+	UserFullResponse getUserDetail(UUID userId);
 
 	/**
 	 * Lấy danh sách công ty đang chờ duyệt.

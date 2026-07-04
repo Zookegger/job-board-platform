@@ -1,3 +1,9 @@
+import { LoginPage } from "@/features/auth/LoginPage";
+import RegisterPage from "@/features/auth/RegisterPage";
+import HomePage from "@/features/home/HomePage";
+import NotFoundPage from "@/features/home/NotFoundPage";
+import { JobDetailPage } from "@/features/jobs/JobDetailPage";
+import { JobListPage } from "@/features/jobs/JobListPage";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { setNavigate } from "@/lib/navigate";
 import { UserRole } from "@/types/auth";
@@ -6,18 +12,9 @@ import { useEffect } from "react";
 import { createBrowserRouter, Navigate, Outlet, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 
-import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
-import { LoginPage } from "@/features/auth/LoginPage";
-import RegisterPage from "@/features/auth/RegisterPage";
-import HomePage from "@/features/home/HomePage";
-import NotFoundPage from "@/features/home/NotFoundPage";
-import { JobDetailPage } from "@/features/jobs/JobDetailPage";
-import { JobListPage } from "@/features/jobs/JobListPage";
-
 import CandidateApplicationDetailPage from "@/features/candidate/ApplicationDetailPage";
 import CandidateApplicationsPage from "@/features/candidate/ApplicationsPage";
 import NotificationsPage from "@/features/shared/NotificationsPage";
-
 
 import EmployerCompanyPage from "@/features/employer/CompanyPage";
 import EmployerDashboardPage from "@/features/employer/DashboardPage";
@@ -54,7 +51,6 @@ export const router = createBrowserRouter([
 					{ index: true, element: <HomePage /> },
 					{ path: RouterRoutes.LOGIN, element: <LoginPage /> },
 					{ path: RouterRoutes.REGISTER, element: <RegisterPage /> },
-					{ path: RouterRoutes.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
 					{ path: RouterRoutes.JOBS, element: <JobListPage /> },
 					{ path: RouterRoutes.JOB_DETAIL(":slug"), element: <JobDetailPage /> },
 					{ path: RouterRoutes.COMPANIES, element: <CompanyListPage /> },
@@ -84,7 +80,10 @@ export const router = createBrowserRouter([
 					{
 						children: [
 							{ path: RouterRoutes.CANDIDATE_APPLICATIONS, element: <CandidateApplicationsPage /> },
-							{ path: RouterRoutes.CANDIDATE_APPLICATION_DETAIL(":id"), element: <CandidateApplicationDetailPage /> },
+							{
+								path: RouterRoutes.CANDIDATE_APPLICATION_DETAIL(":id"),
+								element: <CandidateApplicationDetailPage />,
+							},
 						],
 					},
 				],
