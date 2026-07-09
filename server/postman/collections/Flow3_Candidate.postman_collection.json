@@ -1,0 +1,398 @@
+{
+  "info": {
+    "_postman_id": "f3a00000-0000-0000-0000-000000000003",
+    "name": "Flow 3 — Candidate: Tìm việc & Ứng tuyển",
+    "description": "Kiểm thử luồng candidate: tìm kiếm job (public), xem chi tiết, ứng tuyển, theo dõi đơn, xem timeline, rút đơn.\n\nYêu cầu:\n- Đã chạy Flow 1 + Flow 2 + Flow 4 (Admin duyệt company & job)\n- jobId trong Environment phải là job đang ACTIVE\n\nPublic endpoints: /api/jobs/public, /api/companies/public/search",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Login lại — Candidate (làm mới token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Re-login candidate — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.environment.set('candidateAccessToken', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"testcandidate@flow1.com\",\n  \"password\": \"password123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC-07: Candidate upload CV trước khi ứng tuyển",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-07: Upload CV thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('TC-07: Response có filePath', function () {",
+              "    pm.expect(pm.response.json()).to.have.property('filePath');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "C:\\ThucTapCT Yoot\\job-board-platform\\server\\postman\\test-cv.pdf"
+            },
+            {
+              "key": "title",
+              "value": "CV Test Candidate",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/profile/resume",
+          "host": ["{{baseUrl}}"],
+          "path": ["profile", "resume"]
+        }
+      }
+    },
+    {
+      "name": "1. GET /jobs/public — Danh sách job công khai",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Danh sách job — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Có trường content (Page)', function () {",
+              "    pm.expect(json).to.have.property('content');",
+              "    pm.expect(json.content).to.be.an('array');",
+              "});",
+              "pm.test('Có trường totalElements', function () {",
+              "    pm.expect(json).to.have.property('totalElements');",
+              "});",
+              "if (json.content && json.content.length > 0) {",
+              "    pm.environment.set('jobSlug', json.content[0].slug);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/jobs/public?page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["jobs", "public"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. GET /jobs/public?keyword=Java — Tìm kiếm theo từ khóa",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Tìm kiếm job — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Kết quả là Page object', function () {",
+              "    pm.expect(pm.response.json().content).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/jobs/public?keyword=Java&page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["jobs", "public"],
+          "query": [
+            { "key": "keyword", "value": "Java" },
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. GET /jobs/public/{slug} — Xem chi tiết job",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Chi tiết job — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Có trường title', function () {",
+              "    pm.expect(json.title).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.test('Có trường id', function () {",
+              "    pm.expect(json.id).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/jobs/public/{{jobSlug}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["jobs", "public", "{{jobSlug}}"]
+        }
+      }
+    },
+    {
+      "name": "4. GET /companies/public/search — Danh sách công ty công khai",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Danh sách công ty — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Kết quả là Page object', function () {",
+              "    pm.expect(pm.response.json().content).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/companies/public/search?page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["companies", "public", "search"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. POST /applications — Ứng tuyển vào job",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ứng tuyển — 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Application có id', function () {",
+              "    pm.expect(json.id).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('applicationId', json.id);",
+              "pm.test('Status ban đầu là PENDING', function () {",
+              "    pm.expect(json.status).to.eql('PENDING');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{candidateAccessToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"jobId\": \"{{jobId}}\",\n  \"coverLetter\": \"Tôi có 5 năm kinh nghiệm Java và Spring Boot, rất muốn đóng góp cho công ty của quý vị.\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/applications",
+          "host": ["{{baseUrl}}"],
+          "path": ["applications"]
+        }
+      }
+    },
+    {
+      "name": "6. GET /applications — Danh sách đơn đã nộp",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Danh sách đơn — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Có ít nhất 1 đơn', function () {",
+              "    pm.expect(pm.response.json().content.length).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{candidateAccessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/applications?page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["applications"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. GET /applications/{id} — Chi tiết đơn ứng tuyển",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Chi tiết đơn — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('ID khớp', function () {",
+              "    pm.expect(pm.response.json().id).to.eql(pm.environment.get('applicationId'));",
+              "});",
+              "pm.test('Status là PENDING', function () {",
+              "    pm.expect(pm.response.json().status).to.eql('PENDING');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{candidateAccessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/applications/{{applicationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["applications", "{{applicationId}}"]
+        }
+      }
+    },
+    {
+      "name": "8. GET /applications/{id}/timeline — Timeline hồ sơ",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Timeline — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Timeline là mảng', function () {",
+              "    pm.expect(pm.response.json()).to.be.an('array');",
+              "});",
+              "pm.test('Có ít nhất 1 mục', function () {",
+              "    pm.expect(pm.response.json().length).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{candidateAccessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/applications/{{applicationId}}/timeline",
+          "host": ["{{baseUrl}}"],
+          "path": ["applications", "{{applicationId}}", "timeline"]
+        }
+      }
+    },
+    {
+      "name": "9. DELETE /applications/{id} — Rút đơn ứng tuyển",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Rút đơn — 200 hoặc 204', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{candidateAccessToken}}", "type": "string" }]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/applications/{{applicationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["applications", "{{applicationId}}"]
+        }
+      }
+    }
+  ]
+}

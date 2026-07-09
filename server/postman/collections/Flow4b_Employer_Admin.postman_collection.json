@@ -1,0 +1,258 @@
+{
+  "info": {
+    "_postman_id": "f4b00000-0000-0000-0000-00000000004b",
+    "name": "Flow 4b — Employer & Admin: Review ứng viên & Quản lý user",
+    "description": "Chạy SAU Flow 3 (candidate đã apply).\n\nEmployer xem và cập nhật trạng thái ứng viên. Admin quản lý tài khoản người dùng (suspend/reactivate).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "TC-07: Employer đăng nhập thành công",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-07: Employer đăng nhập thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"testemployer@flow1.com\",\n  \"password\": \"password123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC-08: Employer xem danh sách ứng viên đã nộp đơn",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-08: Danh sách ứng viên trả về HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('TC-08: Kết quả là danh sách phân trang (content array)', function () {",
+              "    pm.expect(json.content).to.be.an('array');",
+              "});",
+              "pm.test('TC-08: Có ít nhất 1 ứng viên', function () {",
+              "    pm.expect(json.content.length).to.be.above(0);",
+              "});",
+              "if (json.content && json.content.length > 0) {",
+              "    pm.environment.set('applicationId', json.content[0].id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/employer/applications?page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["employer", "applications"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC-09: Employer chuyển trạng thái ứng viên sang REVIEWING",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-09: Cập nhật trạng thái REVIEWING thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/employer/applications/{{applicationId}}/status?status=REVIEWING",
+          "host": ["{{baseUrl}}"],
+          "path": ["employer", "applications", "{{applicationId}}", "status"],
+          "query": [{ "key": "status", "value": "REVIEWING" }]
+        }
+      }
+    },
+    {
+      "name": "TC-10: Employer mời ứng viên phỏng vấn (INTERVIEW)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-10: Cập nhật trạng thái INTERVIEW thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/employer/applications/{{applicationId}}/status?status=INTERVIEW&reason=Ứng viên phù hợp, mời phỏng vấn vòng 1",
+          "host": ["{{baseUrl}}"],
+          "path": ["employer", "applications", "{{applicationId}}", "status"],
+          "query": [
+            { "key": "status", "value": "INTERVIEW" },
+            { "key": "reason", "value": "Ứng viên phù hợp, mời phỏng vấn vòng 1" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC-11: Admin đăng nhập thành công (lần 2)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-11: Admin đăng nhập thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.environment.set('adminAccessToken', json.accessToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@yoedu.com\",\n  \"password\": \"admin123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC-12: Admin xem danh sách tài khoản người dùng",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-12: Danh sách users trả về HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('TC-12: Có ít nhất 1 user trong hệ thống', function () {",
+              "    pm.expect(json.content.length).to.be.above(0);",
+              "});",
+              "var candidate = json.content.find(function(u) {",
+              "    return u.email === 'testcandidate@flow1.com';",
+              "});",
+              "if (candidate) {",
+              "    pm.environment.set('candidateUserId', candidate.id);",
+              "    pm.test('TC-12: Tìm thấy tài khoản candidate test', function () {",
+              "        pm.expect(candidate.id).to.be.a('string');",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/users?page=0&size=20",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "users"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "20" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC-13: Admin tạm ngưng tài khoản vi phạm",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-13: Tạm ngưng tài khoản thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/users/{{candidateUserId}}/suspend",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "users", "{{candidateUserId}}", "suspend"]
+        }
+      }
+    },
+    {
+      "name": "TC-14: Admin khôi phục tài khoản bị tạm ngưng",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-14: Khôi phục tài khoản thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/users/{{candidateUserId}}/reactivate",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "users", "{{candidateUserId}}", "reactivate"]
+        }
+      }
+    }
+  ]
+}
