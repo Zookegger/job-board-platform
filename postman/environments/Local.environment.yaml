@@ -1,0 +1,24 @@
+name: Local
+values:
+  - key: baseUrl
+    value: 'http://localhost:5000/api'
+  - key: accessToken
+    value: ''
+  - key: refreshToken
+    value: ''
+  - key: candidateAccessToken
+    value: ''
+  - key: employerAccessToken
+    value: ''
+  - key: adminAccessToken
+    value: ''
+  - key: companyId
+    value: ''
+  - key: jobId
+    value: ''
+  - key: applicationId
+    value: ''
+  - key: reportId
+    value: ''
+  - key: candidateUserId
+    value: ''

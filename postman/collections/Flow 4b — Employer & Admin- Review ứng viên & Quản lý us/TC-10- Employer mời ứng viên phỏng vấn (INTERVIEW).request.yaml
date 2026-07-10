@@ -1,0 +1,15 @@
+$kind: http-request
+name: "TC-10: Employer mời ứng viên phỏng vấn (INTERVIEW)"
+url: "{{baseUrl}}/employer/applications/{{applicationId}}/status?status=INTERVIEW&reason=Ứng viên phù hợp, mời phỏng vấn vòng 1"
+method: PUT
+queryParams:
+  status: INTERVIEW
+  reason: Ứng viên phù hợp, mời phỏng vấn vòng 1
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('TC-10: Cập nhật trạng thái INTERVIEW thành công — HTTP 200', function () {
+          pm.response.to.have.status(200);
+      });
+    language: text/javascript
+order: 4000

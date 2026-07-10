@@ -1,0 +1,7 @@
+$kind: collection
+name: "Flow 2 — Employer: Tạo & Submit Job"
+description: |-
+  Kiểm thử luồng employer: xem công ty, tạo job (DRAFT) → cập nhật → submit để admin duyệt.
+
+  Yêu cầu: đã chạy Flow 1 để có employerAccessToken trong Environment.
+  Sau khi chạy, biến companyId và jobId sẽ được lưu vào Environment để các Flow khác sử dụng.

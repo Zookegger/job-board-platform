@@ -1,0 +1,6 @@
+$kind: collection
+name: "Flow 4b — Employer & Admin: Review ứng viên & Quản lý user"
+description: |-
+  Chạy SAU Flow 3 (candidate đã apply).
+
+  Employer xem và cập nhật trạng thái ứng viên. Admin quản lý tài khoản người dùng (suspend/reactivate).

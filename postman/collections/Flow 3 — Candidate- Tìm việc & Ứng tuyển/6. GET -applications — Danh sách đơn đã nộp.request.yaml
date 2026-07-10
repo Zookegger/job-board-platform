@@ -1,0 +1,22 @@
+$kind: http-request
+name: 6. GET /applications — Danh sách đơn đã nộp
+url: "{{baseUrl}}/applications?page=0&size=10"
+method: GET
+queryParams:
+  page: "0"
+  size: "10"
+auth:
+  type: bearer
+  credentials:
+    token: "{{candidateAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Danh sách đơn — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Có ít nhất 1 đơn', function () {
+          pm.expect(pm.response.json().content.length).to.be.above(0);
+      });
+    language: text/javascript
+order: 8000

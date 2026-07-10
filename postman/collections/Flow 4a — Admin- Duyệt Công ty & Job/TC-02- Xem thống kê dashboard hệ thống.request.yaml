@@ -1,0 +1,22 @@
+$kind: http-request
+name: "TC-02: Xem thống kê dashboard hệ thống"
+url: "{{baseUrl}}/admin/dashboard/stats"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('TC-02: Dashboard stats trả về HTTP 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('TC-02: Có trường totalUsers', function () {
+          pm.expect(json).to.have.property('totalUsers');
+      });
+      pm.test('TC-02: Có trường totalJobs', function () {
+          pm.expect(json).to.have.property('totalJobs');
+      });
+      pm.test('TC-02: totalUsers > 0', function () {
+          pm.expect(json.totalUsers).to.be.above(0);
+      });
+    language: text/javascript
+order: 2000

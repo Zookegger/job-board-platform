@@ -1,0 +1,19 @@
+$kind: http-request
+name: 2. GET /jobs/public?keyword=Java — Tìm kiếm theo từ khóa
+url: "{{baseUrl}}/jobs/public?keyword=Java&page=0&size=10"
+method: GET
+queryParams:
+  keyword: Java
+  page: "0"
+  size: "10"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Tìm kiếm job — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Kết quả là Page object', function () {
+          pm.expect(pm.response.json().content).to.be.an('array');
+      });
+    language: text/javascript
+order: 4000

@@ -1,0 +1,10 @@
+$kind: collection
+name: "Flow 5 — Report: Báo cáo vi phạm"
+description: |-
+  Kiểm thử luồng báo cáo: candidate tạo report → admin xem danh sách → admin review → admin dismiss.
+
+  Yêu cầu:
+  - Đã chạy Flow 1 (có candidateAccessToken, adminAccessToken)
+  - Đã chạy Flow 2 + Flow 4 bước approve (có jobId đang ACTIVE)
+
+  Sau khi chạy, biến reportId sẽ được lưu vào Environment.

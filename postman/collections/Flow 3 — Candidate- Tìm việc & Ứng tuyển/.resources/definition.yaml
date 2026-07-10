@@ -1,0 +1,10 @@
+$kind: collection
+name: "Flow 3 — Candidate: Tìm việc & Ứng tuyển"
+description: |-
+  Kiểm thử luồng candidate: tìm kiếm job (public), xem chi tiết, ứng tuyển, theo dõi đơn, xem timeline, rút đơn.
+
+  Yêu cầu:
+  - Đã chạy Flow 1 + Flow 2 + Flow 4 (Admin duyệt company & job)
+  - jobId trong Environment phải là job đang ACTIVE
+
+  Public endpoints: /api/jobs/public, /api/companies/public/search

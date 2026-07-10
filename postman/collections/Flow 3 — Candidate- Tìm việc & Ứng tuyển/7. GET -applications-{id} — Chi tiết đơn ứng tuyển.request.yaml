@@ -1,0 +1,22 @@
+$kind: http-request
+name: 7. GET /applications/{id} — Chi tiết đơn ứng tuyển
+url: "{{baseUrl}}/applications/{{applicationId}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{candidateAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Chi tiết đơn — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('ID khớp', function () {
+          pm.expect(pm.response.json().id).to.eql(pm.environment.get('applicationId'));
+      });
+      pm.test('Status là PENDING', function () {
+          pm.expect(pm.response.json().status).to.eql('PENDING');
+      });
+    language: text/javascript
+order: 9000

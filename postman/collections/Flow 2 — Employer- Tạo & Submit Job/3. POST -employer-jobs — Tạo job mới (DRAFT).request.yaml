@@ -1,0 +1,48 @@
+$kind: http-request
+name: 3. POST /employer/jobs — Tạo job mới (DRAFT)
+url: "{{baseUrl}}/employer/jobs"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Senior Java Developer",
+      "description": "Chúng tôi tìm kiếm Senior Java Developer có kinh nghiệm xây dựng hệ thống backend quy mô lớn.",
+      "requirements": "- 3+ năm kinh nghiệm Java\n- Thành thạo Spring Boot\n- Hiểu biết về PostgreSQL",
+      "benefits": "- BHXH đầy đủ\n- Thưởng dự án\n- Làm việc linh hoạt",
+      "categoryId": 1,
+      "numberOfOpenings": 2,
+      "salaryMin": 20000000,
+      "salaryMax": 40000000,
+      "currency": "VND",
+      "location": "TP.HCM",
+      "locationTypes": "ONSITE",
+      "employmentType": "FULL_TIME",
+      "experienceLevel": "SENIOR",
+      "skillIds": [1, 5]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{employerAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Tạo job — 201', function () {
+          pm.response.to.have.status(201);
+      });
+      var json = pm.response.json();
+      pm.test('Job có id', function () {
+          pm.expect(json.id).to.be.a('string').and.not.empty;
+      });
+      pm.environment.set('jobId', json.id);
+      pm.test('Status ban đầu là DRAFT', function () {
+          pm.expect(json.status).to.eql('DRAFT');
+      });
+      pm.test('Title đúng', function () {
+          pm.expect(json.title).to.eql('Senior Java Developer');
+      });
+    language: text/javascript
+order: 4000

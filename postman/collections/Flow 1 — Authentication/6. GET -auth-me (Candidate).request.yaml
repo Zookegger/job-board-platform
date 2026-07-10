@@ -1,0 +1,23 @@
+$kind: http-request
+name: 6. GET /auth/me (Candidate)
+url: "{{baseUrl}}/auth/me"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{candidateAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('GET me — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('Có trường email', function () {
+          pm.expect(json.email).to.be.a('string').and.not.empty;
+      });
+      pm.test('Có trường role', function () {
+          pm.expect(json.role).to.be.a('string').and.not.empty;
+      });
+    language: text/javascript
+order: 6000

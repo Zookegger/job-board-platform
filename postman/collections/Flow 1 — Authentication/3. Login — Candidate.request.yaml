@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{candidateEmail}}",
+      "password": "{{testPassword}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Login candidate — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('Trả về accessToken', function () {
+          pm.expect(json.accessToken).to.be.a('string').and.not.empty;
+      });
+      pm.environment.set('candidateAccessToken', json.accessToken);
+      pm.test('tokenType là Bearer', function () {
+          pm.expect(json.tokenType).to.eql('Bearer');
+      });
+    language: text/javascript
+order: 3000

@@ -1,0 +1,28 @@
+$kind: http-request
+name: "TC-12: Admin xem danh sách tài khoản người dùng"
+url: "{{baseUrl}}/admin/users?page=0&size=20"
+method: GET
+queryParams:
+  page: "0"
+  size: "20"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('TC-12: Danh sách users trả về HTTP 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('TC-12: Có ít nhất 1 user trong hệ thống', function () {
+          pm.expect(json.content.length).to.be.above(0);
+      });
+      var candidate = json.content.find(function(u) {
+          return u.email === 'testcandidate@flow1.com';
+      });
+      if (candidate) {
+          pm.environment.set('candidateUserId', candidate.id);
+          pm.test('TC-12: Tìm thấy tài khoản candidate test', function () {
+              pm.expect(candidate.id).to.be.a('string');
+          });
+      }
+    language: text/javascript
+order: 6000

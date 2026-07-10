@@ -1,0 +1,32 @@
+$kind: http-request
+name: 2. GET /admin/reports — Admin xem danh sách báo cáo
+url: "{{baseUrl}}/admin/reports?page=0&size=10"
+method: GET
+queryParams:
+  page: "0"
+  size: "10"
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Danh sách reports — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('Kết quả là Page object', function () {
+          pm.expect(json.content).to.be.an('array');
+      });
+      pm.test('Có ít nhất 1 report', function () {
+          pm.expect(json.content.length).to.be.above(0);
+      });
+      var report = json.content.find(function(r) {
+          return r.id === pm.environment.get('reportId');
+      });
+      pm.test('Tìm thấy report vừa tạo', function () {
+          pm.expect(report).to.not.be.undefined;
+      });
+    language: text/javascript
+order: 4000

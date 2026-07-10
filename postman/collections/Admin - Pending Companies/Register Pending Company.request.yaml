@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/register/company"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "companyName": "Postman Pending {{$timestamp}}",
+      "taxCode": "PM{{$timestamp}}",
+      "address": "123 Postman Street, Ho Chi Minh City",
+      "fullName": "Postman HR",
+      "userEmail": "postman.hr.{{$timestamp}}@example.com",
+      "userPhone": "0901234567",
+      "password": "password123",
+      "confirmPassword": "password123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("creates a company account waiting for approval", function () {
+        pm.response.to.have.status(201);
+      });
+    language: text/javascript
+order: 1000

@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "email": "admin@yoedu.com",
+      "password": "admin123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("admin login succeeds", function () {
+        pm.response.to.have.status(200);
+      });
+
+      var res = pm.response.json();
+      if (res.accessToken) pm.environment.set("accessToken", res.accessToken);
+      if (res.refreshToken) pm.environment.set("refreshToken", res.refreshToken);
+    language: text/javascript
+order: 2000

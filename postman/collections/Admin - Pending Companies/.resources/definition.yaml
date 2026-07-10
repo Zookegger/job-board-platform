@@ -1,0 +1,2 @@
+$kind: collection
+description: "End-to-end checks for viewing pending company approvals: create pending company, login admin, list pending companies, search/filter pending companies."

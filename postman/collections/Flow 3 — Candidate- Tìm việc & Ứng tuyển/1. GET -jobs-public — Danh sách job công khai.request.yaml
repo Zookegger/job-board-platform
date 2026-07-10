@@ -1,0 +1,26 @@
+$kind: http-request
+name: 1. GET /jobs/public — Danh sách job công khai
+url: "{{baseUrl}}/jobs/public?page=0&size=10"
+method: GET
+queryParams:
+  page: "0"
+  size: "10"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Danh sách job — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('Có trường content (Page)', function () {
+          pm.expect(json).to.have.property('content');
+          pm.expect(json.content).to.be.an('array');
+      });
+      pm.test('Có trường totalElements', function () {
+          pm.expect(json).to.have.property('totalElements');
+      });
+      if (json.content && json.content.length > 0) {
+          pm.environment.set('jobSlug', json.content[0].slug);
+      }
+    language: text/javascript
+order: 3000

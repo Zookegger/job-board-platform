@@ -1,0 +1,17 @@
+$kind: http-request
+name: 7. POST /auth/refresh-token
+url: "{{baseUrl}}/auth/refresh-token"
+method: POST
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Refresh token — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('Trả về accessToken mới', function () {
+          pm.expect(json.accessToken).to.be.a('string').and.not.empty;
+      });
+      pm.environment.set('candidateAccessToken', json.accessToken);
+    language: text/javascript
+order: 7000

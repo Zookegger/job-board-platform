@@ -1,0 +1,9 @@
+$kind: collection
+description: |-
+  Kiểm thử luồng xác thực: đăng ký, đăng nhập (3 vai trò), xem thông tin, refresh token, đăng xuất.
+
+  Chạy theo thứ tự từ trên xuống. Sau khi chạy, các biến candidateAccessToken / employerAccessToken / adminAccessToken sẽ được lưu vào Environment.
+variables:
+  candidateEmail: testcandidate@flow1.com
+  employerEmail: testemployer@flow1.com
+  testPassword: password123

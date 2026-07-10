@@ -1,0 +1,24 @@
+$kind: http-request
+name: 1. GET /company/employer — Lấy thông tin công ty
+url: "{{baseUrl}}/company/employer"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{employerAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Lấy company — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('Company có id', function () {
+          pm.expect(json.id).to.be.a('string').and.not.empty;
+      });
+      pm.environment.set('companyId', json.id);
+      pm.test('Company có tên (companyName)', function () {
+          pm.expect(json.companyName).to.be.a('string').and.not.empty;
+      });
+    language: text/javascript
+order: 2000

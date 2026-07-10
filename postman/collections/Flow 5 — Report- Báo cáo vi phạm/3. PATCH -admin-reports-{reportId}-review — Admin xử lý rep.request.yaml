@@ -1,0 +1,24 @@
+$kind: http-request
+name: 3. PATCH /admin/reports/{reportId}/review — Admin xử lý report
+url: "{{baseUrl}}/admin/reports/{{reportId}}/review"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "reviewNotes": "Đã xác nhận vi phạm. Job yêu cầu đặt cọc — không đúng quy định."
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Review report — 200', function () {
+          pm.response.to.have.status(200);
+      });
+    language: text/javascript
+order: 5000

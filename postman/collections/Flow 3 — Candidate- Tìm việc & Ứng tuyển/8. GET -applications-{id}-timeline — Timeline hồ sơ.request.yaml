@@ -1,0 +1,22 @@
+$kind: http-request
+name: 8. GET /applications/{id}/timeline — Timeline hồ sơ
+url: "{{baseUrl}}/applications/{{applicationId}}/timeline"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{candidateAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Timeline — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Timeline là mảng', function () {
+          pm.expect(pm.response.json()).to.be.an('array');
+      });
+      pm.test('Có ít nhất 1 mục', function () {
+          pm.expect(pm.response.json().length).to.be.above(0);
+      });
+    language: text/javascript
+order: 10000

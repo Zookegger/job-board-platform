@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "admin@yoedu.com",
+      "password": "admin123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Re-login admin — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.environment.set('adminAccessToken', pm.response.json().accessToken);
+    language: text/javascript
+order: 2000

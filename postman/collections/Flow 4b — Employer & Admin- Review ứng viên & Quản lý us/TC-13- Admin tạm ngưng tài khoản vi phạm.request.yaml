@@ -1,0 +1,12 @@
+$kind: http-request
+name: "TC-13: Admin tạm ngưng tài khoản vi phạm"
+url: "{{baseUrl}}/admin/users/{{candidateUserId}}/suspend"
+method: PATCH
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('TC-13: Tạm ngưng tài khoản thành công — HTTP 200', function () {
+          pm.response.to.have.status(200);
+      });
+    language: text/javascript
+order: 7000

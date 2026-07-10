@@ -1,0 +1,18 @@
+$kind: http-request
+name: "TC-03: Xem danh sách công ty chờ phê duyệt"
+url: "{{baseUrl}}/admin/companies/pending?page=0&size=10"
+method: GET
+queryParams:
+  page: "0"
+  size: "10"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('TC-03: Danh sách công ty pending trả về HTTP 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('TC-03: Kết quả là danh sách phân trang (content array)', function () {
+          pm.expect(pm.response.json().content).to.be.an('array');
+      });
+    language: text/javascript
+order: 3000

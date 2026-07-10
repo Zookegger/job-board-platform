@@ -1,0 +1,23 @@
+$kind: http-request
+name: "TC-11: Admin đăng nhập thành công (lần 2)"
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "admin@yoedu.com",
+      "password": "admin123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('TC-11: Admin đăng nhập thành công — HTTP 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.environment.set('adminAccessToken', json.accessToken);
+    language: text/javascript
+order: 5000

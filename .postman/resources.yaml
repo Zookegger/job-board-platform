@@ -1,0 +1,27 @@
+# Use this workspace to collaborate
+workspace:
+  id: ceac5e6c-da53-4896-9d41-832e9c290b6b
+
+localResources:
+  collections:
+    - ..\server\postman\admin-pending-companies.postman_collection.json
+    - ..\server\postman\collections\Flow1_Auth.postman_collection.json
+    - ..\server\postman\collections\Flow2_Employer.postman_collection.json
+    - ..\server\postman\collections\Flow3_Candidate.postman_collection.json
+    - ..\server\postman\collections\Flow4a_Admin_Approve.postman_collection.json
+    - ..\server\postman\collections\Flow4b_Employer_Admin.postman_collection.json
+    - ..\server\postman\collections\Flow5_Report.postman_collection.json
+  environments:
+    - ..\server\postman\local.postman_environment.json
+    - ..\server\postman\environments\Local Environment.environment.yaml
+    - ..\server\postman\environments\Local.env.yaml
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ..\postman\collections\Admin - Pending Companies: 4c7cd78c-a0c8-42e0-a470-7ca578206459
+    ..\postman\collections\Flow 1 — Authentication: 58609b66-ac31-4d8e-ac23-752d2300e060
+    ..\postman\collections\Flow 2 — Employer- Tạo & Submit Job: aa9971f6-b7f1-4fb0-b4e0-03cef87a3198
+    ..\postman\collections\Flow 4a — Admin- Duyệt Công ty & Job: 839effc6-05fd-4757-acef-ee7646a6eb1c
+    ..\postman\collections\Flow 5 — Report- Báo cáo vi phạm: 84029bf8-74f9-4f1d-8dcc-f3828002e01b

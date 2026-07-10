@@ -1,0 +1,33 @@
+$kind: http-request
+name: 5. POST /applications — Ứng tuyển vào job
+url: "{{baseUrl}}/applications"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "jobId": "{{jobId}}",
+      "coverLetter": "Tôi có 5 năm kinh nghiệm Java và Spring Boot, rất muốn đóng góp cho công ty của quý vị."
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{candidateAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Ứng tuyển — 201', function () {
+          pm.response.to.have.status(201);
+      });
+      var json = pm.response.json();
+      pm.test('Application có id', function () {
+          pm.expect(json.id).to.be.a('string').and.not.empty;
+      });
+      pm.environment.set('applicationId', json.id);
+      pm.test('Status ban đầu là PENDING', function () {
+          pm.expect(json.status).to.eql('PENDING');
+      });
+    language: text/javascript
+order: 7000

@@ -1,0 +1,6 @@
+$kind: collection
+name: "Flow 4a — Admin: Duyệt Công ty & Job"
+description: |-
+  Chạy SAU Flow 2, TRƯỚC Flow 3.
+
+  Admin đăng nhập và thực hiện kiểm duyệt công ty mới đăng ký và job vừa được submit.

@@ -1,0 +1,12 @@
+$kind: http-request
+name: "TC-04: Admin phê duyệt công ty mới đăng ký"
+url: "{{baseUrl}}/admin/companies/{{companyId}}/approve"
+method: PATCH
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('TC-04: Phê duyệt công ty thành công — HTTP 200', function () {
+          pm.response.to.have.status(200);
+      });
+    language: text/javascript
+order: 4000

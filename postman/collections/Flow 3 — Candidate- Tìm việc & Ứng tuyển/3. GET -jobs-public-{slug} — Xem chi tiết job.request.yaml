@@ -1,0 +1,19 @@
+$kind: http-request
+name: 3. GET /jobs/public/{slug} — Xem chi tiết job
+url: "{{baseUrl}}/jobs/public/{{jobSlug}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Chi tiết job — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      var json = pm.response.json();
+      pm.test('Có trường title', function () {
+          pm.expect(json.title).to.be.a('string').and.not.empty;
+      });
+      pm.test('Có trường id', function () {
+          pm.expect(json.id).to.be.a('string').and.not.empty;
+      });
+    language: text/javascript
+order: 5000

@@ -1,0 +1,40 @@
+$kind: http-request
+name: 5. PUT /employer/jobs/{jobId} — Cập nhật job
+url: "{{baseUrl}}/employer/jobs/{{jobId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Lead Java Developer",
+      "description": "Chúng tôi tìm kiếm Lead Java Developer dẫn dắt team backend.",
+      "requirements": "- 5+ năm kinh nghiệm Java\n- Kinh nghiệm dẫn dắt team\n- Thành thạo microservices",
+      "benefits": "- BHXH đầy đủ\n- Cổ phần công ty\n- Thưởng hiệu suất",
+      "categoryId": 1,
+      "numberOfOpenings": 1,
+      "salaryMin": 35000000,
+      "salaryMax": 60000000,
+      "currency": "VND",
+      "location": "Hà Nội",
+      "locationTypes": "HYBRID",
+      "employmentType": "FULL_TIME",
+      "experienceLevel": "SENIOR",
+      "skillIds": [1, 5]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{employerAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Cập nhật job — 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Title đã được cập nhật', function () {
+          pm.expect(pm.response.json().title).to.eql('Lead Java Developer');
+      });
+    language: text/javascript
+order: 6000

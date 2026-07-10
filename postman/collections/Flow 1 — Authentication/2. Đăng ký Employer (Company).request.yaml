@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/register/company"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "companyName": "Flow1 Test Corp",
+      "taxCode": "0199887766",
+      "address": "123 Test Street, TP.HCM",
+      "fullName": "HR Manager Test",
+      "userEmail": "{{employerEmail}}",
+      "userPhone": "0901234567",
+      "password": "{{testPassword}}",
+      "confirmPassword": "{{testPassword}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Register employer — 201 hoặc 409 (đã tồn tại)', function () {
+          pm.expect(pm.response.code).to.be.oneOf([201, 409]);
+      });
+    language: text/javascript
+order: 2000
