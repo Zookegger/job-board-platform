@@ -1,0 +1,278 @@
+{
+  "info": {
+    "_postman_id": "f1a00000-0000-0000-0000-000000000001",
+    "name": "Flow 1 — Authentication",
+    "description": "Kiểm thử luồng xác thực: đăng ký, đăng nhập (3 vai trò), xem thông tin, refresh token, đăng xuất.\n\nChạy theo thứ tự từ trên xuống. Sau khi chạy, các biến candidateAccessToken / employerAccessToken / adminAccessToken sẽ được lưu vào Environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "candidateEmail", "value": "testcandidate@flow1.com" },
+    { "key": "employerEmail",  "value": "testemployer@flow1.com"  },
+    { "key": "testPassword",   "value": "password123" }
+  ],
+  "item": [
+    {
+      "name": "1. Đăng ký Candidate",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Register candidate — 201 hoặc 409 (đã tồn tại)', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{candidateEmail}}\",\n  \"fullName\": \"Test Candidate\",\n  \"password\": \"{{testPassword}}\",\n  \"confirmPassword\": \"{{testPassword}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register/candidate",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register", "candidate"]
+        }
+      }
+    },
+    {
+      "name": "2. Đăng ký Employer (Company)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Register employer — 201 hoặc 409 (đã tồn tại)', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companyName\": \"Flow1 Test Corp\",\n  \"taxCode\": \"0199887766\",\n  \"address\": \"123 Test Street, TP.HCM\",\n  \"fullName\": \"HR Manager Test\",\n  \"userEmail\": \"{{employerEmail}}\",\n  \"userPhone\": \"0901234567\",\n  \"password\": \"{{testPassword}}\",\n  \"confirmPassword\": \"{{testPassword}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register/company",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register", "company"]
+        }
+      }
+    },
+    {
+      "name": "3. Login — Candidate",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login candidate — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Trả về accessToken', function () {",
+              "    pm.expect(json.accessToken).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('candidateAccessToken', json.accessToken);",
+              "pm.test('tokenType là Bearer', function () {",
+              "    pm.expect(json.tokenType).to.eql('Bearer');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{candidateEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "4. Login — Employer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login employer — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.environment.set('employerAccessToken', json.accessToken);",
+              "pm.test('Có accessToken', function () {",
+              "    pm.expect(json.accessToken).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{employerEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "5. Login — Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login admin — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.environment.set('adminAccessToken', json.accessToken);",
+              "pm.test('Có accessToken', function () {",
+              "    pm.expect(json.accessToken).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@yoedu.com\",\n  \"password\": \"admin123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "6. GET /auth/me (Candidate)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('GET me — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Có trường email', function () {",
+              "    pm.expect(json.email).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.test('Có trường role', function () {",
+              "    pm.expect(json.role).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{candidateAccessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "me"]
+        }
+      }
+    },
+    {
+      "name": "7. POST /auth/refresh-token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Refresh token — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Trả về accessToken mới', function () {",
+              "    pm.expect(json.accessToken).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('candidateAccessToken', json.accessToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/refresh-token",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "refresh-token"]
+        }
+      }
+    },
+    {
+      "name": "8. POST /auth/logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Logout — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{candidateAccessToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/logout",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "logout"]
+        }
+      }
+    }
+  ]
+}

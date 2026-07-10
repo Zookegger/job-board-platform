@@ -1,0 +1,192 @@
+{
+  "info": {
+    "_postman_id": "f4a00000-0000-0000-0000-00000000004a",
+    "name": "Flow 4a — Admin: Duyệt Công ty & Job",
+    "description": "Chạy SAU Flow 2, TRƯỚC Flow 3.\n\nAdmin đăng nhập và thực hiện kiểm duyệt công ty mới đăng ký và job vừa được submit.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "TC-01: Admin đăng nhập thành công",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-01: Admin đăng nhập thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('TC-01: Response trả về accessToken', function () {",
+              "    pm.expect(pm.response.json().accessToken).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@yoedu.com\",\n  \"password\": \"admin123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "TC-02: Xem thống kê dashboard hệ thống",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-02: Dashboard stats trả về HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('TC-02: Có trường totalUsers', function () {",
+              "    pm.expect(json).to.have.property('totalUsers');",
+              "});",
+              "pm.test('TC-02: Có trường totalJobs', function () {",
+              "    pm.expect(json).to.have.property('totalJobs');",
+              "});",
+              "pm.test('TC-02: totalUsers > 0', function () {",
+              "    pm.expect(json.totalUsers).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/dashboard/stats",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "dashboard", "stats"]
+        }
+      }
+    },
+    {
+      "name": "TC-03: Xem danh sách công ty chờ phê duyệt",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-03: Danh sách công ty pending trả về HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('TC-03: Kết quả là danh sách phân trang (content array)', function () {",
+              "    pm.expect(pm.response.json().content).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/companies/pending?page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "companies", "pending"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC-04: Admin phê duyệt công ty mới đăng ký",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-04: Phê duyệt công ty thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/companies/{{companyId}}/approve",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "companies", "{{companyId}}", "approve"]
+        }
+      }
+    },
+    {
+      "name": "TC-05: Xem danh sách job chờ phê duyệt",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-05: Danh sách job pending trả về HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('TC-05: Kết quả là danh sách phân trang (content array)', function () {",
+              "    pm.expect(pm.response.json().content).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/jobs/pending?page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "jobs", "pending"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "TC-06: Admin phê duyệt tin tuyển dụng",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-06: Phê duyệt tin tuyển dụng thành công — HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/jobs/{{jobId}}/approve",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "jobs", "{{jobId}}", "approve"]
+        }
+      }
+    }
+  ]
+}

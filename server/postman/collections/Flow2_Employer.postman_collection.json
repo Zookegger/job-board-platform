@@ -1,0 +1,260 @@
+{
+  "info": {
+    "_postman_id": "f2a00000-0000-0000-0000-000000000002",
+    "name": "Flow 2 — Employer: Tạo & Submit Job",
+    "description": "Kiểm thử luồng employer: xem công ty, tạo job (DRAFT) → cập nhật → submit để admin duyệt.\n\nYêu cầu: đã chạy Flow 1 để có employerAccessToken trong Environment.\nSau khi chạy, biến companyId và jobId sẽ được lưu vào Environment để các Flow khác sử dụng.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Login lại — Employer (làm mới token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Re-login employer — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.environment.set('employerAccessToken', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"testemployer@flow1.com\",\n  \"password\": \"password123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "1. GET /company/employer — Lấy thông tin công ty",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Lấy company — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Company có id', function () {",
+              "    pm.expect(json.id).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('companyId', json.id);",
+              "pm.test('Company có tên (companyName)', function () {",
+              "    pm.expect(json.companyName).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{employerAccessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/company/employer",
+          "host": ["{{baseUrl}}"],
+          "path": ["company", "employer"]
+        }
+      }
+    },
+    {
+      "name": "2. GET /company/status — Trạng thái công ty",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Company status — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Có trường approvalStatus', function () {",
+              "    pm.expect(pm.response.json()).to.have.property('approvalStatus');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{employerAccessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/company/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["company", "status"]
+        }
+      }
+    },
+    {
+      "name": "3. POST /employer/jobs — Tạo job mới (DRAFT)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Tạo job — 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Job có id', function () {",
+              "    pm.expect(json.id).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('jobId', json.id);",
+              "pm.test('Status ban đầu là DRAFT', function () {",
+              "    pm.expect(json.status).to.eql('DRAFT');",
+              "});",
+              "pm.test('Title đúng', function () {",
+              "    pm.expect(json.title).to.eql('Senior Java Developer');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{employerAccessToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Senior Java Developer\",\n  \"description\": \"Chúng tôi tìm kiếm Senior Java Developer có kinh nghiệm xây dựng hệ thống backend quy mô lớn.\",\n  \"requirements\": \"- 3+ năm kinh nghiệm Java\\n- Thành thạo Spring Boot\\n- Hiểu biết về PostgreSQL\",\n  \"benefits\": \"- BHXH đầy đủ\\n- Thưởng dự án\\n- Làm việc linh hoạt\",\n  \"categoryId\": 1,\n  \"numberOfOpenings\": 2,\n  \"salaryMin\": 20000000,\n  \"salaryMax\": 40000000,\n  \"currency\": \"VND\",\n  \"location\": \"TP.HCM\",\n  \"locationTypes\": \"ONSITE\",\n  \"employmentType\": \"FULL_TIME\",\n  \"experienceLevel\": \"SENIOR\",\n  \"skillIds\": [1, 5]\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/employer/jobs",
+          "host": ["{{baseUrl}}"],
+          "path": ["employer", "jobs"]
+        }
+      }
+    },
+    {
+      "name": "4. GET /employer/jobs/{jobId} — Xem chi tiết job",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Xem chi tiết job — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('ID khớp', function () {",
+              "    pm.expect(json.id).to.eql(pm.environment.get('jobId'));",
+              "});",
+              "pm.test('Status là DRAFT', function () {",
+              "    pm.expect(json.status).to.eql('DRAFT');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{employerAccessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/employer/jobs/{{jobId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["employer", "jobs", "{{jobId}}"]
+        }
+      }
+    },
+    {
+      "name": "5. PUT /employer/jobs/{jobId} — Cập nhật job",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Cập nhật job — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Title đã được cập nhật', function () {",
+              "    pm.expect(pm.response.json().title).to.eql('Lead Java Developer');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{employerAccessToken}}", "type": "string" }]
+        },
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Lead Java Developer\",\n  \"description\": \"Chúng tôi tìm kiếm Lead Java Developer dẫn dắt team backend.\",\n  \"requirements\": \"- 5+ năm kinh nghiệm Java\\n- Kinh nghiệm dẫn dắt team\\n- Thành thạo microservices\",\n  \"benefits\": \"- BHXH đầy đủ\\n- Cổ phần công ty\\n- Thưởng hiệu suất\",\n  \"categoryId\": 1,\n  \"numberOfOpenings\": 1,\n  \"salaryMin\": 35000000,\n  \"salaryMax\": 60000000,\n  \"currency\": \"VND\",\n  \"location\": \"Hà Nội\",\n  \"locationTypes\": \"HYBRID\",\n  \"employmentType\": \"FULL_TIME\",\n  \"experienceLevel\": \"SENIOR\",\n  \"skillIds\": [1, 5]\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/employer/jobs/{{jobId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["employer", "jobs", "{{jobId}}"]
+        }
+      }
+    },
+    {
+      "name": "6. POST /employer/jobs/{jobId}/submit — Submit để admin duyệt",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Submit job — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Submit thành công — trả về message', function () {",
+              "    pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{employerAccessToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/employer/jobs/{{jobId}}/submit",
+          "host": ["{{baseUrl}}"],
+          "path": ["employer", "jobs", "{{jobId}}", "submit"]
+        }
+      }
+    }
+  ]
+}

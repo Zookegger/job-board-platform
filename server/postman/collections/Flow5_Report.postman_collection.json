@@ -1,0 +1,228 @@
+{
+  "info": {
+    "_postman_id": "f5a00000-0000-0000-0000-000000000005",
+    "name": "Flow 5 — Report: Báo cáo vi phạm",
+    "description": "Kiểm thử luồng báo cáo: candidate tạo report → admin xem danh sách → admin review → admin dismiss.\n\nYêu cầu:\n- Đã chạy Flow 1 (có candidateAccessToken, adminAccessToken)\n- Đã chạy Flow 2 + Flow 4 bước approve (có jobId đang ACTIVE)\n\nSau khi chạy, biến reportId sẽ được lưu vào Environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0a. Login lại — Candidate (làm mới token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Re-login candidate — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.environment.set('candidateAccessToken', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"testcandidate@flow1.com\",\n  \"password\": \"password123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "0b. Login lại — Admin (làm mới token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Re-login admin — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.environment.set('adminAccessToken', pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@yoedu.com\",\n  \"password\": \"admin123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "1. POST /reports — Candidate tạo báo cáo vi phạm",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('TC-20: Tạo report thành công — HTTP 200 hoặc 201', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Report có id', function () {",
+              "    pm.expect(json.id).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('reportId', json.id);",
+              "pm.test('Reason là SPAM', function () {",
+              "    pm.expect(json.reason).to.eql('SPAM');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{candidateAccessToken}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"jobId\": \"{{jobId}}\",\n  \"reason\": \"SPAM\",\n  \"details\": \"Job này yêu cầu đặt cọc tiền trước khi được nhận việc, có dấu hiệu lừa đảo.\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/reports",
+          "host": ["{{baseUrl}}"],
+          "path": ["reports"]
+        }
+      }
+    },
+    {
+      "name": "2. GET /admin/reports — Admin xem danh sách báo cáo",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Danh sách reports — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Kết quả là Page object', function () {",
+              "    pm.expect(json.content).to.be.an('array');",
+              "});",
+              "pm.test('Có ít nhất 1 report', function () {",
+              "    pm.expect(json.content.length).to.be.above(0);",
+              "});",
+              "var report = json.content.find(function(r) {",
+              "    return r.id === pm.environment.get('reportId');",
+              "});",
+              "pm.test('Tìm thấy report vừa tạo', function () {",
+              "    pm.expect(report).to.not.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{adminAccessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/reports?page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "reports"],
+          "query": [
+            { "key": "page", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. PATCH /admin/reports/{reportId}/review — Admin xử lý report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Review report — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{adminAccessToken}}", "type": "string" }]
+        },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reviewNotes\": \"Đã xác nhận vi phạm. Job yêu cầu đặt cọc — không đúng quy định.\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/reports/{{reportId}}/review",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "reports", "{{reportId}}", "review"]
+        }
+      }
+    },
+    {
+      "name": "4. PATCH /admin/reports/{reportId}/dismiss — Admin bác bỏ report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Dismiss report — 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{adminAccessToken}}", "type": "string" }]
+        },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reviewNotes\": \"Không đủ bằng chứng vi phạm, bác bỏ báo cáo.\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/reports/{{reportId}}/dismiss",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "reports", "{{reportId}}", "dismiss"]
+        }
+      }
+    }
+  ]
+}
